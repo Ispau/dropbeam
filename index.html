@@ -1250,6 +1250,9 @@ function setupSenderQR(icon, label, sub) {
 
         conn.on('open',()=>{
           setSenderStatus('¡Receptor conectado! Verificando emojis...','connected');
+          // Enviar el PIN directamente al receptor — fuente única de verdad
+          // El receptor NO lo calcula, lo recibe del emisor
+          conn.send({ type:'pin-challenge', pin: correctPin });
         });
 
         conn.on('error', ()=>{
@@ -1355,12 +1358,20 @@ function initReceiver(senderId) {
       });
 
       // Register data BEFORE open to avoid missing first message
-      conn.on('data', handleReceiverData);
+      conn.on('data', data => {
+        // PIN viene del emisor — fuente única de verdad
+        if(data.type === 'pin-challenge') {
+          correctPin = data.pin;
+          buildDragPin(correctPin);
+          showScreen('s-verify');
+          return;
+        }
+        handleReceiverData(data);
+      });
 
       conn.on('open', ()=>{
-        correctPin=generatePin(senderId);
-        buildDragPin(correctPin);
-        showScreen('s-verify');
+        // Solo mostrar "conectando" — el PIN llegará via pin-challenge
+        setReceiverStatus('Conectado · esperando verificación...','connected','Conectado','Canal seguro establecido');
       });
 
       conn.on('error', err=>{
@@ -1468,8 +1479,21 @@ function assembleAndDeliver(){
 // DRAG & DROP PIN
 // ════════════════════════════════════════
 function buildDragPin(pin){
-  const decoys=POOL.filter(e=>!pin.includes(e)).slice(0,2);
-  const all=[...pin,...decoys].sort(()=>Math.random()-.5);
+  // Decoys: los 2 primeros del POOL que NO están en el PIN
+  // Deterministas — siempre los mismos para el mismo PIN
+  const decoys = POOL.filter(e => !pin.includes(e)).slice(0, 2);
+  // Mezcla determinista usando el primer emoji del PIN como semilla
+  const seed = pin[0].codePointAt(0);
+  const all = [...pin, ...decoys];
+  // Fisher-Yates con semilla fija
+  for(let i = all.length - 1; i > 0; i--){
+    const j = (seed * (i + 1)) % (i + 1);
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+  // Si la mezcla deja el orden idéntico al PIN, rotar uno
+  const allMatch = all.slice(0,4).every((e,i) => e === pin[i]);
+  if(allMatch) { const tmp=all[0]; all[0]=all[1]; all[1]=tmp; }
+
   slotValues=[null,null,null,null];
 
   const slotsEl=document.getElementById('drop-slots');
