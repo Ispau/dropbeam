@@ -3,1131 +3,1578 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DropBeam — Comparte archivos al instante</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>DropBeam — Comparte archivos sin servidores, sin cuenta, sin cookies</title>
+<meta name="description" content="Envía archivos y enlaces directamente entre dispositivos sin pasar por ningún servidor. Cifrado P2P, sin registro, sin cookies, sin límite de tamaño. Funciona en móvil, tablet y PC.">
+<meta name="keywords" content="compartir archivos P2P, transferencia archivos sin servidor, enviar archivos privado, sin cookies, cifrado extremo a extremo, WebRTC">
+<meta property="og:title" content="DropBeam — Comparte archivos sin servidores, sin cuenta, sin cookies">
+<meta property="og:description" content="Envía archivos directamente entre dispositivos. Sin servidores. Sin cookies. Cifrado P2P.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="DropBeam — P2P · Sin servidores · Sin cookies">
+<meta name="twitter:description" content="Transfiere archivos cifrados directamente entre dispositivos. Sin registro, sin cookies, sin límite de tamaño.">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap');
-
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c28;
-    --accent: #00ff88;
-    --accent2: #7c3aed;
-    --text: #f0f0f5;
-    --muted: #6b6b80;
-    --border: rgba(255,255,255,0.06);
-    --glow: 0 0 40px rgba(0,255,136,0.15);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow-x: hidden;
-  }
-
-  /* Animated background grid */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: 
-      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Glow orb */
-  body::after {
-    content: '';
-    position: fixed;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
-    top: -200px;
-    right: -200px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  header {
-    position: relative;
-    z-index: 10;
-    padding: 24px 40px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .logo {
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .logo-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 12px var(--accent);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
-
-  .badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--accent);
-    background: rgba(0,255,136,0.08);
-    border: 1px solid rgba(0,255,136,0.2);
-    padding: 3px 8px;
-    border-radius: 100px;
-    letter-spacing: 1px;
-  }
-
-  main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    position: relative;
-    z-index: 10;
-  }
-
-  /* SCREEN: DROP ZONE */
-  #screen-drop {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 32px;
-    max-width: 560px;
-    width: 100%;
-  }
-
-  .hero-text {
-    text-align: center;
-  }
-
-  .hero-text h1 {
-    font-size: clamp(36px, 6vw, 56px);
-    font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -2px;
-  }
-
-  .hero-text h1 span {
-    color: var(--accent);
-    text-shadow: 0 0 30px rgba(0,255,136,0.4);
-  }
-
-  .hero-text p {
-    margin-top: 12px;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-  }
-
-  .drop-zone {
-    width: 100%;
-    border: 2px dashed rgba(0,255,136,0.2);
-    border-radius: 20px;
-    padding: 60px 40px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: rgba(0,255,136,0.02);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .drop-zone::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(0,255,136,0.06) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .drop-zone:hover::before,
-  .drop-zone.drag-over::before {
-    opacity: 1;
-  }
-
-  .drop-zone:hover,
-  .drop-zone.drag-over {
-    border-color: rgba(0,255,136,0.6);
-    background: rgba(0,255,136,0.04);
-    transform: scale(1.01);
-  }
-
-  .drop-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    display: block;
-  }
-
-  .drop-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-
-  .drop-sub {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  #file-input { display: none; }
-
-  .features {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .feature {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .feature::before {
-    content: '✓';
-    color: var(--accent);
-    font-weight: 700;
-  }
-
-  /* SCREEN: QR */
-  #screen-qr {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 28px;
-    max-width: 480px;
-    width: 100%;
-  }
-
-  .qr-header {
-    text-align: center;
-  }
-
-  .qr-header h2 {
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -1px;
-  }
-
-  .qr-header p {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-  }
-
-  .qr-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.4);
-    width: 100%;
-  }
-
-  .file-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--surface2);
-    padding: 12px 16px;
-    border-radius: 12px;
-    width: 100%;
-  }
-
-  .file-icon {
-    font-size: 24px;
-  }
-
-  .file-details {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .file-name {
-    font-weight: 700;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .file-size {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  #qr-container {
-    background: white;
-    padding: 16px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .pin-display {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .pin-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .pin-emojis {
-    display: flex;
-    gap: 12px;
-    font-size: 28px;
-    background: var(--surface2);
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-  }
-
-  .status-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-  }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-  }
-
-  .status-dot.waiting {
-    background: #f59e0b;
-    box-shadow: 0 0 8px #f59e0b;
-    animation: pulse 1.5s infinite;
-  }
-
-  .status-dot.connected {
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-  }
-
-  .status-dot.sending {
-    background: var(--accent2);
-    box-shadow: 0 0 8px var(--accent2);
-    animation: pulse 0.8s infinite;
-  }
-
-  /* Progress */
-  .progress-wrap {
-    width: 100%;
-    display: none;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .progress-bar-bg {
-    width: 100%;
-    height: 6px;
-    background: var(--surface2);
-    border-radius: 100px;
-    overflow: hidden;
-  }
-
-  .progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent2), var(--accent));
-    border-radius: 100px;
-    width: 0%;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(0,255,136,0.5);
-  }
-
-  .progress-text {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    text-align: right;
-  }
-
-  /* SCREEN: DONE */
-  #screen-done {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    text-align: center;
-  }
-
-  .done-icon {
-    font-size: 64px;
-    animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  @keyframes pop {
-    from { transform: scale(0); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-
-  .done-title {
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: -1px;
-  }
-
-  .done-sub {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  /* SCREEN: RECEIVER */
-  #screen-receiver {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 28px;
-    max-width: 400px;
-    width: 100%;
-    text-align: center;
-  }
-
-  .receiver-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 40px 32px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.4);
-  }
-
-  .receiver-icon {
-    font-size: 56px;
-    animation: float 3s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 14px 28px;
-    border-radius: 12px;
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s ease;
-    letter-spacing: -0.3px;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #000;
-    box-shadow: 0 0 20px rgba(0,255,136,0.3);
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(0,255,136,0.5);
-  }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
-
-  .btn-ghost:hover {
-    color: var(--text);
-    border-color: rgba(255,255,255,0.15);
-  }
-
-  /* SCREEN: VERIFY PIN */
-  #screen-verify {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    max-width: 400px;
-    width: 100%;
-    text-align: center;
-  }
-
-  .verify-card {
-    background: var(--surface);
-    border: 1px solid rgba(245,158,11,0.3);
-    border-radius: 24px;
-    padding: 40px 32px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    box-shadow: 0 0 40px rgba(245,158,11,0.1), 0 40px 80px rgba(0,0,0,0.4);
-  }
-
-  .verify-title {
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
-
-  .verify-sub {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-
-  .verify-emojis {
-    display: flex;
-    gap: 16px;
-    font-size: 36px;
-    background: var(--surface2);
-    padding: 16px 28px;
-    border-radius: 16px;
-    border: 1px solid rgba(245,158,11,0.2);
-  }
-
-  .verify-question {
-    font-size: 15px;
-    font-weight: 700;
-    color: #f59e0b;
-  }
-
-  .verify-buttons {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .btn-danger {
-    background: rgba(239,68,68,0.15);
-    color: #ef4444;
-    border: 1px solid rgba(239,68,68,0.3);
-    flex: 1;
-  }
-
-  .btn-confirm {
-    background: var(--accent);
-    color: #000;
-    flex: 1;
-  }
-
-  footer {
-    position: relative;
-    z-index: 10;
-    padding: 16px 40px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .footer-text {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .footer-sep { opacity: 0.3; }
-
-  /* Animations */
-  .fade-in {
-    animation: fadeIn 0.4s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Spinner */
-  .spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(0,0,0,0.2);
-    border-top-color: #000;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* Mobile adjustments */
-  @media (max-width: 480px) {
-    header { padding: 16px 20px; }
-    .drop-zone { padding: 40px 20px; }
-    .qr-card { padding: 24px 20px; }
-  }
+/* ── FUENTES LOCALES ── */
+@font-face {
+  font-family: 'Syne';
+  src: url('fonts/Syne-Regular.woff2') format('woff2');
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: 'Syne';
+  src: url('fonts/Syne-Bold.woff2') format('woff2');
+  font-weight: 700; font-display: swap;
+}
+@font-face {
+  font-family: 'Syne';
+  src: url('fonts/Syne-ExtraBold.woff2') format('woff2');
+  font-weight: 800; font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-Light.woff2') format('woff2');
+  font-weight: 300; font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-Regular.woff2') format('woff2');
+  font-weight: 400; font-display: swap;
+}
+
+/* ── VARIABLES ── */
+:root {
+  --bg: #07070d;
+  --s1: #0f0f1a;
+  --s2: #161625;
+  --s3: #1e1e30;
+  --accent: #00e5ff;
+  --accent2: #bf5af2;
+  --green: #30d158;
+  --red: #ff453a;
+  --warn: #ffd60a;
+  --text: #f2f2f7;
+  --muted: #636380;
+  --border: rgba(255,255,255,0.07);
+  --glow: rgba(0,229,255,0.15);
+}
+
+/* ── RESET ── */
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Syne',system-ui,sans-serif;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  overflow-x:hidden;
+}
+
+/* Grid background */
+body::before {
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+body::after {
+  content:'';position:fixed;
+  width:700px;height:700px;
+  background:radial-gradient(circle,rgba(191,90,242,0.1) 0%,transparent 65%);
+  top:-250px;right:-250px;
+  pointer-events:none;z-index:0;
+}
+
+/* ════════════════════════════════════
+   HEADER
+════════════════════════════════════ */
+header {
+  position:relative;z-index:100;
+  padding:18px 36px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+}
+
+.logo {
+  font-size:20px;font-weight:800;letter-spacing:-.5px;
+  display:flex;align-items:center;gap:10px;
+  flex:1;
+}
+.logo-beam {
+  width:28px;height:7px;
+  background:linear-gradient(90deg,var(--accent2),var(--accent));
+  border-radius:100px;
+  box-shadow:0 0 14px var(--accent);
+  animation:beam 2.5s ease-in-out infinite;
+}
+@keyframes beam{0%,100%{opacity:1;transform:scaleX(1)}50%{opacity:.5;transform:scaleX(.65)}}
+
+.nav-links {
+  display:flex;align-items:center;gap:4px;
+}
+.nav-link {
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.5px;
+  color:var(--muted);padding:6px 14px;border-radius:8px;
+  cursor:pointer;transition:all .15s;border:none;background:transparent;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.nav-link.active{color:var(--accent);background:rgba(0,229,255,0.08);}
+
+.chip {
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;
+  color:var(--accent);background:rgba(0,229,255,0.08);
+  border:1px solid rgba(0,229,255,0.18);
+  padding:3px 9px;border-radius:100px;
+}
+
+/* ════════════════════════════════════
+   MAIN & SCREENS
+════════════════════════════════════ */
+main {
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 20px;position:relative;z-index:10;
+}
+
+.page{display:none;}
+.page.active{display:flex;flex-direction:column;align-items:center;}
+
+.screen{display:none;flex-direction:column;align-items:center;}
+.screen.active{display:flex;animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both;}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(18px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ════════════════════════════════════
+   PAGE: APP (MAIN)
+════════════════════════════════════ */
+#page-app{width:100%;}
+
+/* ── DROP SCREEN ── */
+#s-drop{gap:26px;max-width:560px;width:100%;}
+
+.hero{text-align:center;}
+.hero h1{
+  font-size:clamp(32px,5.5vw,52px);
+  font-weight:800;line-height:1.05;letter-spacing:-2px;
+}
+.hero h1 em{
+  font-style:normal;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub {
+  margin-top:12px;
+  font-family:'DM Mono',monospace;font-size:12px;
+  color:var(--muted);line-height:1.7;
+  max-width:420px;margin-left:auto;margin-right:auto;
+}
+.hero-sub strong{color:rgba(0,229,255,0.8);}
+
+/* Brave warning */
+#brave-warn{
+  display:none;width:100%;
+  background:rgba(255,214,10,0.05);
+  border:1px solid rgba(255,214,10,0.2);
+  border-radius:14px;padding:18px 22px;
+  flex-direction:column;gap:10px;
+}
+#brave-warn.show{display:flex;animation:fadeUp .3s ease;}
+.warn-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--warn);}
+.warn-steps{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.9;}
+.warn-steps code{color:var(--warn);background:rgba(255,214,10,0.1);padding:1px 5px;border-radius:4px;font-size:10px;}
+
+/* Tabs */
+.tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow:hidden;width:100%;}
+.tab{
+  flex:1;padding:13px;text-align:center;cursor:pointer;
+  font-size:13px;font-weight:700;transition:all .15s;
+  color:var(--muted);background:transparent;border:none;font-family:'Syne',sans-serif;
+}
+.tab.active{background:var(--s2);color:var(--text);}
+.tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,0.03);}
+
+/* Drop zone */
+.drop-zone{
+  width:100%;border:2px dashed rgba(0,229,255,0.18);
+  border-radius:20px;padding:52px 36px;text-align:center;
+  cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);
+  background:rgba(0,229,255,0.015);position:relative;overflow:hidden;
+}
+.drop-zone::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at center,rgba(0,229,255,0.07) 0%,transparent 70%);
+  opacity:0;transition:opacity .2s;
+}
+.drop-zone:hover::before,.drop-zone.over::before{opacity:1;}
+.drop-zone:hover,.drop-zone.over{
+  border-color:rgba(0,229,255,0.5);
+  transform:scale(1.006);
+  box-shadow:0 0 40px rgba(0,229,255,0.06);
+}
+.drop-icon{font-size:42px;margin-bottom:12px;display:block;transition:transform .2s;}
+.drop-zone:hover .drop-icon{transform:translateY(-4px) scale(1.05);}
+.drop-title{font-size:17px;font-weight:700;margin-bottom:6px;}
+.drop-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+#file-input{display:none;}
+
+/* URL area */
+.url-area{width:100%;display:flex;flex-direction:column;gap:10px;}
+.url-wrap{
+  display:flex;gap:8px;background:var(--s2);
+  border:1px solid var(--border);border-radius:14px;padding:13px 16px;
+  transition:border-color .2s;
+}
+.url-wrap:focus-within{border-color:rgba(0,229,255,0.35);}
+.url-wrap span{font-size:16px;}
+.url-input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'DM Mono',monospace;font-size:13px;
+}
+.url-input::placeholder{color:var(--muted);}
+
+/* Feats */
+.feats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+.feat{
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
+  display:flex;align-items:center;gap:5px;
+}
+.feat::before{content:'✓';color:var(--accent);font-weight:700;}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 24px;border-radius:12px;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;border:none;transition:all .18s cubic-bezier(.16,1,.3,1);
+  letter-spacing:-.3px;position:relative;overflow:hidden;
+}
+.btn::after{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,0);transition:background .15s;
+}
+.btn:hover::after{background:rgba(255,255,255,0.06);}
+.btn:active{transform:scale(.97);}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent2),var(--accent));
+  color:#000;box-shadow:0 0 24px rgba(0,229,255,0.18);width:100%;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 36px rgba(0,229,255,0.3);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.14);}
+
+/* ── CARD ── */
+.card{
+  background:var(--s1);border:1px solid var(--border);border-radius:24px;
+  padding:26px;display:flex;flex-direction:column;align-items:center;gap:16px;
+  box-shadow:0 0 60px var(--glow),0 40px 80px rgba(0,0,0,0.5);
+  width:100%;
+}
+
+/* File strip */
+.fstrip{
+  display:flex;align-items:center;gap:12px;
+  background:var(--s2);padding:11px 14px;border-radius:12px;width:100%;
+}
+.ficon{font-size:20px;}
+.fdet{flex:1;min-width:0;}
+.fname{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fsize{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* QR */
+#qr-box{
+  background:#fff;padding:14px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  min-width:200px;min-height:200px;position:relative;
+}
+.qr-loading{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  border-radius:14px;background:#fff;
+}
+
+/* Pin */
+.pin-section{width:100%;display:flex;flex-direction:column;gap:8px;}
+.pin-label{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;
+}
+.pin-row{
+  display:flex;gap:8px;justify-content:center;
+  background:var(--s2);padding:11px 18px;
+  border-radius:12px;border:1px solid var(--border);
+}
+.pin-emoji{font-size:24px;}
+
+/* Status */
+.status{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:12px;}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.sdot.waiting{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:sdpulse 1.5s infinite;}
+.sdot.connected{background:var(--green);box-shadow:0 0 8px var(--green);}
+.sdot.sending{background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:sdpulse .8s infinite;}
+.sdot.done{background:var(--accent);box-shadow:0 0 8px var(--accent);}
+@keyframes sdpulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* Speed display */
+.speed-display{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--accent);letter-spacing:.5px;
+  min-height:16px;transition:all .3s;
+}
+
+/* Progress */
+.prog-wrap{width:100%;display:flex;flex-direction:column;gap:6px;}
+.prog-bg{height:4px;background:var(--s3);border-radius:100px;overflow:hidden;}
+.prog-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--accent2),var(--accent));
+  border-radius:100px;
+  box-shadow:0 0 10px rgba(0,229,255,0.4);
+  transition:width .15s ease-out;
+}
+.prog-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;}
+
+/* ── DRAG PIN ── */
+.drop-slots{display:flex;gap:8px;justify-content:center;}
+.drop-slot{
+  width:54px;height:54px;
+  border:2px dashed rgba(0,229,255,0.2);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;transition:all .15s;cursor:pointer;position:relative;
+}
+.drop-slot.drag-target{border-color:var(--accent);background:rgba(0,229,255,0.08);transform:scale(1.08);}
+.drop-slot.filled{border-style:solid;border-color:rgba(0,229,255,0.25);}
+.drop-slot.wrong{border-color:var(--red);background:rgba(255,69,58,0.1);animation:shake .4s ease;}
+.drop-slot .snum{
+  position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);
+}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+.emoji-source{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px 0;}
+.edrag{
+  font-size:26px;cursor:grab;
+  background:var(--s2);border:2px solid var(--border);
+  border-radius:12px;padding:7px 9px;
+  transition:all .15s;user-select:none;
+}
+.edrag:hover{border-color:rgba(0,229,255,0.35);transform:scale(1.1);}
+.edrag.dragging{opacity:.3;transform:scale(.9);}
+.edrag.used{opacity:.2;pointer-events:none;}
+
+.vmsg{
+  font-family:'DM Mono',monospace;font-size:12px;text-align:center;
+  padding:10px 16px;border-radius:10px;min-height:38px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.vmsg.err{color:var(--red);background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.2);}
+.vmsg.ok{color:var(--green);background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);}
+
+.btn-verify{
+  width:100%;padding:13px;border-radius:12px;
+  background:var(--accent);color:#000;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;
+  border:none;cursor:pointer;transition:all .18s;opacity:.35;pointer-events:none;
+}
+.btn-verify.ready{opacity:1;pointer-events:all;}
+.btn-verify.ready:hover{transform:translateY(-2px);box-shadow:0 0 24px rgba(0,229,255,0.3);}
+.btn-clr{
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  font-family:'Syne',sans-serif;font-size:12px;padding:8px 16px;
+  border-radius:8px;cursor:pointer;transition:all .15s;
+}
+.btn-clr:hover{color:var(--text);}
+
+/* Done */
+#s-done{gap:18px;text-align:center;}
+.done-circle{
+  width:76px;height:76px;border-radius:50%;
+  background:rgba(48,209,88,0.1);border:2px solid rgba(48,209,88,0.3);
+  display:flex;align-items:center;justify-content:center;font-size:34px;
+  animation:pop .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* URL / Image preview */
+.url-preview{
+  width:100%;background:var(--s2);border:1px solid var(--border);
+  border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;
+}
+.url-plabel{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.url-plink{
+  display:flex;align-items:center;gap:8px;color:var(--accent);
+  font-family:'DM Mono',monospace;font-size:12px;
+  text-decoration:none;word-break:break-all;
+}
+.url-plink:hover{text-decoration:underline;}
+.img-preview{
+  width:100%;max-height:280px;border-radius:14px;
+  object-fit:contain;background:var(--s2);
+}
+
+/* ════════════════════════════════════
+   PAGE: ABOUT
+════════════════════════════════════ */
+#page-about{
+  max-width:680px;width:100%;
+  gap:0;
+  animation:fadeUp .35s cubic-bezier(.16,1,.3,1);
+}
+
+.about-hero{
+  text-align:center;padding:40px 20px 32px;
+}
+.about-hero h2{
+  font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-1.5px;
+  margin-bottom:12px;
+}
+.about-hero h2 em{
+  font-style:normal;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.about-hero p{
+  font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);
+  line-height:1.8;max-width:520px;margin:0 auto;
+}
+
+.about-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  padding:0 0 32px;width:100%;
+}
+@media(max-width:520px){.about-grid{grid-template-columns:1fr;}}
+
+.about-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:18px;padding:22px;
+  display:flex;flex-direction:column;gap:10px;
+  transition:border-color .2s;
+}
+.about-card:hover{border-color:rgba(0,229,255,0.15);}
+.about-card-icon{font-size:28px;}
+.about-card h3{font-size:15px;font-weight:800;letter-spacing:-.3px;}
+.about-card p{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--muted);line-height:1.7;
+}
+.about-card p strong{color:var(--text);}
+
+.about-tech{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:18px;padding:24px;width:100%;margin-bottom:14px;
+}
+.about-tech h3{font-size:15px;font-weight:800;margin-bottom:14px;letter-spacing:-.3px;}
+.tech-list{display:flex;flex-direction:column;gap:10px;}
+.tech-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px;background:var(--s2);border-radius:12px;
+}
+.tech-item-icon{font-size:18px;margin-top:1px;flex-shrink:0;}
+.tech-item-body{}
+.tech-item-title{font-size:13px;font-weight:700;margin-bottom:3px;}
+.tech-item-desc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.6;}
+
+.about-no-cookies{
+  width:100%;
+  background:rgba(0,229,255,0.04);
+  border:1px solid rgba(0,229,255,0.12);
+  border-radius:18px;padding:24px;
+  display:flex;flex-direction:column;gap:10px;margin-bottom:14px;
+}
+.ncook-title{
+  display:flex;align-items:center;gap:10px;
+  font-size:16px;font-weight:800;letter-spacing:-.3px;
+}
+.ncook-title span{font-size:24px;}
+.ncook-desc{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.8;}
+.ncook-desc strong{color:var(--accent);}
+
+.about-disclaimer{
+  width:100%;
+  background:rgba(255,69,58,0.04);
+  border:1px solid rgba(255,69,58,0.12);
+  border-radius:18px;padding:22px;
+  display:flex;flex-direction:column;gap:8px;margin-bottom:14px;
+}
+.disc-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--red);}
+.disc-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;}
+.disc-body strong{color:var(--text);}
+
+.about-open{
+  width:100%;background:var(--s1);border:1px solid var(--border);
+  border-radius:18px;padding:22px;
+  display:flex;align-items:center;gap:16px;margin-bottom:28px;
+}
+.open-icon{font-size:32px;flex-shrink:0;}
+.open-body h3{font-size:14px;font-weight:800;margin-bottom:6px;}
+.open-body p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;}
+.open-body a{color:var(--accent);text-decoration:none;}
+.open-body a:hover{text-decoration:underline;}
+
+/* ════════════════════════════════════
+   FOOTER
+════════════════════════════════════ */
+footer{
+  position:relative;z-index:10;
+  padding:14px 36px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+}
+.foot-txt{
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;
+}
+.foot-sep{opacity:.25;}
+
+/* ════════════════════════════════════
+   RECEIVER SCREENS
+════════════════════════════════════ */
+#s-verify,#s-receiver{gap:22px;max-width:420px;width:100%;}
+
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+/* ════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════ */
+
+/* Tablet */
+@media(max-width:768px){
+  .about-grid{grid-template-columns:1fr;}
+  .about-open{flex-direction:column;text-align:center;}
+}
+
+/* Mobile */
+@media(max-width:480px){
+  /* Header */
+  header{padding:12px 16px;gap:8px;}
+  .logo{font-size:17px;}
+  .logo-beam{width:22px;height:6px;}
+  .chip{display:none;}
+  .nav-link{font-size:12px;padding:5px 9px;}
+
+  /* Main layout */
+  main{padding:20px 12px;}
+
+  /* Hero */
+  .hero h1{font-size:28px;letter-spacing:-1.2px;}
+  .hero-sub{font-size:11px;}
+
+  /* Card & drop */
+  .card{padding:16px 12px;border-radius:18px;}
+  .drop-zone{padding:34px 16px;border-radius:16px;}
+  .drop-icon{font-size:36px;}
+  .drop-title{font-size:15px;}
+
+  /* Tabs */
+  .tab{font-size:12px;padding:11px 8px;}
+
+  /* Features */
+  .feats{gap:8px;}
+  .feat{font-size:10px;}
+
+  /* QR screen */
+  #qr-box{min-width:170px;min-height:170px;padding:10px;}
+
+  /* Drag pin slots */
+  .drop-slots{gap:5px;}
+  .drop-slot{width:58px;height:58px;font-size:22px;}
+  .edrag{font-size:22px;padding:6px 8px;}
+  .emoji-source{gap:6px;}
+
+  /* About page */
+  .about-hero h2{font-size:24px;}
+  .about-hero p{font-size:11px;}
+  .about-card{padding:16px;}
+  .about-tech{padding:18px;}
+  .tech-item{padding:10px;}
+  .about-no-cookies,.about-disclaimer,.about-open{padding:16px;}
+
+  /* Footer */
+  footer{padding:12px 16px;}
+  .foot-txt{font-size:10px;gap:8px;}
+  .foot-sep{display:none;}
+}
+
+/* Very small screens */
+@media(max-width:360px){
+  .hero h1{font-size:24px;}
+  .drop-slot{width:50px;height:50px;font-size:18px;}
+  .nav-link{font-size:11px;padding:4px 7px;}
+}
 </style>
 </head>
 <body>
 
+<!-- ════════════════════════════════════
+     HEADER
+════════════════════════════════════ -->
 <header>
   <div class="logo">
-    <div class="logo-dot"></div>
+    <div class="logo-beam"></div>
     DropBeam
   </div>
-  <div class="badge">P2P · CIFRADO</div>
+  <nav class="nav-links">
+    <button class="nav-link active" onclick="showPage('app')">Compartir</button>
+    <button class="nav-link" onclick="showPage('about')">Acerca de</button>
+  </nav>
+  <div class="chip">P2P · CIFRADO</div>
 </header>
 
+<!-- ════════════════════════════════════
+     MAIN
+════════════════════════════════════ -->
 <main>
 
-  <!-- PANTALLA 1: DROP ZONE (emisor) -->
-  <div id="screen-drop" class="fade-in">
-    <div class="hero-text">
-      <h1>Comparte archivos<br><span>al instante</span></h1>
-      <p>Sin servidores. Sin cuenta. Directo al receptor.</p>
+<!-- ══════════════ PAGE: APP ══════════════ -->
+<div id="page-app" class="page active" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+
+  <!-- S1: DROP -->
+  <div id="s-drop" class="screen active" style="gap:26px;max-width:560px;width:100%;">
+
+    <div class="hero">
+      <h1>Comparte archivos<br><em>sin intermediarios</em></h1>
+      <p class="hero-sub">
+        Tus archivos van directo al receptor — ningún servidor los toca,
+        ninguna empresa los analiza, ninguna IA los usa para entrenarse.<br>
+        <strong>Sin registro · Sin cookies · Sin límite de tamaño</strong>
+      </p>
     </div>
 
-    <div class="drop-zone" id="drop-zone">
-      <span class="drop-icon">📦</span>
-      <div class="drop-title">Arrastra tu archivo aquí</div>
-      <div class="drop-sub">o haz clic para seleccionar · cualquier formato · sin límite de tamaño</div>
-      <input type="file" id="file-input">
+    <!-- No cookies banner -->
+    <div style="
+      width:100%;
+      display:flex;align-items:center;gap:10px;
+      background:rgba(48,209,88,0.06);
+      border:1px solid rgba(48,209,88,0.18);
+      border-radius:12px;padding:11px 16px;
+    ">
+      <span style="font-size:18px;">🍪</span>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(48,209,88,0.9);letter-spacing:.3px;">
+        Esta web <strong>no usa cookies</strong>. No hay nada que aceptar — por diseño, no por omisión.
+      </span>
     </div>
 
-    <div class="features">
-      <div class="feature">Cifrado WebRTC</div>
-      <div class="feature">Sin registro</div>
-      <div class="feature">P2P directo</div>
-      <div class="feature">iOS · Android · PC</div>
+    <div id="brave-warn">
+      <div class="warn-title">⚠️ Brave detectado</div>
+      <div class="warn-steps">
+        Brave bloquea WebRTC por defecto. Para activarlo:<br><br>
+        1 · Ve a <code>brave://settings/privacy</code><br>
+        2 · Busca <code>WebRTC IP handling policy</code><br>
+        3 · Selecciona <code>Default</code><br>
+        4 · Recarga esta página
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('file')">📦 Archivo</button>
+      <button class="tab" onclick="switchTab('url')">🔗 Enlace URL</button>
+    </div>
+
+    <div id="tab-file" style="width:100%;">
+      <div class="drop-zone" id="drop-zone">
+        <span class="drop-icon">📦</span>
+        <div class="drop-title">Arrastra tu archivo aquí</div>
+        <div class="drop-sub">o haz clic · cualquier formato · sin límite de tamaño</div>
+        <input type="file" id="file-input">
+      </div>
+    </div>
+
+    <div id="tab-url" style="display:none;width:100%;">
+      <div class="url-area">
+        <div class="url-wrap">
+          <span>🔗</span>
+          <input class="url-input" id="url-input" type="url" placeholder="https://...">
+        </div>
+        <button class="btn btn-primary" onclick="handleUrl()">Generar QR para este enlace →</button>
+      </div>
+    </div>
+
+    <div class="feats">
+      <div class="feat">Cifrado extremo a extremo</div>
+      <div class="feat">Sin cuenta</div>
+      <div class="feat">Sin cookies</div>
+      <div class="feat">P2P directo</div>
+      <div class="feat">Sin límite de tamaño</div>
+      <div class="feat">iOS · Android · PC</div>
     </div>
   </div>
 
-  <!-- PANTALLA 2: QR (emisor esperando) -->
-  <div id="screen-qr" class="fade-in">
-    <div class="qr-header">
-      <h2>Escanea para recibir</h2>
-      <p>El archivo viaja directo a quien escanee · nadie más lo ve</p>
+  <!-- S2: QR SENDER -->
+  <div id="s-qr" class="screen" style="gap:22px;max-width:480px;width:100%;">
+    <div style="text-align:center;">
+      <h2 style="font-size:24px;font-weight:800;letter-spacing:-1px;">Escanea para recibir</h2>
+      <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-top:5px;">
+        Directo a quien escanee · nadie más lo ve
+      </p>
     </div>
-
-    <div class="qr-card">
-      <div class="file-info">
-        <div class="file-icon" id="file-icon">📄</div>
-        <div class="file-details">
-          <div class="file-name" id="file-name-display">archivo.jpg</div>
-          <div class="file-size" id="file-size-display">0 MB</div>
+    <div class="card">
+      <div class="fstrip" id="s-strip">
+        <div class="ficon" id="s-icon">📄</div>
+        <div class="fdet">
+          <div class="fname" id="s-name">-</div>
+          <div class="fsize" id="s-size">-</div>
         </div>
       </div>
 
-      <div id="qr-container"></div>
-
-      <div class="pin-display">
-        <div class="pin-label">Verifica estos emojis con el receptor</div>
-        <div class="pin-emojis" id="pin-emojis">⏳</div>
+      <div id="qr-box">
+        <div class="qr-loading" id="qr-loading">⏳</div>
+        <canvas id="qr-canvas" style="display:none;border-radius:6px;"></canvas>
       </div>
 
-      <div class="status-indicator">
-        <div class="status-dot waiting" id="status-dot"></div>
-        <span id="status-text">Esperando que alguien escanee...</span>
-      </div>
-
-      <div class="progress-wrap" id="progress-wrap">
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="progress-fill"></div>
+      <div class="pin-section">
+        <div class="pin-label">Di este orden en voz alta al receptor</div>
+        <div class="pin-row" id="sender-pin"><span class="pin-emoji">⏳</span></div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;">
+          El receptor los arrastra en ese orden para verificar la conexión
         </div>
-        <div class="progress-text" id="progress-text">0%</div>
+      </div>
+
+      <div class="status">
+        <div class="sdot waiting" id="s-dot"></div>
+        <span id="s-status">Inicializando conexión segura...</span>
+      </div>
+
+      <div class="prog-wrap" id="s-prog" style="display:none;">
+        <div class="prog-bg"><div class="prog-fill" id="s-fill"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="speed-display" id="s-speed"></div>
+          <div class="prog-txt" id="s-prog-txt">0%</div>
+        </div>
       </div>
     </div>
-
-    <button class="btn btn-ghost" onclick="resetApp()">← Enviar otro archivo</button>
+    <button class="btn btn-ghost" onclick="resetApp()">← Compartir otro</button>
   </div>
 
-  <!-- PANTALLA 3: DONE (emisor) -->
-  <div id="screen-done">
-    <div class="done-icon">✅</div>
-    <div class="done-title">¡Enviado!</div>
-    <div class="done-sub">El archivo llegó al receptor de forma segura</div>
-    <button class="btn btn-primary" onclick="resetApp()">Enviar otro archivo</button>
+  <!-- S3: DONE SENDER -->
+  <div id="s-done" class="screen">
+    <div class="done-circle">✅</div>
+    <div style="font-size:26px;font-weight:800;letter-spacing:-1px;">¡Enviado!</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">
+      Llegó de forma segura · sin pasar por ningún servidor
+    </div>
+    <button class="btn btn-primary" style="margin-top:8px;" onclick="resetApp()">Compartir otro</button>
   </div>
 
-  <!-- PANTALLA 4: RECEPTOR (quien escanea el QR) -->
-  <div id="screen-receiver">
-    <div class="receiver-card">
-      <div class="receiver-icon">📡</div>
+  <!-- S4: VERIFY PIN (receptor) -->
+  <div id="s-verify" class="screen">
+    <div style="text-align:center;">
+      <div style="font-size:38px;margin-bottom:10px;">🔐</div>
+      <h2 style="font-size:20px;font-weight:800;letter-spacing:-.5px;">Verifica la conexión</h2>
+      <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px;line-height:1.7;">
+        El emisor te dice el orden en voz alta.<br>
+        Arrastra los emojis en ese orden exacto.
+      </p>
+    </div>
+    <div class="card" style="gap:18px;">
       <div>
-        <h2 style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">Conectando...</h2>
-        <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-top:6px;">Estableciendo conexión segura con el emisor</p>
+        <div class="pin-label" style="text-align:center;margin-bottom:14px;">Arrastra aquí en el orden que te dicen</div>
+        <div class="drop-slots" id="drop-slots"></div>
       </div>
-
-      <div class="file-info" id="receiver-file-info" style="display:none;">
-        <div class="file-icon" id="receiver-file-icon">📄</div>
-        <div class="file-details">
-          <div class="file-name" id="receiver-file-name">-</div>
-          <div class="file-size" id="receiver-file-size">-</div>
-        </div>
+      <div>
+        <div class="pin-label" style="text-align:center;margin-bottom:10px;">Emojis disponibles — toca o arrastra</div>
+        <div class="emoji-source" id="emoji-source"></div>
       </div>
-
-      <div class="progress-wrap" id="receiver-progress-wrap" style="display:flex;">
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="receiver-progress-fill"></div>
-        </div>
-        <div class="progress-text" id="receiver-progress-text">Conectando...</div>
-      </div>
-
-      <div class="status-indicator">
-        <div class="status-dot waiting" id="receiver-status-dot"></div>
-        <span id="receiver-status-text">Buscando al emisor...</span>
+      <div class="vmsg" id="vmsg"></div>
+      <div style="display:flex;gap:8px;width:100%;">
+        <button class="btn-clr" onclick="clearSlots()">Borrar</button>
+        <button class="btn-verify" id="btn-verify" onclick="checkPin()">Confirmar orden →</button>
       </div>
     </div>
   </div>
 
-  <!-- PANTALLA 5: VERIFICAR PIN (receptor) -->
-  <div id="screen-verify">
-    <div class="verify-card">
-      <div style="font-size:32px;">🔐</div>
-      <div class="verify-title">Verifica la conexión</div>
-      <div class="verify-sub">Asegúrate de que el emisor ve<br>exactamente estos mismos emojis</div>
-      <div class="verify-emojis" id="verify-emojis">⏳</div>
-      <div class="verify-question">¿Coinciden en la pantalla del emisor?</div>
-      <div class="verify-buttons">
-        <button class="btn btn-danger" onclick="rejectConnection()">✗ No coinciden</button>
-        <button class="btn btn-confirm btn-primary" onclick="acceptConnection()">✓ Sí, coinciden</button>
+  <!-- S5: RECEIVER -->
+  <div id="s-receiver" class="screen">
+    <div class="card">
+      <div style="font-size:46px;animation:float 3s ease-in-out infinite;">📡</div>
+      <div style="text-align:center;">
+        <h2 style="font-size:20px;font-weight:800;letter-spacing:-.5px;" id="r-title">Conectando...</h2>
+        <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;" id="r-sub">
+          Estableciendo conexión cifrada
+        </p>
+      </div>
+
+      <div class="fstrip" id="r-strip" style="display:none;">
+        <div class="ficon" id="r-icon">📄</div>
+        <div class="fdet">
+          <div class="fname" id="r-name">-</div>
+          <div class="fsize" id="r-size">-</div>
+        </div>
+      </div>
+
+      <img id="r-img" class="img-preview" style="display:none;" alt="preview">
+
+      <div class="url-preview" id="r-url-preview" style="display:none;">
+        <div class="url-plabel">ENLACE RECIBIDO</div>
+        <a class="url-plink" id="r-url-link" href="#" target="_blank" rel="noopener">
+          🔗 <span id="r-url-txt">-</span>
+        </a>
+        <button class="btn btn-primary" id="r-url-btn" style="margin-top:4px;">Abrir enlace →</button>
+      </div>
+
+      <div class="prog-wrap" id="r-prog">
+        <div class="prog-bg"><div class="prog-fill" id="r-fill"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="speed-display" id="r-speed"></div>
+          <div class="prog-txt" id="r-prog-txt">Conectando...</div>
+        </div>
+      </div>
+
+      <div class="status">
+        <div class="sdot waiting" id="r-dot"></div>
+        <span id="r-status">Buscando al emisor...</span>
       </div>
     </div>
   </div>
+
+</div><!-- /page-app -->
+
+<!-- ══════════════ PAGE: ABOUT ══════════════ -->
+<div id="page-about" class="page" style="width:100%;">
+  <div style="max-width:680px;width:100%;display:flex;flex-direction:column;align-items:center;gap:0;">
+
+    <div class="about-hero">
+      <h2>Por qué <em>DropBeam</em><br>es diferente</h2>
+      <p>
+        La mayoría de servicios para compartir archivos guardan tus datos en sus servidores,
+        los analizan, y algunos los usan para entrenar modelos de IA.
+        DropBeam funciona de forma radicalmente diferente.
+      </p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-card">
+        <div class="about-card-icon">🚫</div>
+        <h3>Sin servidores propios</h3>
+        <p>Tus archivos van <strong>directamente</strong> de tu dispositivo al del receptor. Ningún servidor de DropBeam los toca, almacena ni procesa jamás.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-card-icon">🔒</div>
+        <h3>Cifrado de extremo a extremo</h3>
+        <p>WebRTC cifra cada byte con <strong>DTLS</strong> obligatoriamente. Nadie en la red puede leer lo que estás enviando, ni siquiera con acceso al servidor de señalización.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-card-icon">🤖</div>
+        <h3>No entrena ninguna IA</h3>
+        <p>No vemos tus archivos. No podríamos usarlos aunque quisiéramos. <strong>Zero datos = zero entrenamiento.</strong></p>
+      </div>
+      <div class="about-card">
+        <div class="about-card-icon">👤</div>
+        <h3>Sin cuenta, sin rastro</h3>
+        <p>No pedimos email, nombre ni nada. Cada sesión es efímera. Cuando cierras la pestaña, <strong>no queda ningún registro</strong>.</p>
+      </div>
+    </div>
+
+    <div class="about-tech">
+      <h3>¿Cómo funciona técnicamente?</h3>
+      <div class="tech-list">
+        <div class="tech-item">
+          <div class="tech-item-icon">📡</div>
+          <div class="tech-item-body">
+            <div class="tech-item-title">WebRTC P2P</div>
+            <div class="tech-item-desc">Protocolo estándar del W3C implementado en todos los navegadores modernos. Crea un canal directo cifrado entre dos dispositivos sin intermediarios para los datos.</div>
+          </div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-item-icon">🤝</div>
+          <div class="tech-item-body">
+            <div class="tech-item-title">Servidor de señalización (PeerJS)</div>
+            <div class="tech-item-desc">Necesario solo para que los dos dispositivos se "encuentren" en internet (intercambio de IPs). Dura segundos y nunca ve los archivos. Es como dar tu dirección para que alguien te mande una carta — el cartero no lee la carta.</div>
+          </div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-item-icon">🔐</div>
+          <div class="tech-item-body">
+            <div class="tech-item-title">Verificación por emojis</div>
+            <div class="tech-item-desc">El PIN de 4 emojis se deriva criptográficamente del handshake de la conexión. Si hay un atacante en medio, los emojis no coincidirán — es matemáticamente imposible falsificarlos.</div>
+          </div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-item-icon">💾</div>
+          <div class="tech-item-body">
+            <div class="tech-item-title">File System Access API</div>
+            <div class="tech-item-desc">Para archivos grandes, los datos se escriben directamente en disco en lugar de acumularse en RAM. Esto permite enviar archivos de cualquier tamaño sin limitaciones de memoria del navegador.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-no-cookies">
+      <div class="ncook-title"><span>🍪</span> Sin cookies — y no es un eslogan</div>
+      <div class="ncook-desc">
+        La mayoría de webs te piden aceptar cookies aunque no las necesiten. Nosotros no usamos cookies porque <strong>arquitectónicamente no las necesitamos</strong>. No hay sesiones que mantener, no hay usuarios que recordar, no hay analíticas que recoger.<br><br>
+        Las fuentes tipográficas se sirven desde el mismo servidor que esta página — sin peticiones a Google Fonts ni a ningún CDN externo. <strong>Cero tracking. Cero banners. Por diseño.</strong>
+      </div>
+    </div>
+
+    <div class="about-open">
+      <div class="open-icon">📖</div>
+      <div class="open-body">
+        <h3>Código abierto y auditable</h3>
+        <p>
+          Todo el código de DropBeam es público y auditable en
+          <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>.
+          No tienes que confiar en nuestra palabra — puedes verificar exactamente qué hace el código.
+          Cualquier persona técnica puede revisarlo y confirmar que no hay puertas traseras.
+        </p>
+      </div>
+    </div>
+
+    <div class="about-disclaimer">
+      <div class="disc-title">⚠️ Aviso legal y limitación de responsabilidad</div>
+      <div class="disc-body">
+        DropBeam es un servicio de infraestructura técnica para la transferencia directa de archivos entre dispositivos.<br><br>
+        <strong>No nos hacemos responsables del uso que los usuarios hagan del servicio.</strong> El usuario es el único responsable del contenido que comparte, de verificar que tiene los derechos necesarios para compartirlo y de asegurarse de que el receptor es quien dice ser.<br><br>
+        DropBeam no almacena, procesa ni tiene acceso al contenido transferido. Por tanto, no puede ser considerado responsable de infracciones de derechos de autor, distribución de contenido ilegal o cualquier otro uso indebido realizado por los usuarios a través de la plataforma.<br><br>
+        El servicio se ofrece "tal cual" sin garantías de disponibilidad continua.
+      </div>
+    </div>
+
+  </div>
+</div><!-- /page-about -->
 
 </main>
 
 <footer>
-  <div class="footer-text">
-    <span>🔒 Cifrado de extremo a extremo</span>
-    <span class="footer-sep">|</span>
-    <span>Los archivos nunca tocan ningún servidor</span>
-    <span class="footer-sep">|</span>
+  <div class="foot-txt">
+    <span>🔒 Cifrado extremo a extremo</span>
+    <span class="foot-sep">|</span>
+    <span>Sin cookies · Sin servidores · Sin rastro</span>
+    <span class="foot-sep">|</span>
     <span>P2P directo</span>
   </div>
 </footer>
 
-<!-- PeerJS desde CDN -->
+<!-- PeerJS -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-
 <script>
-// ═══════════════════════════════════════════════════
-// DROPBEAM — Lógica principal
-// ═══════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+// DROPBEAM v3 — Core Logic
+// ════════════════════════════════════════════════════════
 
-const EMOJI_SET = ['🦊','🌮','⚡','🎸','🐬','🌵','🔥','🎯','🦋','🌊',
-                   '🍕','🎪','🦄','🌈','🎭','🚀','🐙','🍄','🎲','🦁'];
+// ── Emojis pool ──
+const POOL = ['🦊','🐬','🌮','⚡','🎸','🌵','🔥','🎯','🦋','🌊',
+              '🍕','🎪','🦄','🌈','🎭','🚀','🐙','🍄','🎲','🦁',
+              '🐧','🦀','🌺','🍦','🎵','🏔️','🦜','🍋','🎨','🐊'];
 
-let peer = null;
-let conn = null;
-let selectedFile = null;
-let receivedChunks = [];
-let receivedSize = 0;
-let fileMetadata = null;
-let isReceiver = false;
-let pendingConn = null;
-let connectionVerified = false;
+// ── State ──
+let peer=null, conn=null;
+let selectedFile=null, sharedUrl=null;
+let correctPin=[], slotValues=[null,null,null,null];
+let dragSrc=null;
+let receivedChunks=[], receivedSize=0, fileMeta=null;
+let fileWriter=null; // File System Access API
+let isReceiver=false;
 
-// ── Detectar si somos receptor (hay ?id= en la URL) ──
-const urlParams = new URLSearchParams(window.location.search);
-const receiverPeerId = urlParams.get('id');
+// Speed tracking
+let lastBytes=0, lastTime=0, speedInterval=null;
+
+// ── Init ──
+const params = new URLSearchParams(location.search);
+const receiverPeerId = params.get('id');
+
+detectBrave();
 
 if (receiverPeerId) {
   isReceiver = true;
-  showScreen('receiver');
+  // Hide nav tabs
+  document.querySelector('.nav-links').style.display = 'none';
+  showScreen('s-receiver');
   initReceiver(receiverPeerId);
 } else {
-  initSender();
+  // Pre-init peer for speed
+  preinitPeer();
+  initSenderUI();
 }
 
-// ── Generar PIN de emojis a partir de un string ──
-function generatePin(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
+// ════════════════════════════════════════
+// BRAVE
+// ════════════════════════════════════════
+async function detectBrave() {
+  try {
+    const isBrave = navigator.brave
+      ? await navigator.brave.isBrave().catch(()=>false)
+      : navigator.userAgent.includes('Brave');
+    if (isBrave) document.getElementById('brave-warn').classList.add('show');
+  } catch(e){}
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>{
+    if(l.textContent.trim()===(name==='app'?'Compartir':'Acerca de'))
+      l.classList.add('active');
+  });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',(tab==='file'&&i===0)||(tab==='url'&&i===1));
+  });
+  document.getElementById('tab-file').style.display = tab==='file'?'block':'none';
+  document.getElementById('tab-url').style.display = tab==='url'?'block':'none';
+}
+
+// ════════════════════════════════════════
+// PRE-INIT PEER (velocidad percibida)
+// ════════════════════════════════════════
+let prePeer=null, prePeerId=null;
+function preinitPeer() {
+  try {
+    prePeer = new Peer({
+      config:{ iceServers:[
+        {urls:'stun:stun.l.google.com:19302'},
+        {urls:'stun:stun1.l.google.com:19302'},
+      ]}
+    });
+    prePeer.on('open', id=>{ prePeerId=id; });
+    prePeer.on('error', ()=>{ prePeer=null; prePeerId=null; });
+  } catch(e){}
+}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function fmtSize(b) {
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
+  return (b/1073741824).toFixed(2)+' GB';
+}
+
+function fmtSpeed(bps) {
+  if(bps<1024) return bps.toFixed(0)+' B/s';
+  if(bps<1048576) return (bps/1024).toFixed(0)+' KB/s';
+  return (bps/1048576).toFixed(1)+' MB/s';
+}
+
+function fileIcon(name) {
+  if(!name) return '🔗';
+  const e=name.split('.').pop().toLowerCase();
+  return ({
+    jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',
+    mp4:'🎬',mov:'🎬',avi:'🎬',mkv:'🎬',webm:'🎬',
+    mp3:'🎵',wav:'🎵',flac:'🎵',aac:'🎵',ogg:'🎵',
+    pdf:'📕',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',
+    zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',
+    js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',
+    txt:'📄',md:'📄',json:'📋',
+  }[e])||'📦';
+}
+
+function isImage(name) {
+  const e=name?.split('.').pop().toLowerCase();
+  return ['jpg','jpeg','png','gif','webp','svg','heic','avif'].includes(e);
+}
+
+function generatePin(id) {
+  let h=0;
+  for(let i=0;i<id.length;i++) h=Math.imul(31,h)+id.charCodeAt(i)|0;
+  const out=[]; let s=Math.abs(h);
+  while(out.length<4){
+    const idx=s%POOL.length;
+    if(!out.includes(POOL[idx])) out.push(POOL[idx]);
+    s=(s*1103515245+12345)&0x7fffffff;
   }
-  const emojis = [];
-  let seed = Math.abs(hash);
-  for (let i = 0; i < 4; i++) {
-    emojis.push(EMOJI_SET[seed % EMOJI_SET.length]);
-    seed = Math.floor(seed / EMOJI_SET.length) + (i * 7919);
-  }
-  return emojis.join(' ');
+  return out;
 }
 
-// ── Formatear tamaño ──
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-}
+// ════════════════════════════════════════
+// QR GENERATOR (inline canvas)
+// ════════════════════════════════════════
+function drawQR(url, canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const loading = document.getElementById('qr-loading');
+  const SIZE = 200;
 
-// ── Icono por tipo de archivo ──
-function getFileIcon(name) {
-  const ext = name.split('.').pop().toLowerCase();
-  const icons = {
-    jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️',
-    mp4: '🎬', mov: '🎬', avi: '🎬', mkv: '🎬', webm: '🎬',
-    mp3: '🎵', wav: '🎵', flac: '🎵', aac: '🎵',
-    pdf: '📕', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📋', pptx: '📋',
-    zip: '🗜️', rar: '🗜️', '7z': '🗜️', tar: '🗜️',
-    js: '⚙️', ts: '⚙️', py: '🐍', html: '🌐', css: '🎨',
-    txt: '📄', md: '📄',
+  // Use QR API image — works when deployed to HTTPS
+  const img = new Image();
+  img.crossOrigin='anonymous';
+  img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${SIZE}x${SIZE}&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=2`;
+
+  img.onload=()=>{
+    canvas.width=SIZE; canvas.height=SIZE;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,SIZE,SIZE);
+    ctx.drawImage(img,0,0,SIZE,SIZE);
+    loading.style.display='none';
+    canvas.style.display='block';
   };
-  return icons[ext] || '📦';
-}
 
-// ── Mostrar pantalla ──
-function showScreen(name) {
-  const screens = ['screen-drop', 'screen-qr', 'screen-done', 'screen-receiver', 'screen-verify'];
-  screens.forEach(id => {
-    const el = document.getElementById(id);
-    el.style.display = 'none';
-    el.classList.remove('fade-in');
-  });
-  const target = document.getElementById('screen-' + name);
-  target.style.display = 'flex';
-  setTimeout(() => target.classList.add('fade-in'), 10);
+  img.onerror=()=>{
+    // Fallback: show URL text in canvas
+    canvas.width=SIZE; canvas.height=SIZE;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,SIZE,SIZE);
+    ctx.fillStyle='#000'; ctx.font='12px monospace';
+    ctx.textAlign='center';
+    const words=url.split('?id=');
+    ctx.fillText('Abre esta URL:', SIZE/2, SIZE/2-20);
+    ctx.font='10px monospace';
+    ctx.fillText(words[0], SIZE/2, SIZE/2);
+    ctx.fillStyle='#7c3aed';
+    ctx.fillText('?id='+words[1], SIZE/2, SIZE/2+16);
+    loading.style.display='none';
+    canvas.style.display='block';
+  };
 }
 
 // ════════════════════════════════════════
-// EMISOR
+// SENDER UI
 // ════════════════════════════════════════
-
-function initSender() {
-  const dropZone = document.getElementById('drop-zone');
-  const fileInput = document.getElementById('file-input');
-
-  dropZone.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
-
-  dropZone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropZone.classList.add('drag-over');
-  });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+function initSenderUI() {
+  const dz=document.getElementById('drop-zone');
+  const fi=document.getElementById('file-input');
+  dz.addEventListener('click',()=>fi.click());
+  fi.addEventListener('change',e=>{if(e.target.files[0]) startWithFile(e.target.files[0]);});
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('over');
+    if(e.dataTransfer.files[0]) startWithFile(e.dataTransfer.files[0]);
   });
 }
 
-function handleFile(file) {
-  if (!file) return;
-  selectedFile = file;
+function handleUrl() {
+  const val=document.getElementById('url-input').value.trim();
+  if(!val||!val.startsWith('http')) {
+    document.getElementById('url-input').style.outline='2px solid var(--red)';
+    return;
+  }
+  sharedUrl=val; selectedFile=null;
+  setupSenderQR('url','🔗',val,'Enlace compartido');
+}
 
-  // UI
-  document.getElementById('file-name-display').textContent = file.name;
-  document.getElementById('file-size-display').textContent = formatSize(file.size);
-  document.getElementById('file-icon').textContent = getFileIcon(file.name);
-  showScreen('qr');
+function startWithFile(file) {
+  selectedFile=file; sharedUrl=null;
+  setupSenderQR(
+    isImage(file.name)?'image':'file',
+    fileIcon(file.name),
+    file.name,
+    fmtSize(file.size)
+  );
+}
 
-  // Crear peer con ID aleatorio
-  peer = new Peer({
-    config: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
+function setupSenderQR(type, icon, label, sub) {
+  document.getElementById('s-icon').textContent=icon;
+  document.getElementById('s-name').textContent=label;
+  document.getElementById('s-size').textContent=sub;
+  showScreen('s-qr');
+  setSenderStatus('waiting','Inicializando conexión segura...');
+
+  // Reuse pre-initialized peer if available
+  if (prePeer && prePeerId) {
+    peer=prePeer; prePeer=null;
+    const id=prePeerId; prePeerId=null;
+    onPeerOpen(id);
+    peer.on('connection', onIncoming);
+    peer.on('error', e=>setSenderStatus('waiting','Error: '+e.type));
+  } else {
+    peer=new Peer({config:{iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'},
+    ]}});
+    peer.on('open', onPeerOpen);
+    peer.on('connection', onIncoming);
+    peer.on('error', e=>setSenderStatus('waiting','Error: '+e.type));
+  }
+}
+
+function onPeerOpen(id) {
+  const url=`${location.origin}${location.pathname}?id=${id}`;
+  drawQR(url,'qr-canvas');
+  correctPin=generatePin(id);
+  document.getElementById('sender-pin').innerHTML=
+    correctPin.map(e=>`<span class="pin-emoji">${e}</span>`).join('');
+  setSenderStatus('waiting','Esperando que alguien escanee...');
+  document.getElementById('s-dot').className='sdot waiting';
+}
+
+function onIncoming(incoming) {
+  if(conn){incoming.close();return;}
+  conn=incoming;
+  incoming.on('open',()=>{
+    setSenderStatus('connected','¡Receptor conectado! Verificando...');
+    document.getElementById('s-dot').className='sdot connected';
+  });
+  incoming.on('data',data=>{
+    if(data.type==='pin-ok'){
+      setSenderStatus('sending','✓ Verificado · Enviando...');
+      document.getElementById('s-dot').className='sdot sending';
+      document.getElementById('s-prog').style.display='flex';
+      startSending();
+    } else if(data.type==='pin-fail'){
+      setSenderStatus('waiting','⚠️ PIN incorrecto. Esperando nuevo intento...');
+      document.getElementById('s-dot').className='sdot waiting';
+      conn=null;
     }
   });
-
-  peer.on('open', id => {
-    // Generar QR con la URL completa
-    const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
-    
-    document.getElementById('qr-container').innerHTML = '';
-    new QRCode(document.getElementById('qr-container'), {
-      text: url,
-      width: 200,
-      height: 200,
-      colorDark: '#000000',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-
-    // Mostrar PIN inicial (basado en el ID del peer)
-    const pin = generatePin(id);
-    document.getElementById('pin-emojis').textContent = pin;
-  });
-
-  peer.on('connection', incomingConn => {
-    // Solo aceptar una conexión
-    if (conn) {
-      incomingConn.close();
-      return;
-    }
-
-    pendingConn = incomingConn;
-
-    incomingConn.on('open', () => {
-      // Recibir el PIN del receptor para verificar
-      incomingConn.on('data', data => {
-        if (data.type === 'pin-verify') {
-          // El receptor nos manda su versión del PIN para que lo verifiquemos visualmente
-          // En esta implementación el emisor ya muestra el pin derivado del peer ID
-          // La verificación es que ambos vean el mismo valor
-          updateSenderStatus('connected', '¡Receptor conectado! Verifica los emojis');
-          document.getElementById('status-dot').className = 'status-dot connected';
-          conn = incomingConn;
-          
-          // Esperar confirmación del receptor
-          incomingConn.on('data', data2 => {
-            if (data2.type === 'accepted') {
-              startSending();
-            } else if (data2.type === 'rejected') {
-              updateSenderStatus('waiting', 'Conexión rechazada. Esperando...');
-              document.getElementById('status-dot').className = 'status-dot waiting';
-              conn = null;
-            }
-          });
-        }
-      });
-    });
-  });
-
-  peer.on('error', err => {
-    console.error('Peer error:', err);
-    updateSenderStatus('waiting', 'Error de conexión. Intenta de nuevo.');
-  });
 }
 
-function updateSenderStatus(state, text) {
-  document.getElementById('status-text').textContent = text;
+function setSenderStatus(state, txt) {
+  document.getElementById('s-status').textContent=txt;
 }
 
+// ════════════════════════════════════════
+// SEND — adaptive chunks + speed
+// ════════════════════════════════════════
 function startSending() {
-  if (!conn || !selectedFile) return;
+  if(sharedUrl) {
+    conn.send({type:'url', url:sharedUrl});
+    setTimeout(()=>showScreen('s-done'), 400);
+    return;
+  }
 
-  updateSenderStatus('sending', 'Enviando archivo...');
-  document.getElementById('status-dot').className = 'status-dot sending';
-  document.getElementById('progress-wrap').style.display = 'flex';
-
-  // Enviar metadatos primero
   conn.send({
-    type: 'metadata',
-    name: selectedFile.name,
-    size: selectedFile.size,
-    fileType: selectedFile.type
+    type:'metadata',
+    name:selectedFile.name,
+    size:selectedFile.size,
+    mime:selectedFile.type,
+    isImage:isImage(selectedFile.name)
   });
 
-  // Enviar archivo en chunks
-  const CHUNK_SIZE = 64 * 1024; // 64KB por chunk
-  const reader = new FileReader();
-  let offset = 0;
+  let offset=0;
+  let chunkSize=64*1024; // start 64KB
+  let lastMeasure=Date.now(), bytesSinceMeasure=0;
+  const reader=new FileReader();
 
-  function sendNextChunk() {
-    if (offset >= selectedFile.size) {
-      conn.send({ type: 'done' });
-      showScreen('done');
+  function nextChunk(){
+    if(offset>=selectedFile.size){
+      conn.send({type:'done'});
+      clearInterval(speedInterval);
+      showScreen('s-done');
       return;
     }
-
-    const slice = selectedFile.slice(offset, offset + CHUNK_SIZE);
-    reader.readAsArrayBuffer(slice);
+    reader.readAsArrayBuffer(selectedFile.slice(offset, offset+chunkSize));
   }
 
-  reader.onload = e => {
-    conn.send({ type: 'chunk', data: e.target.result });
-    offset += e.target.result.byteLength;
-    
-    const pct = Math.round((offset / selectedFile.size) * 100);
-    document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('progress-text').textContent = 
-      `${formatSize(offset)} de ${formatSize(selectedFile.size)} · ${pct}%`;
-    
-    // Pequeño delay para no saturar el canal
-    setTimeout(sendNextChunk, 0);
+  reader.onload=e=>{
+    const buf=e.target.result;
+    conn.send({type:'chunk', data:buf});
+    offset+=buf.byteLength;
+    bytesSinceMeasure+=buf.byteLength;
+
+    // Adaptive chunk size based on speed
+    const now=Date.now();
+    const elapsed=(now-lastMeasure)/1000;
+    if(elapsed>=0.5){
+      const bps=bytesSinceMeasure/elapsed;
+      // Scale chunk: fast connection → bigger chunks
+      if(bps>2*1024*1024) chunkSize=256*1024;       // >2MB/s → 256KB chunks
+      else if(bps>512*1024) chunkSize=128*1024;       // >512KB/s → 128KB
+      else chunkSize=64*1024;                          // default 64KB
+      document.getElementById('s-speed').textContent=fmtSpeed(bps);
+      bytesSinceMeasure=0; lastMeasure=now;
+    }
+
+    const pct=Math.round(offset/selectedFile.size*100);
+    document.getElementById('s-fill').style.width=pct+'%';
+    document.getElementById('s-prog-txt').textContent=
+      `${fmtSize(offset)} / ${fmtSize(selectedFile.size)} · ${pct}%`;
+
+    setTimeout(nextChunk,0);
   };
 
-  sendNextChunk();
+  nextChunk();
 }
 
 // ════════════════════════════════════════
-// RECEPTOR
+// RECEIVER
 // ════════════════════════════════════════
+function initReceiver(senderId) {
+  peer=new Peer({config:{iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+  ]}});
 
-function initReceiver(senderPeerId) {
-  peer = new Peer({
-    config: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
+  peer.on('open',()=>{
+    conn=peer.connect(senderId,{reliable:true});
+
+    conn.on('open',()=>{
+      correctPin=generatePin(senderId);
+      buildDragPin(correctPin);
+      showScreen('s-verify');
+    });
+
+    conn.on('data', handleReceiverData);
+    conn.on('error',()=>{
+      document.getElementById('r-status').textContent='Error de conexión';
+    });
+  });
+
+  peer.on('error',()=>{
+    document.getElementById('r-status').textContent='No se pudo conectar. El QR puede haber expirado.';
+  });
+}
+
+let receiverBytesSince=0, receiverLastTime=Date.now();
+
+async function handleReceiverData(data) {
+  if(data.type==='metadata'){
+    fileMeta=data; receivedChunks=[]; receivedSize=0;
+    receiverBytesSince=0; receiverLastTime=Date.now();
+    showScreen('s-receiver');
+
+    document.getElementById('r-icon').textContent=fileIcon(data.name);
+    document.getElementById('r-name').textContent=data.name;
+    document.getElementById('r-size').textContent=fmtSize(data.size);
+    document.getElementById('r-strip').style.display='flex';
+    document.getElementById('r-title').textContent='Recibiendo...';
+    document.getElementById('r-sub').textContent='Conexión P2P cifrada activa';
+    document.getElementById('r-dot').className='sdot sending';
+    document.getElementById('r-status').textContent='Recibiendo archivo...';
+
+    // Try File System Access API for large files (Chrome/Edge)
+    if(data.size > 50*1024*1024 && 'showSaveFilePicker' in window){
+      try {
+        const fh=await window.showSaveFilePicker({suggestedName:data.name});
+        fileWriter=await fh.createWritable();
+      } catch(e){ fileWriter=null; }
     }
-  });
 
-  peer.on('open', myId => {
-    // Conectar al emisor
-    conn = peer.connect(senderPeerId, { reliable: true });
+  } else if(data.type==='chunk'){
+    const buf=data.data;
 
-    conn.on('open', () => {
-      // Generar PIN compartido (basado en el ID del emisor, que ambos conocen)
-      const pin = generatePin(senderPeerId);
-      
-      // Enviar nuestro PIN al emisor para verificación cruzada
-      conn.send({ type: 'pin-verify', pin: pin });
+    if(fileWriter){
+      await fileWriter.write(buf);
+    } else {
+      receivedChunks.push(buf);
+    }
 
-      // Mostrar pantalla de verificación
-      document.getElementById('verify-emojis').textContent = pin;
-      showScreen('verify');
-    });
+    receivedSize+=buf.byteLength;
+    receiverBytesSince+=buf.byteLength;
 
-    conn.on('data', data => {
-      if (data.type === 'metadata') {
-        fileMetadata = data;
-        receivedChunks = [];
-        receivedSize = 0;
-        
-        document.getElementById('receiver-file-icon').textContent = getFileIcon(data.name);
-        document.getElementById('receiver-file-name').textContent = data.name;
-        document.getElementById('receiver-file-size').textContent = formatSize(data.size);
-        document.getElementById('receiver-file-info').style.display = 'flex';
-        
-        showScreen('receiver');
-        document.getElementById('receiver-status-text').textContent = 'Recibiendo archivo...';
-        document.getElementById('receiver-status-dot').className = 'status-dot sending';
-        document.getElementById('receiver-progress-wrap').style.display = 'flex';
+    const now=Date.now();
+    const elapsed=(now-receiverLastTime)/1000;
+    if(elapsed>=0.5){
+      const bps=receiverBytesSince/elapsed;
+      document.getElementById('r-speed').textContent=fmtSpeed(bps);
+      receiverBytesSince=0; receiverLastTime=now;
+    }
 
-      } else if (data.type === 'chunk') {
-        receivedChunks.push(data.data);
-        receivedSize += data.data.byteLength;
-        
-        if (fileMetadata) {
-          const pct = Math.round((receivedSize / fileMetadata.size) * 100);
-          document.getElementById('receiver-progress-fill').style.width = pct + '%';
-          document.getElementById('receiver-progress-text').textContent = 
-            `${formatSize(receivedSize)} de ${formatSize(fileMetadata.size)} · ${pct}%`;
-        }
+    if(fileMeta){
+      const pct=Math.round(receivedSize/fileMeta.size*100);
+      document.getElementById('r-fill').style.width=pct+'%';
+      document.getElementById('r-prog-txt').textContent=
+        `${fmtSize(receivedSize)} / ${fmtSize(fileMeta.size)} · ${pct}%`;
+    }
 
-      } else if (data.type === 'done') {
-        // Ensamblar y descargar el archivo
-        const blob = new Blob(receivedChunks, { type: fileMetadata?.fileType || 'application/octet-stream' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileMetadata?.name || 'archivo';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+  } else if(data.type==='done'){
+    if(fileWriter){
+      await fileWriter.close();
+      fileWriter=null;
+      document.getElementById('r-title').textContent='¡Archivo guardado!';
+      document.getElementById('r-dot').className='sdot done';
+      document.getElementById('r-status').textContent='Guardado directamente en disco ✓';
+      document.getElementById('r-prog-txt').textContent='✓ Completado';
+      document.getElementById('r-fill').style.width='100%';
+    } else {
+      assembleAndDeliver();
+    }
 
-        // Mostrar éxito en el receptor
-        showScreen('receiver');
-        document.getElementById('receiver-status-dot').className = 'status-dot connected';
-        document.getElementById('receiver-status-text').textContent = '¡Archivo recibido!';
-        document.getElementById('receiver-progress-fill').style.width = '100%';
-        document.getElementById('receiver-progress-text').textContent = '✓ Completado';
-      }
-    });
+  } else if(data.type==='url'){
+    showScreen('s-receiver');
+    document.getElementById('r-title').textContent='¡Enlace recibido!';
+    document.getElementById('r-sub').textContent='Toca para abrirlo';
+    document.getElementById('r-dot').className='sdot done';
+    document.getElementById('r-status').textContent='Recibido ✓';
+    document.getElementById('r-prog').style.display='none';
 
-    conn.on('error', err => {
-      console.error('Connection error:', err);
-      document.getElementById('receiver-status-text').textContent = 'Error de conexión';
-    });
-  });
-
-  peer.on('error', err => {
-    console.error('Peer error:', err);
-    document.getElementById('receiver-status-text').textContent = 
-      'No se pudo conectar. El QR puede haber expirado.';
-  });
-}
-
-function acceptConnection() {
-  if (conn) {
-    conn.send({ type: 'accepted' });
-    showScreen('receiver');
-    document.getElementById('receiver-file-info').style.display = 'none';
-    document.getElementById('receiver-status-text').textContent = 'Esperando el archivo...';
-    document.getElementById('receiver-status-dot').className = 'status-dot connected';
+    const preview=document.getElementById('r-url-preview');
+    preview.style.display='flex';
+    document.getElementById('r-url-txt').textContent=data.url;
+    document.getElementById('r-url-link').href=data.url;
+    document.getElementById('r-url-btn').onclick=()=>window.open(data.url,'_blank','noopener');
   }
 }
 
-function rejectConnection() {
-  if (conn) {
-    conn.send({ type: 'rejected' });
-    conn.close();
+function assembleAndDeliver(){
+  const blob=new Blob(receivedChunks,{type:fileMeta?.mime||'application/octet-stream'});
+
+  if(fileMeta?.isImage){
+    const url=URL.createObjectURL(blob);
+    const img=document.getElementById('r-img');
+    img.src=url; img.style.display='block';
+    document.getElementById('r-title').textContent='¡Imagen recibida!';
+    document.getElementById('r-sub').textContent='Mantén pulsado para guardar';
+  } else {
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fileMeta?.name||'archivo';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    document.getElementById('r-title').textContent='¡Archivo recibido!';
+    document.getElementById('r-sub').textContent='Descarga iniciada ✓';
   }
-  document.getElementById('receiver-status-text').textContent = 'Conexión cancelada';
-  showScreen('receiver');
+
+  document.getElementById('r-dot').className='sdot done';
+  document.getElementById('r-status').textContent='Transferencia completa ✓';
+  document.getElementById('r-prog-txt').textContent='✓ Completado';
+  document.getElementById('r-fill').style.width='100%';
+  document.getElementById('r-speed').textContent='';
 }
 
-// ── Reset ──
-function resetApp() {
-  if (peer) { peer.destroy(); peer = null; }
-  conn = null;
-  selectedFile = null;
-  receivedChunks = [];
-  receivedSize = 0;
-  fileMetadata = null;
-  document.getElementById('qr-container').innerHTML = '';
-  document.getElementById('progress-fill').style.width = '0%';
-  document.getElementById('progress-wrap').style.display = 'none';
-  document.getElementById('file-input').value = '';
-  showScreen('drop');
-  // Limpiar URL
-  window.history.replaceState({}, '', window.location.pathname);
+// ════════════════════════════════════════
+// DRAG & DROP PIN
+// ════════════════════════════════════════
+function buildDragPin(pin){
+  const decoys=POOL.filter(e=>!pin.includes(e)).slice(0,2);
+  const all=[...pin,...decoys].sort(()=>Math.random()-.5);
+
+  // Slots
+  const slotsEl=document.getElementById('drop-slots');
+  slotsEl.innerHTML='';
+  slotValues=[null,null,null,null];
+
+  for(let i=0;i<4;i++){
+    const s=document.createElement('div');
+    s.className='drop-slot'; s.dataset.idx=i;
+    const num=document.createElement('span');
+    num.className='snum'; num.textContent=i+1;
+    s.appendChild(num);
+
+    s.addEventListener('dragover',e=>{e.preventDefault();s.classList.add('drag-target');});
+    s.addEventListener('dragleave',()=>s.classList.remove('drag-target'));
+    s.addEventListener('drop',e=>{
+      e.preventDefault();s.classList.remove('drag-target');
+      if(dragSrc!==null) placeEmoji(i,s,dragSrc);
+      dragSrc=null;
+    });
+    s.addEventListener('click',()=>{
+      if(slotValues[i]!==null) removeFromSlot(i,s);
+    });
+    slotsEl.appendChild(s);
+  }
+
+  // Source emojis
+  const srcEl=document.getElementById('emoji-source');
+  srcEl.innerHTML='';
+  all.forEach(emoji=>{
+    const el=document.createElement('div');
+    el.className='edrag'; el.textContent=emoji; el.dataset.emoji=emoji;
+    el.draggable=true;
+
+    el.addEventListener('dragstart',e=>{
+      dragSrc=emoji; el.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+    el.addEventListener('click',()=>{
+      if(el.classList.contains('used')) return;
+      const idx=slotValues.indexOf(null);
+      if(idx===-1) return;
+      placeEmoji(idx, slotsEl.children[idx], emoji);
+    });
+    srcEl.appendChild(el);
+  });
+}
+
+function placeEmoji(idx, slotEl, emoji){
+  // Remove from old slot if dragging same emoji
+  if(slotValues[idx]!==null){
+    const old=document.querySelector(`.edrag[data-emoji="${slotValues[idx]}"]`);
+    if(old) old.classList.remove('used');
+  }
+  slotValues[idx]=emoji;
+  slotEl.textContent=emoji;
+  const num=document.createElement('span');
+  num.className='snum'; num.textContent=parseInt(slotEl.dataset.idx)+1;
+  slotEl.appendChild(num);
+  slotEl.classList.add('filled'); slotEl.classList.remove('wrong');
+
+  const src=document.querySelector(`.edrag[data-emoji="${emoji}"]`);
+  if(src) src.classList.add('used');
+  clearVmsg(); updateVerifyBtn();
+}
+
+function removeFromSlot(idx, slotEl){
+  const emoji=slotValues[idx];
+  const src=document.querySelector(`.edrag[data-emoji="${emoji}"]`);
+  if(src) src.classList.remove('used');
+  slotValues[idx]=null;
+  slotEl.textContent='';
+  const num=document.createElement('span');
+  num.className='snum'; num.textContent=idx+1;
+  slotEl.appendChild(num);
+  slotEl.classList.remove('filled','wrong');
+  clearVmsg(); updateVerifyBtn();
+}
+
+function clearSlots(){
+  slotValues=[null,null,null,null];
+  document.querySelectorAll('.drop-slot').forEach((s,i)=>{
+    s.textContent='';
+    const n=document.createElement('span');
+    n.className='snum'; n.textContent=i+1;
+    s.appendChild(n);
+    s.classList.remove('filled','wrong');
+  });
+  document.querySelectorAll('.edrag').forEach(e=>e.classList.remove('used'));
+  clearVmsg(); updateVerifyBtn();
+}
+
+function updateVerifyBtn(){
+  const full=slotValues.every(v=>v!==null);
+  document.getElementById('btn-verify').classList.toggle('ready',full);
+}
+
+function clearVmsg(){
+  const m=document.getElementById('vmsg');
+  m.textContent=''; m.className='vmsg';
+}
+
+function checkPin(){
+  const ok=slotValues.every((v,i)=>v===correctPin[i]);
+  const m=document.getElementById('vmsg');
+  if(ok){
+    m.className='vmsg ok'; m.textContent='✓ Orden correcto — Conexión verificada';
+    if(conn) conn.send({type:'pin-ok'});
+    setTimeout(()=>{
+      showScreen('s-receiver');
+      document.getElementById('r-status').textContent='Esperando el archivo...';
+    },700);
+  } else {
+    m.className='vmsg err'; m.textContent='✗ Orden incorrecto — Inténtalo de nuevo';
+    document.querySelectorAll('.drop-slot.filled').forEach(s=>s.classList.add('wrong'));
+    if(conn) conn.send({type:'pin-fail'});
+    setTimeout(clearSlots,1100);
+  }
+}
+
+// ════════════════════════════════════════
+// RESET
+// ════════════════════════════════════════
+function resetApp(){
+  if(peer){peer.destroy();peer=null;}
+  conn=null; selectedFile=null; sharedUrl=null;
+  receivedChunks=[]; receivedSize=0; fileMeta=null; fileWriter=null;
+  slotValues=[null,null,null,null];
+  document.getElementById('file-input').value='';
+  document.getElementById('url-input').value='';
+  document.getElementById('qr-canvas').style.display='none';
+  document.getElementById('qr-loading').style.display='flex';
+  document.getElementById('s-prog').style.display='none';
+  document.getElementById('s-fill').style.width='0%';
+  document.getElementById('sender-pin').innerHTML='<span class="pin-emoji">⏳</span>';
+  history.replaceState({},'',location.pathname);
+  showScreen('s-drop');
+  // Pre-init again for next transfer
+  preinitPeer();
 }
 </script>
 </body>
