@@ -953,25 +953,35 @@ footer{
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 // ════════════════════════════════════════════════════════
-// DROPBEAM v3 — Core Logic
+// DROPBEAM v3.1 — Core Logic (robust connection)
 // ════════════════════════════════════════════════════════
 
-// ── Emojis pool ──
 const POOL = ['🦊','🐬','🌮','⚡','🎸','🌵','🔥','🎯','🦋','🌊',
               '🍕','🎪','🦄','🌈','🎭','🚀','🐙','🍄','🎲','🦁',
               '🐧','🦀','🌺','🍦','🎵','🏔️','🦜','🍋','🎨','🐊'];
 
-// ── State ──
+// ICE servers — múltiples para máxima compatibilidad móvil
+const ICE = {
+  iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    {urls:'stun:stun2.l.google.com:19302'},
+    {urls:'stun:stun3.l.google.com:19302'},
+    {urls:'stun:stun4.l.google.com:19302'},
+    {urls:'stun:stun.cloudflare.com:3478'},
+  ]
+};
+
+// State
 let peer=null, conn=null;
 let selectedFile=null, sharedUrl=null;
 let correctPin=[], slotValues=[null,null,null,null];
 let dragSrc=null;
 let receivedChunks=[], receivedSize=0, fileMeta=null;
-let fileWriter=null; // File System Access API
+let fileWriter=null;
 let isReceiver=false;
-
-// Speed tracking
-let lastBytes=0, lastTime=0, speedInterval=null;
+let receiverBytesSince=0, receiverLastTime=0;
+let senderBytesSince=0, senderLastTime=0;
 
 // ── Init ──
 const params = new URLSearchParams(location.search);
@@ -981,25 +991,22 @@ detectBrave();
 
 if (receiverPeerId) {
   isReceiver = true;
-  // Hide nav tabs
-  document.querySelector('.nav-links').style.display = 'none';
+  document.querySelector('.nav-links').style.display='none';
   showScreen('s-receiver');
   initReceiver(receiverPeerId);
 } else {
-  // Pre-init peer for speed
-  preinitPeer();
   initSenderUI();
 }
 
 // ════════════════════════════════════════
-// BRAVE
+// BRAVE DETECTION
 // ════════════════════════════════════════
 async function detectBrave() {
   try {
-    const isBrave = navigator.brave
+    const b = navigator.brave
       ? await navigator.brave.isBrave().catch(()=>false)
-      : navigator.userAgent.includes('Brave');
-    if (isBrave) document.getElementById('brave-warn').classList.add('show');
+      : /Brave/.test(navigator.userAgent);
+    if(b) document.getElementById('brave-warn').classList.add('show');
   } catch(e){}
 }
 
@@ -1025,62 +1032,38 @@ function switchTab(tab) {
   document.querySelectorAll('.tab').forEach((t,i)=>{
     t.classList.toggle('active',(tab==='file'&&i===0)||(tab==='url'&&i===1));
   });
-  document.getElementById('tab-file').style.display = tab==='file'?'block':'none';
-  document.getElementById('tab-url').style.display = tab==='url'?'block':'none';
-}
-
-// ════════════════════════════════════════
-// PRE-INIT PEER (velocidad percibida)
-// ════════════════════════════════════════
-let prePeer=null, prePeerId=null;
-function preinitPeer() {
-  try {
-    prePeer = new Peer({
-      config:{ iceServers:[
-        {urls:'stun:stun.l.google.com:19302'},
-        {urls:'stun:stun1.l.google.com:19302'},
-      ]}
-    });
-    prePeer.on('open', id=>{ prePeerId=id; });
-    prePeer.on('error', ()=>{ prePeer=null; prePeerId=null; });
-  } catch(e){}
+  document.getElementById('tab-file').style.display=tab==='file'?'block':'none';
+  document.getElementById('tab-url').style.display=tab==='url'?'block':'none';
 }
 
 // ════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════
 function fmtSize(b) {
-  if(b<1024) return b+' B';
+  if(!b||b<1024) return (b||0)+' B';
   if(b<1048576) return (b/1024).toFixed(1)+' KB';
   if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
   return (b/1073741824).toFixed(2)+' GB';
 }
-
 function fmtSpeed(bps) {
-  if(bps<1024) return bps.toFixed(0)+' B/s';
+  if(bps<1024) return '<1 KB/s';
   if(bps<1048576) return (bps/1024).toFixed(0)+' KB/s';
   return (bps/1048576).toFixed(1)+' MB/s';
 }
-
-function fileIcon(name) {
-  if(!name) return '🔗';
-  const e=name.split('.').pop().toLowerCase();
-  return ({
-    jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',
+function fileIcon(n) {
+  if(!n) return '🔗';
+  const e=n.split('.').pop().toLowerCase();
+  return {jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',
     mp4:'🎬',mov:'🎬',avi:'🎬',mkv:'🎬',webm:'🎬',
     mp3:'🎵',wav:'🎵',flac:'🎵',aac:'🎵',ogg:'🎵',
     pdf:'📕',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',
     zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',
-    js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',
-    txt:'📄',md:'📄',json:'📋',
-  }[e])||'📦';
+    js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',txt:'📄',md:'📄',json:'📋'}[e]||'📦';
 }
-
-function isImage(name) {
-  const e=name?.split('.').pop().toLowerCase();
-  return ['jpg','jpeg','png','gif','webp','svg','heic','avif'].includes(e);
+function isImage(n) {
+  return ['jpg','jpeg','png','gif','webp','svg','heic','avif']
+    .includes(n?.split('.').pop().toLowerCase());
 }
-
 function generatePin(id) {
   let h=0;
   for(let i=0;i<id.length;i++) h=Math.imul(31,h)+id.charCodeAt(i)|0;
@@ -1094,43 +1077,63 @@ function generatePin(id) {
 }
 
 // ════════════════════════════════════════
-// QR GENERATOR (inline canvas)
+// QR
 // ════════════════════════════════════════
-function drawQR(url, canvasId) {
-  const canvas = document.getElementById(canvasId);
-  const loading = document.getElementById('qr-loading');
-  const SIZE = 200;
-
-  // Use QR API image — works when deployed to HTTPS
-  const img = new Image();
+function drawQR(url) {
+  const canvas=document.getElementById('qr-canvas');
+  const loading=document.getElementById('qr-loading');
+  const SIZE=200;
+  const img=new Image();
   img.crossOrigin='anonymous';
   img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${SIZE}x${SIZE}&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=2`;
-
   img.onload=()=>{
     canvas.width=SIZE; canvas.height=SIZE;
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,SIZE,SIZE);
-    ctx.drawImage(img,0,0,SIZE,SIZE);
+    canvas.getContext('2d').drawImage(img,0,0,SIZE,SIZE);
     loading.style.display='none';
     canvas.style.display='block';
   };
-
   img.onerror=()=>{
-    // Fallback: show URL text in canvas
     canvas.width=SIZE; canvas.height=SIZE;
     const ctx=canvas.getContext('2d');
     ctx.fillStyle='#fff'; ctx.fillRect(0,0,SIZE,SIZE);
-    ctx.fillStyle='#000'; ctx.font='12px monospace';
-    ctx.textAlign='center';
-    const words=url.split('?id=');
-    ctx.fillText('Abre esta URL:', SIZE/2, SIZE/2-20);
-    ctx.font='10px monospace';
-    ctx.fillText(words[0], SIZE/2, SIZE/2);
-    ctx.fillStyle='#7c3aed';
-    ctx.fillText('?id='+words[1], SIZE/2, SIZE/2+16);
+    ctx.fillStyle='#333'; ctx.font='11px monospace'; ctx.textAlign='center';
+    ctx.fillText('Escanea la URL:', SIZE/2, 80);
+    ctx.font='9px monospace'; ctx.fillStyle='#666';
+    // Show shortened URL
+    const short=url.replace(location.origin,'');
+    ctx.fillText(short.substring(0,30), SIZE/2, 100);
     loading.style.display='none';
     canvas.style.display='block';
   };
+}
+
+// ════════════════════════════════════════
+// PEER FACTORY — limpio, con timeout
+// ════════════════════════════════════════
+function makePeer(onOpen, onError) {
+  const p = new Peer({ config: ICE });
+  let opened = false;
+
+  // Timeout si no conecta en 10s
+  const timeout = setTimeout(()=>{
+    if(!opened) {
+      p.destroy();
+      onError('timeout');
+    }
+  }, 10000);
+
+  p.on('open', id=>{
+    opened=true;
+    clearTimeout(timeout);
+    onOpen(p, id);
+  });
+
+  p.on('error', err=>{
+    clearTimeout(timeout);
+    onError(err.type||'error');
+  });
+
+  return p;
 }
 
 // ════════════════════════════════════════
@@ -1144,7 +1147,7 @@ function initSenderUI() {
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
   dz.addEventListener('drop',e=>{
-    e.preventDefault();dz.classList.remove('over');
+    e.preventDefault(); dz.classList.remove('over');
     if(e.dataTransfer.files[0]) startWithFile(e.dataTransfer.files[0]);
   });
 }
@@ -1156,86 +1159,85 @@ function handleUrl() {
     return;
   }
   sharedUrl=val; selectedFile=null;
-  setupSenderQR('url','🔗',val,'Enlace compartido');
+  setupSenderQR('🔗', val, 'Enlace compartido');
 }
 
 function startWithFile(file) {
   selectedFile=file; sharedUrl=null;
-  setupSenderQR(
-    isImage(file.name)?'image':'file',
-    fileIcon(file.name),
-    file.name,
-    fmtSize(file.size)
-  );
+  setupSenderQR(fileIcon(file.name), file.name, fmtSize(file.size));
 }
 
-function setupSenderQR(type, icon, label, sub) {
+function setSenderStatus(txt, dotClass) {
+  document.getElementById('s-status').textContent=txt;
+  if(dotClass) document.getElementById('s-dot').className='sdot '+dotClass;
+}
+
+function setupSenderQR(icon, label, sub) {
   document.getElementById('s-icon').textContent=icon;
   document.getElementById('s-name').textContent=label;
   document.getElementById('s-size').textContent=sub;
   showScreen('s-qr');
-  setSenderStatus('waiting','Inicializando conexión segura...');
+  setSenderStatus('Conectando al servidor de señalización...','waiting');
 
-  // Reuse pre-initialized peer if available
-  if (prePeer && prePeerId) {
-    peer=prePeer; prePeer=null;
-    const id=prePeerId; prePeerId=null;
-    onPeerOpen(id);
-    peer.on('connection', onIncoming);
-    peer.on('error', e=>setSenderStatus('waiting','Error: '+e.type));
-  } else {
-    peer=new Peer({config:{iceServers:[
-      {urls:'stun:stun.l.google.com:19302'},
-      {urls:'stun:stun1.l.google.com:19302'},
-    ]}});
-    peer.on('open', onPeerOpen);
-    peer.on('connection', onIncoming);
-    peer.on('error', e=>setSenderStatus('waiting','Error: '+e.type));
-  }
-}
+  if(peer) { try{peer.destroy();}catch(e){} peer=null; conn=null; }
 
-function onPeerOpen(id) {
-  const url=`${location.origin}${location.pathname}?id=${id}`;
-  drawQR(url,'qr-canvas');
-  correctPin=generatePin(id);
-  document.getElementById('sender-pin').innerHTML=
-    correctPin.map(e=>`<span class="pin-emoji">${e}</span>`).join('');
-  setSenderStatus('waiting','Esperando que alguien escanee...');
-  document.getElementById('s-dot').className='sdot waiting';
-}
+  makePeer(
+    (p, id) => {
+      peer = p;
+      const url=`${location.origin}${location.pathname}?id=${id}`;
+      drawQR(url);
+      correctPin=generatePin(id);
+      document.getElementById('sender-pin').innerHTML=
+        correctPin.map(e=>`<span class="pin-emoji">${e}</span>`).join('');
+      setSenderStatus('Listo — esperando que escaneen el QR','waiting');
 
-function onIncoming(incoming) {
-  if(conn){incoming.close();return;}
-  conn=incoming;
-  incoming.on('open',()=>{
-    setSenderStatus('connected','¡Receptor conectado! Verificando...');
-    document.getElementById('s-dot').className='sdot connected';
-  });
-  incoming.on('data',data=>{
-    if(data.type==='pin-ok'){
-      setSenderStatus('sending','✓ Verificado · Enviando...');
-      document.getElementById('s-dot').className='sdot sending';
-      document.getElementById('s-prog').style.display='flex';
-      startSending();
-    } else if(data.type==='pin-fail'){
-      setSenderStatus('waiting','⚠️ PIN incorrecto. Esperando nuevo intento...');
-      document.getElementById('s-dot').className='sdot waiting';
-      conn=null;
+      // Register connection handler BEFORE anyone connects
+      p.on('connection', incoming=>{
+        if(conn) { incoming.close(); return; }
+        conn = incoming;
+
+        // Register data handler immediately, before open
+        conn.on('data', data=>{
+          if(data.type==='pin-ok'){
+            setSenderStatus('✓ Verificado · Enviando...','sending');
+            document.getElementById('s-prog').style.display='flex';
+            startSending();
+          } else if(data.type==='pin-fail'){
+            setSenderStatus('⚠️ PIN incorrecto. Esperando otro intento...','waiting');
+            conn=null;
+          }
+        });
+
+        conn.on('open',()=>{
+          setSenderStatus('¡Receptor conectado! Verificando emojis...','connected');
+        });
+
+        conn.on('error', e=>{
+          setSenderStatus('Error de conexión — recarga el QR','waiting');
+          conn=null;
+        });
+
+        conn.on('close',()=>{
+          if(document.getElementById('s-qr').classList.contains('active')){
+            setSenderStatus('Receptor desconectado — esperando nuevo escaneo','waiting');
+            conn=null;
+          }
+        });
+      });
+    },
+    (errType) => {
+      setSenderStatus(`Error: ${errType} — recarga la página`,'waiting');
     }
-  });
-}
-
-function setSenderStatus(state, txt) {
-  document.getElementById('s-status').textContent=txt;
+  );
 }
 
 // ════════════════════════════════════════
-// SEND — adaptive chunks + speed
+// SEND — adaptive chunks
 // ════════════════════════════════════════
 function startSending() {
-  if(sharedUrl) {
+  if(sharedUrl){
     conn.send({type:'url', url:sharedUrl});
-    setTimeout(()=>showScreen('s-done'), 400);
+    setTimeout(()=>showScreen('s-done'), 300);
     return;
   }
 
@@ -1247,15 +1249,13 @@ function startSending() {
     isImage:isImage(selectedFile.name)
   });
 
-  let offset=0;
-  let chunkSize=64*1024; // start 64KB
-  let lastMeasure=Date.now(), bytesSinceMeasure=0;
+  let offset=0, chunkSize=64*1024;
+  senderBytesSince=0; senderLastTime=Date.now();
   const reader=new FileReader();
 
   function nextChunk(){
     if(offset>=selectedFile.size){
       conn.send({type:'done'});
-      clearInterval(speedInterval);
       showScreen('s-done');
       return;
     }
@@ -1264,21 +1264,16 @@ function startSending() {
 
   reader.onload=e=>{
     const buf=e.target.result;
-    conn.send({type:'chunk', data:buf});
+    try { conn.send({type:'chunk', data:buf}); } catch(err){ return; }
     offset+=buf.byteLength;
-    bytesSinceMeasure+=buf.byteLength;
+    senderBytesSince+=buf.byteLength;
 
-    // Adaptive chunk size based on speed
-    const now=Date.now();
-    const elapsed=(now-lastMeasure)/1000;
+    const now=Date.now(), elapsed=(now-senderLastTime)/1000;
     if(elapsed>=0.5){
-      const bps=bytesSinceMeasure/elapsed;
-      // Scale chunk: fast connection → bigger chunks
-      if(bps>2*1024*1024) chunkSize=256*1024;       // >2MB/s → 256KB chunks
-      else if(bps>512*1024) chunkSize=128*1024;       // >512KB/s → 128KB
-      else chunkSize=64*1024;                          // default 64KB
+      const bps=senderBytesSince/elapsed;
+      chunkSize = bps>2097152 ? 262144 : bps>524288 ? 131072 : 65536;
       document.getElementById('s-speed').textContent=fmtSpeed(bps);
-      bytesSinceMeasure=0; lastMeasure=now;
+      senderBytesSince=0; senderLastTime=now;
     }
 
     const pct=Math.round(offset/selectedFile.size*100);
@@ -1286,60 +1281,78 @@ function startSending() {
     document.getElementById('s-prog-txt').textContent=
       `${fmtSize(offset)} / ${fmtSize(selectedFile.size)} · ${pct}%`;
 
-    setTimeout(nextChunk,0);
+    // Small delay to let the data channel breathe
+    setTimeout(nextChunk, 1);
   };
 
   nextChunk();
 }
 
 // ════════════════════════════════════════
-// RECEIVER
+// RECEIVER — robust with retry message
 // ════════════════════════════════════════
-function initReceiver(senderId) {
-  peer=new Peer({config:{iceServers:[
-    {urls:'stun:stun.l.google.com:19302'},
-    {urls:'stun:stun1.l.google.com:19302'},
-  ]}});
-
-  peer.on('open',()=>{
-    conn=peer.connect(senderId,{reliable:true});
-
-    conn.on('open',()=>{
-      correctPin=generatePin(senderId);
-      buildDragPin(correctPin);
-      showScreen('s-verify');
-    });
-
-    conn.on('data', handleReceiverData);
-    conn.on('error',()=>{
-      document.getElementById('r-status').textContent='Error de conexión';
-    });
-  });
-
-  peer.on('error',()=>{
-    document.getElementById('r-status').textContent='No se pudo conectar. El QR puede haber expirado.';
-  });
+function setReceiverStatus(txt, dotClass, title, sub) {
+  if(txt) document.getElementById('r-status').textContent=txt;
+  if(dotClass) document.getElementById('r-dot').className='sdot '+dotClass;
+  if(title) document.getElementById('r-title').textContent=title;
+  if(sub) document.getElementById('r-sub').textContent=sub;
 }
 
-let receiverBytesSince=0, receiverLastTime=Date.now();
+function initReceiver(senderId) {
+  setReceiverStatus('Conectando...','waiting','Iniciando...','Creando peer local...');
+
+  makePeer(
+    (p, myId) => {
+      peer = p;
+      setReceiverStatus('Conectando con el emisor...','waiting','Conectando...','Estableciendo canal seguro');
+
+      conn = p.connect(senderId, {
+        reliable: true,
+        serialization: 'binary'
+      });
+
+      // Register data BEFORE open to avoid missing first message
+      conn.on('data', handleReceiverData);
+
+      conn.on('open', ()=>{
+        correctPin=generatePin(senderId);
+        buildDragPin(correctPin);
+        showScreen('s-verify');
+      });
+
+      conn.on('error', err=>{
+        setReceiverStatus(
+          'Error de conexión — el QR puede haber expirado',
+          'waiting','Error','Vuelve a escanear el QR');
+      });
+
+      conn.on('close', ()=>{
+        // Only show error if we were still receiving
+        if(fileMeta && receivedSize < fileMeta.size){
+          setReceiverStatus('Conexión cerrada antes de terminar','waiting');
+        }
+      });
+    },
+    (errType) => {
+      setReceiverStatus(
+        `No se pudo conectar (${errType}). Vuelve a escanear el QR.`,
+        'waiting','Error de red','Prueba con Chrome o Safari');
+    }
+  );
+}
 
 async function handleReceiverData(data) {
   if(data.type==='metadata'){
     fileMeta=data; receivedChunks=[]; receivedSize=0;
     receiverBytesSince=0; receiverLastTime=Date.now();
     showScreen('s-receiver');
-
     document.getElementById('r-icon').textContent=fileIcon(data.name);
     document.getElementById('r-name').textContent=data.name;
     document.getElementById('r-size').textContent=fmtSize(data.size);
     document.getElementById('r-strip').style.display='flex';
-    document.getElementById('r-title').textContent='Recibiendo...';
-    document.getElementById('r-sub').textContent='Conexión P2P cifrada activa';
-    document.getElementById('r-dot').className='sdot sending';
-    document.getElementById('r-status').textContent='Recibiendo archivo...';
+    setReceiverStatus('Recibiendo...','sending','Recibiendo...','Conexión P2P cifrada activa');
 
-    // Try File System Access API for large files (Chrome/Edge)
-    if(data.size > 50*1024*1024 && 'showSaveFilePicker' in window){
+    if(data.size>52428800 && 'showSaveFilePicker' in window){
       try {
         const fh=await window.showSaveFilePicker({suggestedName:data.name});
         fileWriter=await fh.createWritable();
@@ -1348,21 +1361,15 @@ async function handleReceiverData(data) {
 
   } else if(data.type==='chunk'){
     const buf=data.data;
-
-    if(fileWriter){
-      await fileWriter.write(buf);
-    } else {
-      receivedChunks.push(buf);
-    }
+    if(fileWriter) await fileWriter.write(buf);
+    else receivedChunks.push(buf);
 
     receivedSize+=buf.byteLength;
     receiverBytesSince+=buf.byteLength;
 
-    const now=Date.now();
-    const elapsed=(now-receiverLastTime)/1000;
+    const now=Date.now(), elapsed=(now-receiverLastTime)/1000;
     if(elapsed>=0.5){
-      const bps=receiverBytesSince/elapsed;
-      document.getElementById('r-speed').textContent=fmtSpeed(bps);
+      document.getElementById('r-speed').textContent=fmtSpeed(receiverBytesSince/elapsed);
       receiverBytesSince=0; receiverLastTime=now;
     }
 
@@ -1374,26 +1381,20 @@ async function handleReceiverData(data) {
     }
 
   } else if(data.type==='done'){
+    document.getElementById('r-fill').style.width='100%';
+    document.getElementById('r-speed').textContent='';
     if(fileWriter){
-      await fileWriter.close();
-      fileWriter=null;
-      document.getElementById('r-title').textContent='¡Archivo guardado!';
-      document.getElementById('r-dot').className='sdot done';
-      document.getElementById('r-status').textContent='Guardado directamente en disco ✓';
+      await fileWriter.close(); fileWriter=null;
+      setReceiverStatus('Guardado en disco ✓','done','¡Archivo guardado!','Escritura directa en disco');
       document.getElementById('r-prog-txt').textContent='✓ Completado';
-      document.getElementById('r-fill').style.width='100%';
     } else {
       assembleAndDeliver();
     }
 
   } else if(data.type==='url'){
     showScreen('s-receiver');
-    document.getElementById('r-title').textContent='¡Enlace recibido!';
-    document.getElementById('r-sub').textContent='Toca para abrirlo';
-    document.getElementById('r-dot').className='sdot done';
-    document.getElementById('r-status').textContent='Recibido ✓';
+    setReceiverStatus('Recibido ✓','done','¡Enlace recibido!','Toca para abrirlo');
     document.getElementById('r-prog').style.display='none';
-
     const preview=document.getElementById('r-url-preview');
     preview.style.display='flex';
     document.getElementById('r-url-txt').textContent=data.url;
@@ -1404,29 +1405,20 @@ async function handleReceiverData(data) {
 
 function assembleAndDeliver(){
   const blob=new Blob(receivedChunks,{type:fileMeta?.mime||'application/octet-stream'});
-
   if(fileMeta?.isImage){
     const url=URL.createObjectURL(blob);
     const img=document.getElementById('r-img');
     img.src=url; img.style.display='block';
-    document.getElementById('r-title').textContent='¡Imagen recibida!';
-    document.getElementById('r-sub').textContent='Mantén pulsado para guardar';
+    setReceiverStatus('Mantén pulsado para guardar','done','¡Imagen recibida!','');
   } else {
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url; a.download=fileMeta?.name||'archivo';
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(url),5000);
-    document.getElementById('r-title').textContent='¡Archivo recibido!';
-    document.getElementById('r-sub').textContent='Descarga iniciada ✓';
+    setReceiverStatus('Descarga iniciada ✓','done','¡Archivo recibido!','');
   }
-
-  document.getElementById('r-dot').className='sdot done';
-  document.getElementById('r-status').textContent='Transferencia completa ✓';
   document.getElementById('r-prog-txt').textContent='✓ Completado';
-  document.getElementById('r-fill').style.width='100%';
-  document.getElementById('r-speed').textContent='';
 }
 
 // ════════════════════════════════════════
@@ -1435,19 +1427,16 @@ function assembleAndDeliver(){
 function buildDragPin(pin){
   const decoys=POOL.filter(e=>!pin.includes(e)).slice(0,2);
   const all=[...pin,...decoys].sort(()=>Math.random()-.5);
-
-  // Slots
-  const slotsEl=document.getElementById('drop-slots');
-  slotsEl.innerHTML='';
   slotValues=[null,null,null,null];
 
+  const slotsEl=document.getElementById('drop-slots');
+  slotsEl.innerHTML='';
   for(let i=0;i<4;i++){
     const s=document.createElement('div');
     s.className='drop-slot'; s.dataset.idx=i;
     const num=document.createElement('span');
     num.className='snum'; num.textContent=i+1;
     s.appendChild(num);
-
     s.addEventListener('dragover',e=>{e.preventDefault();s.classList.add('drag-target');});
     s.addEventListener('dragleave',()=>s.classList.remove('drag-target'));
     s.addEventListener('drop',e=>{
@@ -1455,20 +1444,16 @@ function buildDragPin(pin){
       if(dragSrc!==null) placeEmoji(i,s,dragSrc);
       dragSrc=null;
     });
-    s.addEventListener('click',()=>{
-      if(slotValues[i]!==null) removeFromSlot(i,s);
-    });
+    s.addEventListener('click',()=>{ if(slotValues[i]!==null) removeFromSlot(i,s); });
     slotsEl.appendChild(s);
   }
 
-  // Source emojis
   const srcEl=document.getElementById('emoji-source');
   srcEl.innerHTML='';
   all.forEach(emoji=>{
     const el=document.createElement('div');
     el.className='edrag'; el.textContent=emoji; el.dataset.emoji=emoji;
     el.draggable=true;
-
     el.addEventListener('dragstart',e=>{
       dragSrc=emoji; el.classList.add('dragging');
       e.dataTransfer.effectAllowed='move';
@@ -1485,10 +1470,8 @@ function buildDragPin(pin){
 }
 
 function placeEmoji(idx, slotEl, emoji){
-  // Remove from old slot if dragging same emoji
   if(slotValues[idx]!==null){
-    const old=document.querySelector(`.edrag[data-emoji="${slotValues[idx]}"]`);
-    if(old) old.classList.remove('used');
+    document.querySelector(`.edrag[data-emoji="${slotValues[idx]}"]`)?.classList.remove('used');
   }
   slotValues[idx]=emoji;
   slotEl.textContent=emoji;
@@ -1496,16 +1479,12 @@ function placeEmoji(idx, slotEl, emoji){
   num.className='snum'; num.textContent=parseInt(slotEl.dataset.idx)+1;
   slotEl.appendChild(num);
   slotEl.classList.add('filled'); slotEl.classList.remove('wrong');
-
-  const src=document.querySelector(`.edrag[data-emoji="${emoji}"]`);
-  if(src) src.classList.add('used');
+  document.querySelector(`.edrag[data-emoji="${emoji}"]`)?.classList.add('used');
   clearVmsg(); updateVerifyBtn();
 }
 
 function removeFromSlot(idx, slotEl){
-  const emoji=slotValues[idx];
-  const src=document.querySelector(`.edrag[data-emoji="${emoji}"]`);
-  if(src) src.classList.remove('used');
+  document.querySelector(`.edrag[data-emoji="${slotValues[idx]}"]`)?.classList.remove('used');
   slotValues[idx]=null;
   slotEl.textContent='';
   const num=document.createElement('span');
@@ -1520,8 +1499,7 @@ function clearSlots(){
   document.querySelectorAll('.drop-slot').forEach((s,i)=>{
     s.textContent='';
     const n=document.createElement('span');
-    n.className='snum'; n.textContent=i+1;
-    s.appendChild(n);
+    n.className='snum'; n.textContent=i+1; s.appendChild(n);
     s.classList.remove('filled','wrong');
   });
   document.querySelectorAll('.edrag').forEach(e=>e.classList.remove('used'));
@@ -1529,8 +1507,7 @@ function clearSlots(){
 }
 
 function updateVerifyBtn(){
-  const full=slotValues.every(v=>v!==null);
-  document.getElementById('btn-verify').classList.toggle('ready',full);
+  document.getElementById('btn-verify').classList.toggle('ready',slotValues.every(v=>v!==null));
 }
 
 function clearVmsg(){
@@ -1546,13 +1523,13 @@ function checkPin(){
     if(conn) conn.send({type:'pin-ok'});
     setTimeout(()=>{
       showScreen('s-receiver');
-      document.getElementById('r-status').textContent='Esperando el archivo...';
-    },700);
+      setReceiverStatus('Esperando el archivo...','connected','Verificado ✓','Canal seguro establecido');
+    },600);
   } else {
     m.className='vmsg err'; m.textContent='✗ Orden incorrecto — Inténtalo de nuevo';
     document.querySelectorAll('.drop-slot.filled').forEach(s=>s.classList.add('wrong'));
     if(conn) conn.send({type:'pin-fail'});
-    setTimeout(clearSlots,1100);
+    setTimeout(clearSlots, 1000);
   }
 }
 
@@ -1560,7 +1537,7 @@ function checkPin(){
 // RESET
 // ════════════════════════════════════════
 function resetApp(){
-  if(peer){peer.destroy();peer=null;}
+  if(peer){ try{peer.destroy();}catch(e){} peer=null; }
   conn=null; selectedFile=null; sharedUrl=null;
   receivedChunks=[]; receivedSize=0; fileMeta=null; fileWriter=null;
   slotValues=[null,null,null,null];
@@ -1571,10 +1548,11 @@ function resetApp(){
   document.getElementById('s-prog').style.display='none';
   document.getElementById('s-fill').style.width='0%';
   document.getElementById('sender-pin').innerHTML='<span class="pin-emoji">⏳</span>';
+  document.getElementById('r-img').style.display='none';
+  document.getElementById('r-url-preview').style.display='none';
+  document.getElementById('r-strip').style.display='none';
   history.replaceState({},'',location.pathname);
   showScreen('s-drop');
-  // Pre-init again for next transfer
-  preinitPeer();
 }
 </script>
 </body>
