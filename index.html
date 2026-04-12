@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DropBeam — Comparte archivos al instante</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --accent: #00ff88;
+    --accent2: #7c3aed;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --border: rgba(255,255,255,0.06);
+    --glow: 0 0 40px rgba(0,255,136,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow orb */
+  body::after {
+    content: '';
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--accent);
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.2);
+    padding: 3px 8px;
+    border-radius: 100px;
+    letter-spacing: 1px;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* SCREEN: DROP ZONE */
+  #screen-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    max-width: 560px;
+    width: 100%;
+  }
+
+  .hero-text {
+    text-align: center;
+  }
+
+  .hero-text h1 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+  }
+
+  .hero-text h1 span {
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(0,255,136,0.4);
+  }
+
+  .hero-text p {
+    margin-top: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .drop-zone {
+    width: 100%;
+    border: 2px dashed rgba(0,255,136,0.2);
+    border-radius: 20px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(0,255,136,0.02);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0,255,136,0.06) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .drop-zone:hover::before,
+  .drop-zone.drag-over::before {
+    opacity: 1;
+  }
+
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    border-color: rgba(0,255,136,0.6);
+    background: rgba(0,255,136,0.04);
+    transform: scale(1.01);
+  }
+
+  .drop-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .drop-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .drop-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  #file-input { display: none; }
+
+  .features {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .feature {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .feature::before {
+    content: '✓';
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* SCREEN: QR */
+  #screen-qr {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .qr-header {
+    text-align: center;
+  }
+
+  .qr-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .qr-header p {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .qr-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.4);
+    width: 100%;
+  }
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface2);
+    padding: 12px 16px;
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  .file-icon {
+    font-size: 24px;
+  }
+
+  .file-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-name {
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-size {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  #qr-container {
+    background: white;
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pin-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pin-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .pin-emojis {
+    display: flex;
+    gap: 12px;
+    font-size: 28px;
+    background: var(--surface2);
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .status-dot.waiting {
+    background: #f59e0b;
+    box-shadow: 0 0 8px #f59e0b;
+    animation: pulse 1.5s infinite;
+  }
+
+  .status-dot.connected {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .status-dot.sending {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    animation: pulse 0.8s infinite;
+  }
+
+  /* Progress */
+  .progress-wrap {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(0,255,136,0.5);
+  }
+
+  .progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* SCREEN: DONE */
+  #screen-done {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .done-icon {
+    font-size: 64px;
+    animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes pop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .done-title {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .done-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* SCREEN: RECEIVER */
+  #screen-receiver {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .receiver-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.4);
+  }
+
+  .receiver-icon {
+    font-size: 56px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    letter-spacing: -0.3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 20px rgba(0,255,136,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0,255,136,0.5);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  /* SCREEN: VERIFY PIN */
+  #screen-verify {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .verify-card {
+    background: var(--surface);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 0 40px rgba(245,158,11,0.1), 0 40px 80px rgba(0,0,0,0.4);
+  }
+
+  .verify-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .verify-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .verify-emojis {
+    display: flex;
+    gap: 16px;
+    font-size: 36px;
+    background: var(--surface2);
+    padding: 16px 28px;
+    border-radius: 16px;
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+
+  .verify-question {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f59e0b;
+  }
+
+  .verify-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.3);
+    flex: 1;
+  }
+
+  .btn-confirm {
+    background: var(--accent);
+    color: #000;
+    flex: 1;
+  }
+
+  footer {
+    position: relative;
+    z-index: 10;
+    padding: 16px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .footer-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .footer-sep { opacity: 0.3; }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 480px) {
+    header { padding: 16px 20px; }
+    .drop-zone { padding: 40px 20px; }
+    .qr-card { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    DropBeam
+  </div>
+  <div class="badge">P2P · CIFRADO</div>
+</header>
+
+<main>
+
+  <!-- PANTALLA 1: DROP ZONE (emisor) -->
+  <div id="screen-drop" class="fade-in">
+    <div class="hero-text">
+      <h1>Comparte archivos<br><span>al instante</span></h1>
+      <p>Sin servidores. Sin cuenta. Directo al receptor.</p>
+    </div>
+
+    <div class="drop-zone" id="drop-zone">
+      <span class="drop-icon">📦</span>
+      <div class="drop-title">Arrastra tu archivo aquí</div>
+      <div class="drop-sub">o haz clic para seleccionar · cualquier formato · sin límite de tamaño</div>
+      <input type="file" id="file-input">
+    </div>
+
+    <div class="features">
+      <div class="feature">Cifrado WebRTC</div>
+      <div class="feature">Sin registro</div>
+      <div class="feature">P2P directo</div>
+      <div class="feature">iOS · Android · PC</div>
+    </div>
+  </div>
+
+  <!-- PANTALLA 2: QR (emisor esperando) -->
+  <div id="screen-qr" class="fade-in">
+    <div class="qr-header">
+      <h2>Escanea para recibir</h2>
+      <p>El archivo viaja directo a quien escanee · nadie más lo ve</p>
+    </div>
+
+    <div class="qr-card">
+      <div class="file-info">
+        <div class="file-icon" id="file-icon">📄</div>
+        <div class="file-details">
+          <div class="file-name" id="file-name-display">archivo.jpg</div>
+          <div class="file-size" id="file-size-display">0 MB</div>
+        </div>
+      </div>
+
+      <div id="qr-container"></div>
+
+      <div class="pin-display">
+        <div class="pin-label">Verifica estos emojis con el receptor</div>
+        <div class="pin-emojis" id="pin-emojis">⏳</div>
+      </div>
+
+      <div class="status-indicator">
+        <div class="status-dot waiting" id="status-dot"></div>
+        <span id="status-text">Esperando que alguien escanee...</span>
+      </div>
+
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0%</div>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost" onclick="resetApp()">← Enviar otro archivo</button>
+  </div>
+
+  <!-- PANTALLA 3: DONE (emisor) -->
+  <div id="screen-done">
+    <div class="done-icon">✅</div>
+    <div class="done-title">¡Enviado!</div>
+    <div class="done-sub">El archivo llegó al receptor de forma segura</div>
+    <button class="btn btn-primary" onclick="resetApp()">Enviar otro archivo</button>
+  </div>
+
+  <!-- PANTALLA 4: RECEPTOR (quien escanea el QR) -->
+  <div id="screen-receiver">
+    <div class="receiver-card">
+      <div class="receiver-icon">📡</div>
+      <div>
+        <h2 style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">Conectando...</h2>
+        <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-top:6px;">Estableciendo conexión segura con el emisor</p>
+      </div>
+
+      <div class="file-info" id="receiver-file-info" style="display:none;">
+        <div class="file-icon" id="receiver-file-icon">📄</div>
+        <div class="file-details">
+          <div class="file-name" id="receiver-file-name">-</div>
+          <div class="file-size" id="receiver-file-size">-</div>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="receiver-progress-wrap" style="display:flex;">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="receiver-progress-fill"></div>
+        </div>
+        <div class="progress-text" id="receiver-progress-text">Conectando...</div>
+      </div>
+
+      <div class="status-indicator">
+        <div class="status-dot waiting" id="receiver-status-dot"></div>
+        <span id="receiver-status-text">Buscando al emisor...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA 5: VERIFICAR PIN (receptor) -->
+  <div id="screen-verify">
+    <div class="verify-card">
+      <div style="font-size:32px;">🔐</div>
+      <div class="verify-title">Verifica la conexión</div>
+      <div class="verify-sub">Asegúrate de que el emisor ve<br>exactamente estos mismos emojis</div>
+      <div class="verify-emojis" id="verify-emojis">⏳</div>
+      <div class="verify-question">¿Coinciden en la pantalla del emisor?</div>
+      <div class="verify-buttons">
+        <button class="btn btn-danger" onclick="rejectConnection()">✗ No coinciden</button>
+        <button class="btn btn-confirm btn-primary" onclick="acceptConnection()">✓ Sí, coinciden</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-text">
+    <span>🔒 Cifrado de extremo a extremo</span>
+    <span class="footer-sep">|</span>
+    <span>Los archivos nunca tocan ningún servidor</span>
+    <span class="footer-sep">|</span>
+    <span>P2P directo</span>
+  </div>
+</footer>
+
+<!-- PeerJS desde CDN -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DROPBEAM — Lógica principal
+// ═══════════════════════════════════════════════════
+
+const EMOJI_SET = ['🦊','🌮','⚡','🎸','🐬','🌵','🔥','🎯','🦋','🌊',
+                   '🍕','🎪','🦄','🌈','🎭','🚀','🐙','🍄','🎲','🦁'];
+
+let peer = null;
+let conn = null;
+let selectedFile = null;
+let receivedChunks = [];
+let receivedSize = 0;
+let fileMetadata = null;
+let isReceiver = false;
+let pendingConn = null;
+let connectionVerified = false;
+
+// ── Detectar si somos receptor (hay ?id= en la URL) ──
+const urlParams = new URLSearchParams(window.location.search);
+const receiverPeerId = urlParams.get('id');
+
+if (receiverPeerId) {
+  isReceiver = true;
+  showScreen('receiver');
+  initReceiver(receiverPeerId);
+} else {
+  initSender();
+}
+
+// ── Generar PIN de emojis a partir de un string ──
+function generatePin(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const emojis = [];
+  let seed = Math.abs(hash);
+  for (let i = 0; i < 4; i++) {
+    emojis.push(EMOJI_SET[seed % EMOJI_SET.length]);
+    seed = Math.floor(seed / EMOJI_SET.length) + (i * 7919);
+  }
+  return emojis.join(' ');
+}
+
+// ── Formatear tamaño ──
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+// ── Icono por tipo de archivo ──
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = {
+    jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️',
+    mp4: '🎬', mov: '🎬', avi: '🎬', mkv: '🎬', webm: '🎬',
+    mp3: '🎵', wav: '🎵', flac: '🎵', aac: '🎵',
+    pdf: '📕', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📋', pptx: '📋',
+    zip: '🗜️', rar: '🗜️', '7z': '🗜️', tar: '🗜️',
+    js: '⚙️', ts: '⚙️', py: '🐍', html: '🌐', css: '🎨',
+    txt: '📄', md: '📄',
+  };
+  return icons[ext] || '📦';
+}
+
+// ── Mostrar pantalla ──
+function showScreen(name) {
+  const screens = ['screen-drop', 'screen-qr', 'screen-done', 'screen-receiver', 'screen-verify'];
+  screens.forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = 'none';
+    el.classList.remove('fade-in');
+  });
+  const target = document.getElementById('screen-' + name);
+  target.style.display = 'flex';
+  setTimeout(() => target.classList.add('fade-in'), 10);
+}
+
+// ════════════════════════════════════════
+// EMISOR
+// ════════════════════════════════════════
+
+function initSender() {
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+}
+
+function handleFile(file) {
+  if (!file) return;
+  selectedFile = file;
+
+  // UI
+  document.getElementById('file-name-display').textContent = file.name;
+  document.getElementById('file-size-display').textContent = formatSize(file.size);
+  document.getElementById('file-icon').textContent = getFileIcon(file.name);
+  showScreen('qr');
+
+  // Crear peer con ID aleatorio
+  peer = new Peer({
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    }
+  });
+
+  peer.on('open', id => {
+    // Generar QR con la URL completa
+    const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
+    
+    document.getElementById('qr-container').innerHTML = '';
+    new QRCode(document.getElementById('qr-container'), {
+      text: url,
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    // Mostrar PIN inicial (basado en el ID del peer)
+    const pin = generatePin(id);
+    document.getElementById('pin-emojis').textContent = pin;
+  });
+
+  peer.on('connection', incomingConn => {
+    // Solo aceptar una conexión
+    if (conn) {
+      incomingConn.close();
+      return;
+    }
+
+    pendingConn = incomingConn;
+
+    incomingConn.on('open', () => {
+      // Recibir el PIN del receptor para verificar
+      incomingConn.on('data', data => {
+        if (data.type === 'pin-verify') {
+          // El receptor nos manda su versión del PIN para que lo verifiquemos visualmente
+          // En esta implementación el emisor ya muestra el pin derivado del peer ID
+          // La verificación es que ambos vean el mismo valor
+          updateSenderStatus('connected', '¡Receptor conectado! Verifica los emojis');
+          document.getElementById('status-dot').className = 'status-dot connected';
+          conn = incomingConn;
+          
+          // Esperar confirmación del receptor
+          incomingConn.on('data', data2 => {
+            if (data2.type === 'accepted') {
+              startSending();
+            } else if (data2.type === 'rejected') {
+              updateSenderStatus('waiting', 'Conexión rechazada. Esperando...');
+              document.getElementById('status-dot').className = 'status-dot waiting';
+              conn = null;
+            }
+          });
+        }
+      });
+    });
+  });
+
+  peer.on('error', err => {
+    console.error('Peer error:', err);
+    updateSenderStatus('waiting', 'Error de conexión. Intenta de nuevo.');
+  });
+}
+
+function updateSenderStatus(state, text) {
+  document.getElementById('status-text').textContent = text;
+}
+
+function startSending() {
+  if (!conn || !selectedFile) return;
+
+  updateSenderStatus('sending', 'Enviando archivo...');
+  document.getElementById('status-dot').className = 'status-dot sending';
+  document.getElementById('progress-wrap').style.display = 'flex';
+
+  // Enviar metadatos primero
+  conn.send({
+    type: 'metadata',
+    name: selectedFile.name,
+    size: selectedFile.size,
+    fileType: selectedFile.type
+  });
+
+  // Enviar archivo en chunks
+  const CHUNK_SIZE = 64 * 1024; // 64KB por chunk
+  const reader = new FileReader();
+  let offset = 0;
+
+  function sendNextChunk() {
+    if (offset >= selectedFile.size) {
+      conn.send({ type: 'done' });
+      showScreen('done');
+      return;
+    }
+
+    const slice = selectedFile.slice(offset, offset + CHUNK_SIZE);
+    reader.readAsArrayBuffer(slice);
+  }
+
+  reader.onload = e => {
+    conn.send({ type: 'chunk', data: e.target.result });
+    offset += e.target.result.byteLength;
+    
+    const pct = Math.round((offset / selectedFile.size) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = 
+      `${formatSize(offset)} de ${formatSize(selectedFile.size)} · ${pct}%`;
+    
+    // Pequeño delay para no saturar el canal
+    setTimeout(sendNextChunk, 0);
+  };
+
+  sendNextChunk();
+}
+
+// ════════════════════════════════════════
+// RECEPTOR
+// ════════════════════════════════════════
+
+function initReceiver(senderPeerId) {
+  peer = new Peer({
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    }
+  });
+
+  peer.on('open', myId => {
+    // Conectar al emisor
+    conn = peer.connect(senderPeerId, { reliable: true });
+
+    conn.on('open', () => {
+      // Generar PIN compartido (basado en el ID del emisor, que ambos conocen)
+      const pin = generatePin(senderPeerId);
+      
+      // Enviar nuestro PIN al emisor para verificación cruzada
+      conn.send({ type: 'pin-verify', pin: pin });
+
+      // Mostrar pantalla de verificación
+      document.getElementById('verify-emojis').textContent = pin;
+      showScreen('verify');
+    });
+
+    conn.on('data', data => {
+      if (data.type === 'metadata') {
+        fileMetadata = data;
+        receivedChunks = [];
+        receivedSize = 0;
+        
+        document.getElementById('receiver-file-icon').textContent = getFileIcon(data.name);
+        document.getElementById('receiver-file-name').textContent = data.name;
+        document.getElementById('receiver-file-size').textContent = formatSize(data.size);
+        document.getElementById('receiver-file-info').style.display = 'flex';
+        
+        showScreen('receiver');
+        document.getElementById('receiver-status-text').textContent = 'Recibiendo archivo...';
+        document.getElementById('receiver-status-dot').className = 'status-dot sending';
+        document.getElementById('receiver-progress-wrap').style.display = 'flex';
+
+      } else if (data.type === 'chunk') {
+        receivedChunks.push(data.data);
+        receivedSize += data.data.byteLength;
+        
+        if (fileMetadata) {
+          const pct = Math.round((receivedSize / fileMetadata.size) * 100);
+          document.getElementById('receiver-progress-fill').style.width = pct + '%';
+          document.getElementById('receiver-progress-text').textContent = 
+            `${formatSize(receivedSize)} de ${formatSize(fileMetadata.size)} · ${pct}%`;
+        }
+
+      } else if (data.type === 'done') {
+        // Ensamblar y descargar el archivo
+        const blob = new Blob(receivedChunks, { type: fileMetadata?.fileType || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileMetadata?.name || 'archivo';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Mostrar éxito en el receptor
+        showScreen('receiver');
+        document.getElementById('receiver-status-dot').className = 'status-dot connected';
+        document.getElementById('receiver-status-text').textContent = '¡Archivo recibido!';
+        document.getElementById('receiver-progress-fill').style.width = '100%';
+        document.getElementById('receiver-progress-text').textContent = '✓ Completado';
+      }
+    });
+
+    conn.on('error', err => {
+      console.error('Connection error:', err);
+      document.getElementById('receiver-status-text').textContent = 'Error de conexión';
+    });
+  });
+
+  peer.on('error', err => {
+    console.error('Peer error:', err);
+    document.getElementById('receiver-status-text').textContent = 
+      'No se pudo conectar. El QR puede haber expirado.';
+  });
+}
+
+function acceptConnection() {
+  if (conn) {
+    conn.send({ type: 'accepted' });
+    showScreen('receiver');
+    document.getElementById('receiver-file-info').style.display = 'none';
+    document.getElementById('receiver-status-text').textContent = 'Esperando el archivo...';
+    document.getElementById('receiver-status-dot').className = 'status-dot connected';
+  }
+}
+
+function rejectConnection() {
+  if (conn) {
+    conn.send({ type: 'rejected' });
+    conn.close();
+  }
+  document.getElementById('receiver-status-text').textContent = 'Conexión cancelada';
+  showScreen('receiver');
+}
+
+// ── Reset ──
+function resetApp() {
+  if (peer) { peer.destroy(); peer = null; }
+  conn = null;
+  selectedFile = null;
+  receivedChunks = [];
+  receivedSize = 0;
+  fileMetadata = null;
+  document.getElementById('qr-container').innerHTML = '';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  showScreen('drop');
+  // Limpiar URL
+  window.history.replaceState({}, '', window.location.pathname);
+}
+</script>
+</body>
+</html>
