@@ -538,6 +538,17 @@ footer{
 
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 
+/* Mode buttons */
+.mode-btn {
+  flex:1;display:flex;align-items:center;gap:10px;
+  padding:14px 16px;background:transparent;border:none;
+  cursor:pointer;font-family:'Syne',sans-serif;color:var(--muted);
+  transition:all .18s;text-align:left;
+}
+.mode-btn:hover{background:rgba(255,255,255,0.03);color:var(--text);}
+.mode-btn + .mode-btn{border-left:1px solid var(--border);}
+.mode-active{background:var(--s2)!important;color:var(--text)!important;}
+
 /* ════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════ */
@@ -639,18 +650,15 @@ footer{
     <div class="hero">
       <h1>Comparte archivos<br><em>sin intermediarios</em></h1>
       <p class="hero-sub">
-        Tus archivos van directo al receptor — ningún servidor los toca,
-        ninguna empresa los analiza, ninguna IA los usa para entrenarse.<br>
-        <strong>Sin registro · Sin cookies · Sin límite de tamaño</strong>
+        Sin servidores. Sin almacenamiento. De tu dispositivo al suyo, directo.<br>
+        Como Emule pero en el navegador — <strong>ningún servidor toca tus archivos</strong>.
       </p>
     </div>
 
     <!-- No cookies banner -->
     <div style="
-      width:100%;
-      display:flex;align-items:center;gap:10px;
-      background:rgba(48,209,88,0.06);
-      border:1px solid rgba(48,209,88,0.18);
+      width:100%;display:flex;align-items:center;gap:10px;
+      background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.18);
       border-radius:12px;padding:11px 16px;
     ">
       <span style="font-size:18px;">🍪</span>
@@ -694,6 +702,84 @@ footer{
       </div>
     </div>
 
+    <!-- How it works — debajo del drop zone -->
+    <div style="
+      width:100%;background:var(--s1);border:1px solid var(--border);
+      border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;
+    ">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">
+        Cómo funciona
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="
+            width:24px;height:24px;border-radius:50%;
+            background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);
+            display:flex;align-items:center;justify-content:center;
+            font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);flex-shrink:0;margin-top:1px;
+          ">1</div>
+          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;">
+            <strong style="color:var(--text);">Sube tu archivo o pega una URL.</strong> Aparece un código QR en tu pantalla.
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="
+            width:24px;height:24px;border-radius:50%;
+            background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);
+            display:flex;align-items:center;justify-content:center;
+            font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);flex-shrink:0;margin-top:1px;
+          ">2</div>
+          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;">
+            <strong style="color:var(--text);">Tu amigo escanea el QR</strong> con la cámara del móvil. Sin instalar nada.
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="
+            width:24px;height:24px;border-radius:50%;
+            background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);
+            display:flex;align-items:center;justify-content:center;
+            font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);flex-shrink:0;margin-top:1px;
+          ">3</div>
+          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;">
+            <strong style="color:var(--text);">El archivo llega a su móvil</strong> — sin pasar por ningún servidor. Sin WhatsApp, sin email, sin Telegram.
+          </div>
+        </div>
+      </div>
+      <div style="
+        background:var(--s2);border-radius:10px;padding:12px 14px;
+        font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;
+        border-left:2px solid rgba(0,229,255,0.3);
+      ">
+        💡 <strong style="color:var(--text);">Ejemplo real:</strong> Estás con un amigo. Quieres pasarle un vídeo, una foto o un contrato. Subes el archivo, él escanea el QR de tu pantalla y en segundos lo tiene en su móvil. De dispositivo a dispositivo — como pasarle algo en mano.
+      </div>
+    </div>
+
+    <!-- Modo de seguridad -->
+    <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;">
+        Modo de transferencia
+      </div>
+      <div style="display:flex;border:1px solid var(--border);border-radius:12px;overflow:hidden;width:100%;">
+        <button id="mode-fast" class="mode-btn mode-active" onclick="setMode('fast')">
+          <span style="font-size:16px;">⚡</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;">Rápido</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Sin verificación · Estáis juntos</div>
+          </div>
+        </button>
+        <button id="mode-secure" class="mode-btn" onclick="setMode('secure')">
+          <span style="font-size:16px;">🔐</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;">Seguro</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Verificación con emojis</div>
+          </div>
+        </button>
+      </div>
+      <div id="mode-desc" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.6;">
+        El receptor escanea y recibe al instante. Ideal cuando estáis en la misma habitación.
+      </div>
+    </div>
+
     <div class="feats">
       <div class="feat">Cifrado extremo a extremo</div>
       <div class="feat">Sin cuenta</div>
@@ -726,7 +812,7 @@ footer{
         <canvas id="qr-canvas" style="display:none;border-radius:6px;"></canvas>
       </div>
 
-      <div class="pin-section">
+      <div class="pin-section" id="pin-section">
         <div class="pin-label">Di este orden en voz alta al receptor</div>
         <div class="pin-row" id="sender-pin"><span class="pin-emoji">⏳</span></div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;">
@@ -840,10 +926,57 @@ footer{
     <div class="about-hero">
       <h2>Por qué <em>DropBeam</em><br>es diferente</h2>
       <p>
-        La mayoría de servicios para compartir archivos guardan tus datos en sus servidores,
-        los analizan, y algunos los usan para entrenar modelos de IA.
-        DropBeam funciona de forma radicalmente diferente.
+        WeTransfer, Smash, Filemail y similares almacenan tus archivos en sus servidores.
+        DropBeam no almacena nada — porque técnicamente no puede hacerlo.
       </p>
+    </div>
+
+    <!-- Comparativa -->
+    <div style="width:100%;margin-bottom:14px;">
+      <div style="
+        display:grid;grid-template-columns:1fr 1fr;gap:12px;
+      ">
+        <div style="
+          background:rgba(255,69,58,0.04);border:1px solid rgba(255,69,58,0.12);
+          border-radius:16px;padding:20px;
+        ">
+          <div style="font-size:22px;margin-bottom:8px;">☁️</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text);">WeTransfer / Smash</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;display:flex;flex-direction:column;gap:4px;">
+            <span>✗ Tu archivo va a sus servidores</span>
+            <span>✗ Lo almacenan durante días</span>
+            <span>✗ Pueden ver el contenido</span>
+            <span>✗ Límite de tamaño (2GB gratis)</span>
+            <span>✗ Requiere email</span>
+            <span>✗ Usan tus datos</span>
+          </div>
+        </div>
+        <div style="
+          background:rgba(48,209,88,0.04);border:1px solid rgba(48,209,88,0.15);
+          border-radius:16px;padding:20px;
+        ">
+          <div style="font-size:22px;margin-bottom:8px;">⚡</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text);">DropBeam</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;display:flex;flex-direction:column;gap:4px;">
+            <span style="color:var(--green);">✓ Directo entre dispositivos</span>
+            <span style="color:var(--green);">✓ Sin almacenamiento</span>
+            <span style="color:var(--green);">✓ Nadie ve el contenido</span>
+            <span style="color:var(--green);">✓ Sin límite de tamaño</span>
+            <span style="color:var(--green);">✓ Sin cuenta ni email</span>
+            <span style="color:var(--green);">✓ Cero datos recopilados</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- La única limitación honesta -->
+      <div style="
+        margin-top:12px;
+        background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.15);
+        border-radius:14px;padding:16px 18px;
+        font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;
+      ">
+        <strong style="color:var(--warn);">⚠️ La única diferencia:</strong> emisor y receptor deben estar conectados al mismo tiempo. Como una llamada, no como un mensaje de voz. WeTransfer guarda el archivo y el receptor lo descarga cuando quiera — DropBeam no guarda nada, por eso ambos deben estar presentes.
+      </div>
     </div>
 
     <div class="about-grid">
@@ -985,6 +1118,7 @@ const ICE = {
 // 'locked'    → PIN verificado, transferencia en curso, nadie más puede entrar
 let sessionState = 'waiting';
 let zombieTimeout = null;
+let secureMode = false; // false = rápido, true = verificación con emojis
 
 // State
 let peer=null, conn=null;
@@ -1048,6 +1182,15 @@ function switchTab(tab) {
   });
   document.getElementById('tab-file').style.display=tab==='file'?'block':'none';
   document.getElementById('tab-url').style.display=tab==='url'?'block':'none';
+}
+
+function setMode(mode) {
+  secureMode = (mode === 'secure');
+  document.getElementById('mode-fast').classList.toggle('mode-active', !secureMode);
+  document.getElementById('mode-secure').classList.toggle('mode-active', secureMode);
+  document.getElementById('mode-desc').textContent = secureMode
+    ? 'El receptor verifica 4 emojis antes de recibir. Ideal cuando no estáis juntos físicamente.'
+    : 'El receptor escanea y recibe al instante. Ideal cuando estáis en la misma habitación.';
 }
 
 // ════════════════════════════════════════
@@ -1203,6 +1346,8 @@ function setupSenderQR(icon, label, sub) {
       correctPin=generatePin(id);
       document.getElementById('sender-pin').innerHTML=
         correctPin.map(e=>`<span class="pin-emoji">${e}</span>`).join('');
+      // Mostrar u ocultar PIN según modo
+      document.getElementById('pin-section').style.display = secureMode ? 'flex' : 'none';
       setSenderStatus('Listo — esperando que escaneen el QR','waiting');
 
       // Register connection handler BEFORE anyone connects
@@ -1250,9 +1395,20 @@ function setupSenderQR(icon, label, sub) {
 
         conn.on('open',()=>{
           setSenderStatus('¡Receptor conectado! Verificando emojis...','connected');
-          // Enviar el PIN directamente al receptor — fuente única de verdad
-          // El receptor NO lo calcula, lo recibe del emisor
-          conn.send({ type:'pin-challenge', pin: correctPin });
+          if(secureMode) {
+            // Modo seguro: enviar PIN al receptor
+            document.getElementById('pin-section').style.display='flex';
+            conn.send({ type:'pin-challenge', pin: correctPin });
+          } else {
+            // Modo rápido: saltar verificación, empezar directo
+            document.getElementById('pin-section').style.display='none';
+            clearTimeout(zombieTimeout);
+            sessionState = 'locked';
+            conn.send({ type:'skip-verify' });
+            setSenderStatus('✓ Conectado · Enviando...','sending');
+            document.getElementById('s-prog').style.display='flex';
+            startSending();
+          }
         });
 
         conn.on('error', ()=>{
@@ -1359,7 +1515,13 @@ function initReceiver(senderId) {
 
       // Register data BEFORE open to avoid missing first message
       conn.on('data', data => {
-        // PIN viene del emisor — fuente única de verdad
+        // Modo rápido — sin verificación
+        if(data.type === 'skip-verify') {
+          showScreen('s-receiver');
+          setReceiverStatus('Esperando el archivo...','connected','Conectado ✓','Canal seguro establecido');
+          return;
+        }
+        // Modo seguro — PIN viene del emisor
         if(data.type === 'pin-challenge') {
           correctPin = data.pin;
           buildDragPin(correctPin);
