@@ -956,9 +956,16 @@ footer{
 // DROPBEAM v3.1 — Core Logic (robust connection)
 // ════════════════════════════════════════════════════════
 
-const POOL = ['🦊','🐬','🌮','⚡','🎸','🌵','🔥','🎯','🦋','🌊',
-              '🍕','🎪','🦄','🌈','🎭','🚀','🐙','🍄','🎲','🦁',
-              '🐧','🦀','🌺','🍦','🎵','🏔️','🦜','🍋','🎨','🐊'];
+// Emojis visualmente únicos y sin ambigüedad entre iOS/Android/Windows.
+// Sin duplicados de categoría, sin variantes similares.
+const POOL = [
+  '🦊','🐬','🌮','⚡','🎸',
+  '🌵','🔥','🎯','🦋','🍕',
+  '🚀','🐙','🎲','🦁','🌈',
+  '🍦','🎵','🍋','🎨','🐊',
+  '🧲','🎺','🌙','🍩','🦩',
+  '🧸','🎃','💎','🎪','🧊'
+];
 
 // ICE servers — múltiples para máxima compatibilidad móvil
 const ICE = {
@@ -971,6 +978,13 @@ const ICE = {
     {urls:'stun:stun.cloudflare.com:3478'},
   ]
 };
+
+// Session state — controla quién puede conectar
+// 'waiting'   → acepta cualquier nueva conexión
+// 'verifying' → alguien conectó, esperando PIN (zombie timeout activo)
+// 'locked'    → PIN verificado, transferencia en curso, nadie más puede entrar
+let sessionState = 'waiting';
+let zombieTimeout = null;
 
 // State
 let peer=null, conn=null;
@@ -1193,18 +1207,44 @@ function setupSenderQR(icon, label, sub) {
 
       // Register connection handler BEFORE anyone connects
       p.on('connection', incoming=>{
-        if(conn) { incoming.close(); return; }
+
+        // Solo bloqueamos si ya está locked (transferencia en curso)
+        if(sessionState === 'locked') {
+          incoming.close();
+          return;
+        }
+
+        // Si había una conexión zombie anterior, la cerramos limpiamente
+        if(conn) {
+          try { conn.close(); } catch(e){}
+          clearTimeout(zombieTimeout);
+        }
+
         conn = incoming;
+        sessionState = 'verifying';
+
+        // Zombie timeout: si en 60s no verifica el PIN, liberamos la conexión
+        zombieTimeout = setTimeout(()=>{
+          if(sessionState === 'verifying') {
+            try { conn.close(); } catch(e){}
+            conn = null;
+            sessionState = 'waiting';
+            setSenderStatus('Tiempo agotado — esperando nuevo escaneo','waiting');
+          }
+        }, 60000);
 
         // Register data handler immediately, before open
         conn.on('data', data=>{
           if(data.type==='pin-ok'){
+            clearTimeout(zombieTimeout);
+            sessionState = 'locked';
             setSenderStatus('✓ Verificado · Enviando...','sending');
             document.getElementById('s-prog').style.display='flex';
             startSending();
           } else if(data.type==='pin-fail'){
-            setSenderStatus('⚠️ PIN incorrecto. Esperando otro intento...','waiting');
-            conn=null;
+            // PIN incorrecto: liberamos para que pueda reintentar
+            setSenderStatus('⚠️ PIN incorrecto. Reintentando...','waiting');
+            // No cerramos la conexión — el receptor puede volver a intentarlo
           }
         });
 
@@ -1212,15 +1252,18 @@ function setupSenderQR(icon, label, sub) {
           setSenderStatus('¡Receptor conectado! Verificando emojis...','connected');
         });
 
-        conn.on('error', e=>{
-          setSenderStatus('Error de conexión — recarga el QR','waiting');
-          conn=null;
+        conn.on('error', ()=>{
+          clearTimeout(zombieTimeout);
+          conn=null; sessionState='waiting';
+          setSenderStatus('Error de conexión — esperando nuevo escaneo','waiting');
         });
 
         conn.on('close',()=>{
-          if(document.getElementById('s-qr').classList.contains('active')){
-            setSenderStatus('Receptor desconectado — esperando nuevo escaneo','waiting');
-            conn=null;
+          clearTimeout(zombieTimeout);
+          // Solo resetear si no estamos en medio de envío
+          if(sessionState !== 'locked'){
+            conn=null; sessionState='waiting';
+            setSenderStatus('Receptor desconectado — listo para nuevo escaneo','waiting');
           }
         });
       });
@@ -1541,6 +1584,8 @@ function resetApp(){
   conn=null; selectedFile=null; sharedUrl=null;
   receivedChunks=[]; receivedSize=0; fileMeta=null; fileWriter=null;
   slotValues=[null,null,null,null];
+  sessionState='waiting';
+  clearTimeout(zombieTimeout);
   document.getElementById('file-input').value='';
   document.getElementById('url-input').value='';
   document.getElementById('qr-canvas').style.display='none';
