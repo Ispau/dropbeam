@@ -1194,32 +1194,58 @@ function initReceiver(senderId){
       peer=p;
       setReceiverStatus('Conectando con el emisor...','waiting','Conectando...','Canal seguro');
 
-      const conn=p.connect(senderId,{reliable:true,serialization:'binary'});
+      // Sin serialization:'binary' — dejamos que PeerJS maneje
+      // automáticamente JSON y ArrayBuffer según el tipo enviado
+      const conn=p.connect(senderId,{reliable:true});
 
-      conn.on('data',handleReceiverData);
+      // Timeout si no abre en 15 segundos
+      const connTimeout=setTimeout(()=>{
+        if(!fileMeta && receivedSize===0){
+          setReceiverStatus(
+            'No se pudo conectar — el QR puede haber expirado',
+            'waiting','Error de conexión',
+            'Pide al emisor que genere un nuevo QR'
+          );
+        }
+      }, 15000);
 
       conn.on('open',()=>{
+        clearTimeout(connTimeout);
         setReceiverStatus('Conectado · esperando archivo...','connected','Conectado ✓','Canal P2P cifrado activo');
-        // Indicar que estamos listos
         conn.send({type:'ready'});
       });
 
-      conn.on('error',()=>{
-        setReceiverStatus('Error de conexión — vuelve a escanear el QR','waiting','Error','');
+      // Handler síncrono — sin async para evitar race conditions
+      conn.on('data', data=>{
+        handleReceiverData(data, conn);
       });
+
+      conn.on('error', err=>{
+        clearTimeout(connTimeout);
+        console.error('Receiver conn error:', err);
+        setReceiverStatus(
+          'Error de conexión — vuelve a escanear el QR',
+          'waiting','Error','');
+      });
+
       conn.on('close',()=>{
-        if(fileMeta && receivedSize<fileMeta.size){
+        clearTimeout(connTimeout);
+        if(fileMeta && receivedSize < fileMeta.size){
           setReceiverStatus('Conexión cerrada antes de terminar','waiting');
         }
       });
     },
     (errType)=>{
-      setReceiverStatus(`No se pudo conectar (${errType}). Vuelve a escanear.`,'waiting','Error de red','Prueba con Chrome o Safari');
+      setReceiverStatus(
+        `No se pudo conectar (${errType}). Vuelve a escanear.`,
+        'waiting','Error de red','Prueba con Chrome o Safari');
     }
   );
 }
 
-async function handleReceiverData(data){
+function handleReceiverData(data, conn){
+  if(!data) return;
+
   if(data.type==='metadata'){
     fileMeta=data; receivedChunks=[]; receivedSize=0;
     rBytesSince=0; rLastTime=Date.now();
@@ -1230,40 +1256,51 @@ async function handleReceiverData(data){
     document.getElementById('r-strip').style.display='flex';
     setReceiverStatus('Recibiendo...','sending','Recibiendo...','Conexión P2P cifrada activa');
 
-    if(data.size>52428800 && 'showSaveFilePicker' in window){
-      try{
-        const fh=await window.showSaveFilePicker({suggestedName:data.name});
-        fileWriter=await fh.createWritable();
-      }catch(e){ fileWriter=null; }
+    // File System Access API para archivos grandes (async, no bloquea)
+    if(data.size > 52428800 && 'showSaveFilePicker' in window){
+      window.showSaveFilePicker({suggestedName:data.name})
+        .then(fh=>fh.createWritable())
+        .then(w=>{ fileWriter=w; })
+        .catch(()=>{ fileWriter=null; });
     }
 
   } else if(data.type==='chunk'){
-    const buf=data.data;
-    if(fileWriter) await fileWriter.write(buf);
-    else receivedChunks.push(buf);
-    receivedSize+=buf.byteLength;
-    rBytesSince+=buf.byteLength;
+    // Los chunks llegan como ArrayBuffer o Blob según la versión de PeerJS
+    const buf = data.data instanceof ArrayBuffer ? data.data
+              : data.data instanceof Blob ? null // manejado abajo
+              : null;
 
-    const now=Date.now(), elapsed=(now-rLastTime)/1000;
-    if(elapsed>=0.5){
-      document.getElementById('r-speed').textContent=fmtSpeed(rBytesSince/elapsed);
-      rBytesSince=0; rLastTime=now;
+    if(buf){
+      if(fileWriter) fileWriter.write(buf).catch(()=>{});
+      else receivedChunks.push(buf);
+      receivedSize += buf.byteLength;
+      rBytesSince  += buf.byteLength;
+    } else if(data.data instanceof Blob){
+      // Fallback Blob → ArrayBuffer
+      data.data.arrayBuffer().then(ab=>{
+        if(fileWriter) fileWriter.write(ab).catch(()=>{});
+        else receivedChunks.push(ab);
+        receivedSize += ab.byteLength;
+        rBytesSince  += ab.byteLength;
+        updateReceiverProgress();
+      });
+      return; // updateReceiverProgress se llama dentro del then
     }
 
-    if(fileMeta){
-      const pct=Math.round(receivedSize/fileMeta.size*100);
-      document.getElementById('r-fill').style.width=pct+'%';
-      document.getElementById('r-prog-txt').textContent=
-        `${fmtSize(receivedSize)} / ${fmtSize(fileMeta.size)} · ${pct}%`;
-    }
+    updateReceiverProgress();
 
   } else if(data.type==='done'){
     document.getElementById('r-fill').style.width='100%';
     document.getElementById('r-speed').textContent='';
+    document.getElementById('r-prog-txt').textContent='✓ Completado';
     if(fileWriter){
-      await fileWriter.close(); fileWriter=null;
-      setReceiverStatus('Guardado en disco ✓','done','¡Archivo guardado!','Escritura directa en disco');
-      document.getElementById('r-prog-txt').textContent='✓ Completado';
+      fileWriter.close().then(()=>{
+        fileWriter=null;
+        setReceiverStatus('Guardado en disco ✓','done','¡Archivo guardado!','Escritura directa en disco');
+      }).catch(()=>{
+        fileWriter=null;
+        assembleAndDeliver();
+      });
     } else {
       assembleAndDeliver();
     }
@@ -1276,6 +1313,20 @@ async function handleReceiverData(data){
     document.getElementById('r-url-txt').textContent=data.url;
     document.getElementById('r-url-link').href=data.url;
     document.getElementById('r-url-btn').onclick=()=>window.open(data.url,'_blank','noopener');
+  }
+}
+
+function updateReceiverProgress(){
+  const now=Date.now(), elapsed=(now-rLastTime)/1000;
+  if(elapsed>=0.5){
+    document.getElementById('r-speed').textContent=fmtSpeed(rBytesSince/elapsed);
+    rBytesSince=0; rLastTime=now;
+  }
+  if(fileMeta && fileMeta.size>0){
+    const pct=Math.min(100,Math.round(receivedSize/fileMeta.size*100));
+    document.getElementById('r-fill').style.width=pct+'%';
+    document.getElementById('r-prog-txt').textContent=
+      `${fmtSize(receivedSize)} / ${fmtSize(fileMeta.size)} · ${pct}%`;
   }
 }
 
