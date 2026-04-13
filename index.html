@@ -3,199 +3,171 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DropBeam — Comparte archivos sin servidores, sin cuenta, sin cookies</title>
-<meta name="description" content="Envía archivos y enlaces directamente entre dispositivos sin pasar por ningún servidor. Cifrado P2P, sin registro, sin cookies, sin límite de tamaño. Funciona en móvil, tablet y PC.">
-<meta name="keywords" content="compartir archivos P2P, transferencia archivos sin servidor, enviar archivos privado, sin cookies, cifrado extremo a extremo, WebRTC">
-<meta property="og:title" content="DropBeam — Comparte archivos sin servidores, sin cuenta, sin cookies">
-<meta property="og:description" content="Envía archivos directamente entre dispositivos. Sin servidores. Sin cookies. Cifrado P2P.">
+<title>DropBeam — AirDrop para cualquier dispositivo. Sin instalar nada.</title>
+<meta name="description" content="Transfiere archivos entre iPhone, Android, Windows o Mac al instante. Como AirDrop pero entre cualquier dispositivo — desde el navegador, sin cuenta, sin almacenamiento en servidores.">
+<meta name="keywords" content="airdrop alternativa, transferir archivos entre dispositivos, compartir archivos sin registro, enviar archivo del pc al movil, transferencia directa dispositivos, sin instalar nada">
+<meta property="og:title" content="DropBeam — AirDrop para cualquier dispositivo">
+<meta property="og:description" content="Transfiere archivos entre iPhone, Android y PC en tiempo real. Sin almacenamiento en servidores. Sin cuenta. Sin instalar nada.">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="DropBeam — P2P · Sin servidores · Sin cookies">
-<meta name="twitter:description" content="Transfiere archivos cifrados directamente entre dispositivos. Sin registro, sin cookies, sin límite de tamaño.">
+<meta name="twitter:title" content="DropBeam — Transferencia directa entre dispositivos">
+<meta name="twitter:description" content="Como AirDrop pero para cualquier dispositivo. Desde el navegador, sin instalar nada, sin almacenamiento en servidores.">
 <style>
-/* ── FUENTES LOCALES ── */
 @font-face {
-  font-family: 'Syne';
-  src: url('fonts/Syne-Regular.woff2') format('woff2');
-  font-weight: 400; font-display: swap;
+  font-family:'Syne';src:url('fonts/Syne-Regular.woff2') format('woff2');
+  font-weight:400;font-display:swap;
 }
 @font-face {
-  font-family: 'Syne';
-  src: url('fonts/Syne-Bold.woff2') format('woff2');
-  font-weight: 700; font-display: swap;
+  font-family:'Syne';src:url('fonts/Syne-Bold.woff2') format('woff2');
+  font-weight:700;font-display:swap;
 }
 @font-face {
-  font-family: 'Syne';
-  src: url('fonts/Syne-ExtraBold.woff2') format('woff2');
-  font-weight: 800; font-display: swap;
+  font-family:'Syne';src:url('fonts/Syne-ExtraBold.woff2') format('woff2');
+  font-weight:800;font-display:swap;
 }
 @font-face {
-  font-family: 'DM Mono';
-  src: url('fonts/DMMono-Light.woff2') format('woff2');
-  font-weight: 300; font-display: swap;
+  font-family:'DM Mono';src:url('fonts/DMMono-Light.woff2') format('woff2');
+  font-weight:300;font-display:swap;
 }
 @font-face {
-  font-family: 'DM Mono';
-  src: url('fonts/DMMono-Regular.woff2') format('woff2');
-  font-weight: 400; font-display: swap;
+  font-family:'DM Mono';src:url('fonts/DMMono-Regular.woff2') format('woff2');
+  font-weight:400;font-display:swap;
 }
 
-/* ── VARIABLES ── */
 :root {
-  --bg: #07070d;
-  --s1: #0f0f1a;
-  --s2: #161625;
-  --s3: #1e1e30;
-  --accent: #00e5ff;
-  --accent2: #bf5af2;
-  --green: #30d158;
-  --red: #ff453a;
-  --warn: #ffd60a;
-  --text: #f2f2f7;
-  --muted: #636380;
-  --border: rgba(255,255,255,0.07);
-  --glow: rgba(0,229,255,0.15);
+  --bg:#07070d;--s1:#0f0f1a;--s2:#161625;--s3:#1e1e30;
+  --accent:#00e5ff;--accent2:#bf5af2;
+  --green:#30d158;--red:#ff453a;--warn:#ffd60a;
+  --text:#f2f2f7;--muted:#636380;
+  --border:rgba(255,255,255,0.07);
+  --glow:rgba(0,229,255,0.12);
 }
 
-/* ── RESET ── */
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 
-body {
-  background:var(--bg);
-  color:var(--text);
+body{
+  background:var(--bg);color:var(--text);
   font-family:'Syne',system-ui,sans-serif;
-  min-height:100vh;
-  display:flex;flex-direction:column;
+  min-height:100vh;display:flex;flex-direction:column;
   overflow-x:hidden;
 }
 
-/* Grid background */
-body::before {
+body::before{
   content:'';position:fixed;inset:0;
   background-image:
     linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),
     linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);
-  background-size:48px 48px;
-  pointer-events:none;z-index:0;
+  background-size:48px 48px;pointer-events:none;z-index:0;
 }
-body::after {
-  content:'';position:fixed;
-  width:700px;height:700px;
-  background:radial-gradient(circle,rgba(191,90,242,0.1) 0%,transparent 65%);
-  top:-250px;right:-250px;
-  pointer-events:none;z-index:0;
+body::after{
+  content:'';position:fixed;width:600px;height:600px;
+  background:radial-gradient(circle,rgba(191,90,242,0.08) 0%,transparent 65%);
+  top:-200px;right:-200px;pointer-events:none;z-index:0;
 }
 
-/* ════════════════════════════════════
-   HEADER
-════════════════════════════════════ */
-header {
+/* ── HEADER ── */
+header{
   position:relative;z-index:100;
-  padding:18px 36px;
+  padding:16px 32px;
   display:flex;align-items:center;gap:12px;
   border-bottom:1px solid var(--border);
   backdrop-filter:blur(12px);
 }
-
-.logo {
-  font-size:20px;font-weight:800;letter-spacing:-.5px;
-  display:flex;align-items:center;gap:10px;
-  flex:1;
+.logo{
+  font-size:19px;font-weight:800;letter-spacing:-.5px;
+  display:flex;align-items:center;gap:10px;flex:1;
 }
-.logo-beam {
-  width:28px;height:7px;
+.logo-beam{
+  width:26px;height:6px;
   background:linear-gradient(90deg,var(--accent2),var(--accent));
-  border-radius:100px;
-  box-shadow:0 0 14px var(--accent);
+  border-radius:100px;box-shadow:0 0 12px var(--accent);
   animation:beam 2.5s ease-in-out infinite;
 }
-@keyframes beam{0%,100%{opacity:1;transform:scaleX(1)}50%{opacity:.5;transform:scaleX(.65)}}
+@keyframes beam{0%,100%{opacity:1;transform:scaleX(1)}50%{opacity:.4;transform:scaleX(.6)}}
 
-.nav-links {
-  display:flex;align-items:center;gap:4px;
-}
-.nav-link {
-  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.5px;
-  color:var(--muted);padding:6px 14px;border-radius:8px;
-  cursor:pointer;transition:all .15s;border:none;background:transparent;
+.nav{display:flex;gap:2px;}
+.nav-btn{
   font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  color:var(--muted);padding:6px 14px;border-radius:8px;
+  cursor:pointer;border:none;background:transparent;
+  transition:all .15s;
 }
-.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.05);}
-.nav-link.active{color:var(--accent);background:rgba(0,229,255,0.08);}
+.nav-btn:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.nav-btn.active{color:var(--accent);background:rgba(0,229,255,0.08);}
 
-.chip {
+.chip{
   font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;
   color:var(--accent);background:rgba(0,229,255,0.08);
   border:1px solid rgba(0,229,255,0.18);
   padding:3px 9px;border-radius:100px;
 }
 
-/* ════════════════════════════════════
-   MAIN & SCREENS
-════════════════════════════════════ */
-main {
+/* ── MAIN ── */
+main{
   flex:1;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  padding:40px 20px;position:relative;z-index:10;
+  padding:36px 20px;position:relative;z-index:10;
 }
 
-.page{display:none;}
-.page.active{display:flex;flex-direction:column;align-items:center;}
+/* ── PAGES ── */
+.page{display:none;width:100%;flex-direction:column;align-items:center;}
+.page.active{display:flex;animation:fadeUp .35s cubic-bezier(.16,1,.3,1);}
 
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SCREENS (dentro de page-app) ── */
 .screen{display:none;flex-direction:column;align-items:center;}
-.screen.active{display:flex;animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both;}
+.screen.active{display:flex;animation:fadeUp .3s cubic-bezier(.16,1,.3,1);}
 
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(18px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* ════════════════════════════════════
-   PAGE: APP (MAIN)
-════════════════════════════════════ */
-#page-app{width:100%;}
-
-/* ── DROP SCREEN ── */
-#s-drop{gap:26px;max-width:560px;width:100%;}
+/* ═══════════════════════════
+   PAGE APP — PANTALLA DROP
+═══════════════════════════ */
+#s-drop{gap:20px;max-width:520px;width:100%;}
 
 .hero{text-align:center;}
 .hero h1{
-  font-size:clamp(32px,5.5vw,52px);
-  font-weight:800;line-height:1.05;letter-spacing:-2px;
+  font-size:clamp(30px,5vw,48px);font-weight:800;
+  line-height:1.05;letter-spacing:-2px;
 }
 .hero h1 em{
   font-style:normal;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.hero-sub {
-  margin-top:12px;
-  font-family:'DM Mono',monospace;font-size:12px;
-  color:var(--muted);line-height:1.7;
-  max-width:420px;margin-left:auto;margin-right:auto;
+.hero p{
+  margin-top:10px;font-family:'DM Mono',monospace;
+  font-size:12px;color:var(--muted);line-height:1.7;
 }
-.hero-sub strong{color:rgba(0,229,255,0.8);}
+
+/* No-cookies strip */
+.ncstrip{
+  width:100%;display:flex;align-items:flex-start;gap:8px;
+  background:rgba(48,209,88,0.05);border:1px solid rgba(48,209,88,0.15);
+  border-radius:10px;padding:10px 14px;
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:rgba(48,209,88,0.85);line-height:1.5;
+}
+.ncstrip span{flex-shrink:0;}
 
 /* Brave warning */
-#brave-warn{
+.brave-warn{
   display:none;width:100%;
-  background:rgba(255,214,10,0.05);
-  border:1px solid rgba(255,214,10,0.2);
-  border-radius:14px;padding:18px 22px;
-  flex-direction:column;gap:10px;
+  background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.18);
+  border-radius:12px;padding:16px 18px;
+  flex-direction:column;gap:8px;
 }
-#brave-warn.show{display:flex;animation:fadeUp .3s ease;}
-.warn-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--warn);}
-.warn-steps{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.9;}
-.warn-steps code{color:var(--warn);background:rgba(255,214,10,0.1);padding:1px 5px;border-radius:4px;font-size:10px;}
+.brave-warn.show{display:flex;}
+.brave-title{font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px;}
+.brave-steps{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.9;}
+.brave-steps code{color:var(--warn);background:rgba(255,214,10,0.1);padding:1px 5px;border-radius:4px;font-size:10px;}
 
 /* Tabs */
-.tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow:hidden;width:100%;}
+.tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;width:100%;}
 .tab{
-  flex:1;padding:13px;text-align:center;cursor:pointer;
-  font-size:13px;font-weight:700;transition:all .15s;
-  color:var(--muted);background:transparent;border:none;font-family:'Syne',sans-serif;
+  flex:1;padding:11px;text-align:center;cursor:pointer;
+  font-size:13px;font-weight:700;color:var(--muted);
+  background:transparent;border:none;font-family:'Syne',sans-serif;
+  transition:all .15s;
 }
 .tab.active{background:var(--s2);color:var(--text);}
 .tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,0.03);}
@@ -203,7 +175,7 @@ main {
 /* Drop zone */
 .drop-zone{
   width:100%;border:2px dashed rgba(0,229,255,0.18);
-  border-radius:20px;padding:52px 36px;text-align:center;
+  border-radius:18px;padding:48px 32px;text-align:center;
   cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);
   background:rgba(0,229,255,0.015);position:relative;overflow:hidden;
 }
@@ -214,13 +186,11 @@ main {
 }
 .drop-zone:hover::before,.drop-zone.over::before{opacity:1;}
 .drop-zone:hover,.drop-zone.over{
-  border-color:rgba(0,229,255,0.5);
-  transform:scale(1.006);
-  box-shadow:0 0 40px rgba(0,229,255,0.06);
+  border-color:rgba(0,229,255,0.5);transform:scale(1.005);
 }
-.drop-icon{font-size:42px;margin-bottom:12px;display:block;transition:transform .2s;}
+.drop-icon{font-size:40px;margin-bottom:10px;display:block;transition:transform .2s;}
 .drop-zone:hover .drop-icon{transform:translateY(-4px) scale(1.05);}
-.drop-title{font-size:17px;font-weight:700;margin-bottom:6px;}
+.drop-title{font-size:16px;font-weight:700;margin-bottom:5px;}
 .drop-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
 #file-input{display:none;}
 
@@ -228,60 +198,81 @@ main {
 .url-area{width:100%;display:flex;flex-direction:column;gap:10px;}
 .url-wrap{
   display:flex;gap:8px;background:var(--s2);
-  border:1px solid var(--border);border-radius:14px;padding:13px 16px;
+  border:1px solid var(--border);border-radius:12px;padding:12px 14px;
   transition:border-color .2s;
 }
 .url-wrap:focus-within{border-color:rgba(0,229,255,0.35);}
 .url-wrap span{font-size:16px;}
-.url-input{
+.url-input-field{
   flex:1;background:transparent;border:none;outline:none;
   color:var(--text);font-family:'DM Mono',monospace;font-size:13px;
 }
-.url-input::placeholder{color:var(--muted);}
+.url-input-field::placeholder{color:var(--muted);}
 
-/* Feats */
-.feats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
-.feat{
+/* How it works — compact */
+.how{
+  width:100%;background:var(--s1);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.how-label{
+  font-family:'DM Mono',monospace;font-size:9px;
+  color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+}
+.how-steps{display:flex;flex-direction:column;gap:7px;}
+.how-step{
+  display:flex;align-items:center;gap:10px;
   font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
-  display:flex;align-items:center;gap:5px;
+}
+.how-num{
+  width:20px;height:20px;border-radius:50%;flex-shrink:0;
+  background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.18);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:var(--accent);font-weight:700;
+}
+.how-step strong{color:var(--text);}
+
+/* Features */
+.feats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.feat{
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);
+  display:flex;align-items:center;gap:4px;
 }
 .feat::before{content:'✓';color:var(--accent);font-weight:700;}
 
 /* ── BUTTONS ── */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  padding:13px 24px;border-radius:12px;
+  padding:12px 22px;border-radius:11px;
   font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
   cursor:pointer;border:none;transition:all .18s cubic-bezier(.16,1,.3,1);
-  letter-spacing:-.3px;position:relative;overflow:hidden;
+  letter-spacing:-.3px;
 }
-.btn::after{
-  content:'';position:absolute;inset:0;
-  background:rgba(255,255,255,0);transition:background .15s;
-}
-.btn:hover::after{background:rgba(255,255,255,0.06);}
 .btn:active{transform:scale(.97);}
-
 .btn-primary{
   background:linear-gradient(135deg,var(--accent2),var(--accent));
-  color:#000;box-shadow:0 0 24px rgba(0,229,255,0.18);width:100%;
+  color:#000;box-shadow:0 0 20px rgba(0,229,255,0.15);width:100%;
 }
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 36px rgba(0,229,255,0.3);}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 32px rgba(0,229,255,0.28);}
+.btn-ghost{
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border);font-size:13px;
+}
 .btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.14);}
 
 /* ── CARD ── */
 .card{
-  background:var(--s1);border:1px solid var(--border);border-radius:24px;
-  padding:26px;display:flex;flex-direction:column;align-items:center;gap:16px;
-  box-shadow:0 0 60px var(--glow),0 40px 80px rgba(0,0,0,0.5);
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:22px;padding:24px;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  box-shadow:0 0 50px var(--glow),0 32px 64px rgba(0,0,0,0.5);
   width:100%;
 }
 
 /* File strip */
 .fstrip{
-  display:flex;align-items:center;gap:12px;
-  background:var(--s2);padding:11px 14px;border-radius:12px;width:100%;
+  display:flex;align-items:center;gap:10px;
+  background:var(--s2);padding:10px 14px;border-radius:10px;width:100%;
 }
 .ficon{font-size:20px;}
 .fdet{flex:1;min-width:0;}
@@ -290,391 +281,246 @@ main {
 
 /* QR */
 #qr-box{
-  background:#fff;padding:14px;border-radius:14px;
+  background:#fff;padding:12px;border-radius:12px;
   display:flex;align-items:center;justify-content:center;
-  min-width:200px;min-height:200px;position:relative;
+  min-width:196px;min-height:196px;position:relative;
 }
-.qr-loading{
+#qr-loading{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  border-radius:14px;background:#fff;
+  border-radius:12px;background:#fff;font-size:13px;color:#666;
+  font-family:'DM Mono',monospace;
 }
 
-/* Pin */
-.pin-section{width:100%;display:flex;flex-direction:column;gap:8px;}
-.pin-label{
+/* ── RECEIVER COUNTER ── */
+.rcounter{
+  width:100%;display:flex;flex-direction:column;gap:8px;
+}
+.rcounter-header{
+  display:flex;align-items:center;justify-content:space-between;
+}
+.rcounter-label{
   font-family:'DM Mono',monospace;font-size:10px;
-  color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;
+  color:var(--muted);letter-spacing:1px;text-transform:uppercase;
 }
-.pin-row{
-  display:flex;gap:8px;justify-content:center;
-  background:var(--s2);padding:11px 18px;
-  border-radius:12px;border:1px solid var(--border);
+.rcounter-num{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--accent);font-weight:700;
 }
-.pin-emoji{font-size:24px;}
+.rcounter-list{
+  display:flex;flex-direction:column;gap:6px;
+  max-height:120px;overflow-y:auto;
+}
+.rcounter-item{
+  display:flex;align-items:center;gap:8px;
+  background:var(--s2);border-radius:8px;padding:8px 10px;
+  transition:all .2s;
+}
+.rcounter-icon{font-size:14px;flex-shrink:0;}
+.rcounter-name{
+  flex:1;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.rcounter-pct{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--accent);font-weight:700;min-width:32px;text-align:right;
+}
+.rcounter-bar{
+  width:100%;height:2px;background:var(--s3);border-radius:100px;margin-top:4px;overflow:hidden;
+}
+.rcounter-fill{
+  height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));
+  border-radius:100px;transition:width .15s ease-out;
+  box-shadow:0 0 6px rgba(0,229,255,0.4);
+}
 
 /* Status */
 .status{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:12px;}
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
-.sdot.waiting{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:sdpulse 1.5s infinite;}
+.sdot.waiting{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:sdp 1.5s infinite;}
 .sdot.connected{background:var(--green);box-shadow:0 0 8px var(--green);}
-.sdot.sending{background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:sdpulse .8s infinite;}
+.sdot.sending{background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:sdp .8s infinite;}
 .sdot.done{background:var(--accent);box-shadow:0 0 8px var(--accent);}
-@keyframes sdpulse{0%,100%{opacity:1}50%{opacity:.35}}
-
-/* Speed display */
-.speed-display{
-  font-family:'DM Mono',monospace;font-size:11px;
-  color:var(--accent);letter-spacing:.5px;
-  min-height:16px;transition:all .3s;
-}
+@keyframes sdp{0%,100%{opacity:1}50%{opacity:.35}}
 
 /* Progress */
-.prog-wrap{width:100%;display:flex;flex-direction:column;gap:6px;}
+.prog-wrap{width:100%;display:flex;flex-direction:column;gap:5px;}
 .prog-bg{height:4px;background:var(--s3);border-radius:100px;overflow:hidden;}
 .prog-fill{
   height:100%;width:0%;
   background:linear-gradient(90deg,var(--accent2),var(--accent));
-  border-radius:100px;
-  box-shadow:0 0 10px rgba(0,229,255,0.4);
-  transition:width .15s ease-out;
+  border-radius:100px;transition:width .15s ease-out;
+  box-shadow:0 0 8px rgba(0,229,255,0.4);
 }
-.prog-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;}
-
-/* ── DRAG PIN ── */
-.drop-slots{display:flex;gap:8px;justify-content:center;}
-.drop-slot{
-  width:54px;height:54px;
-  border:2px dashed rgba(0,229,255,0.2);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:24px;transition:all .15s;cursor:pointer;position:relative;
-}
-.drop-slot.drag-target{border-color:var(--accent);background:rgba(0,229,255,0.08);transform:scale(1.08);}
-.drop-slot.filled{border-style:solid;border-color:rgba(0,229,255,0.25);}
-.drop-slot.wrong{border-color:var(--red);background:rgba(255,69,58,0.1);animation:shake .4s ease;}
-.drop-slot .snum{
-  position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
-  font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);
-}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
-
-.emoji-source{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px 0;}
-.edrag{
-  font-size:26px;cursor:grab;
-  background:var(--s2);border:2px solid var(--border);
-  border-radius:12px;padding:7px 9px;
-  transition:all .15s;user-select:none;
-}
-.edrag:hover{border-color:rgba(0,229,255,0.35);transform:scale(1.1);}
-.edrag.dragging{opacity:.3;transform:scale(.9);}
-.edrag.used{opacity:.2;pointer-events:none;}
-
-.vmsg{
-  font-family:'DM Mono',monospace;font-size:12px;text-align:center;
-  padding:10px 16px;border-radius:10px;min-height:38px;
-  display:flex;align-items:center;justify-content:center;gap:6px;
-}
-.vmsg.err{color:var(--red);background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.2);}
-.vmsg.ok{color:var(--green);background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);}
-
-.btn-verify{
-  width:100%;padding:13px;border-radius:12px;
-  background:var(--accent);color:#000;
-  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;
-  border:none;cursor:pointer;transition:all .18s;opacity:.35;pointer-events:none;
-}
-.btn-verify.ready{opacity:1;pointer-events:all;}
-.btn-verify.ready:hover{transform:translateY(-2px);box-shadow:0 0 24px rgba(0,229,255,0.3);}
-.btn-clr{
-  background:transparent;border:1px solid var(--border);color:var(--muted);
-  font-family:'Syne',sans-serif;font-size:12px;padding:8px 16px;
-  border-radius:8px;cursor:pointer;transition:all .15s;
-}
-.btn-clr:hover{color:var(--text);}
+.prog-row{display:flex;justify-content:space-between;align-items:center;}
+.prog-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.speed-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
 
 /* Done */
-#s-done{gap:18px;text-align:center;}
+#s-done{gap:16px;text-align:center;}
 .done-circle{
-  width:76px;height:76px;border-radius:50%;
+  width:72px;height:72px;border-radius:50%;
   background:rgba(48,209,88,0.1);border:2px solid rgba(48,209,88,0.3);
-  display:flex;align-items:center;justify-content:center;font-size:34px;
+  display:flex;align-items:center;justify-content:center;font-size:32px;
   animation:pop .4s cubic-bezier(.175,.885,.32,1.275);
 }
 @keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 
-/* URL / Image preview */
+/* Image preview */
+.img-preview{width:100%;max-height:260px;border-radius:12px;object-fit:contain;background:var(--s2);}
+
+/* URL preview */
 .url-preview{
   width:100%;background:var(--s2);border:1px solid var(--border);
-  border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;
+  border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;
 }
-.url-plabel{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.url-plabel{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
 .url-plink{
   display:flex;align-items:center;gap:8px;color:var(--accent);
   font-family:'DM Mono',monospace;font-size:12px;
   text-decoration:none;word-break:break-all;
 }
 .url-plink:hover{text-decoration:underline;}
-.img-preview{
-  width:100%;max-height:280px;border-radius:14px;
-  object-fit:contain;background:var(--s2);
+
+/* ═══════════════════════════
+   PAGE ABOUT
+═══════════════════════════ */
+#page-about{max-width:640px;}
+
+.about-section{
+  width:100%;display:flex;flex-direction:column;gap:14px;padding:8px 0;
 }
 
-/* ════════════════════════════════════
-   PAGE: ABOUT
-════════════════════════════════════ */
-#page-about{
-  max-width:680px;width:100%;
-  gap:0;
-  animation:fadeUp .35s cubic-bezier(.16,1,.3,1);
+.about-title{
+  font-size:clamp(24px,4vw,34px);font-weight:800;
+  letter-spacing:-1.5px;text-align:center;line-height:1.1;margin-bottom:4px;
 }
-
-.about-hero{
-  text-align:center;padding:40px 20px 32px;
-}
-.about-hero h2{
-  font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-1.5px;
-  margin-bottom:12px;
-}
-.about-hero h2 em{
+.about-title em{
   font-style:normal;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.about-hero p{
-  font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);
-  line-height:1.8;max-width:520px;margin:0 auto;
+.about-lead{
+  font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);
+  text-align:center;line-height:1.7;margin-bottom:8px;
 }
 
-.about-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:14px;
-  padding:0 0 32px;width:100%;
-}
-@media(max-width:520px){.about-grid{grid-template-columns:1fr;}}
+/* Comparison table */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.cmp-col{border-radius:14px;padding:18px;}
+.cmp-col.bad{background:rgba(255,69,58,0.04);border:1px solid rgba(255,69,58,0.1);}
+.cmp-col.good{background:rgba(48,209,88,0.04);border:1px solid rgba(48,209,88,0.13);}
+.cmp-head{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.cmp-list{display:flex;flex-direction:column;gap:5px;}
+.cmp-item{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.cmp-item.x{color:rgba(255,69,58,0.7);}
+.cmp-item.ok{color:rgba(48,209,88,0.85);}
 
 .about-card{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:18px;padding:22px;
-  display:flex;flex-direction:column;gap:10px;
-  transition:border-color .2s;
-}
-.about-card:hover{border-color:rgba(0,229,255,0.15);}
-.about-card-icon{font-size:28px;}
-.about-card h3{font-size:15px;font-weight:800;letter-spacing:-.3px;}
-.about-card p{
-  font-family:'DM Mono',monospace;font-size:11px;
-  color:var(--muted);line-height:1.7;
-}
-.about-card p strong{color:var(--text);}
-
-.about-tech{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:18px;padding:24px;width:100%;margin-bottom:14px;
-}
-.about-tech h3{font-size:15px;font-weight:800;margin-bottom:14px;letter-spacing:-.3px;}
-.tech-list{display:flex;flex-direction:column;gap:10px;}
-.tech-item{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:12px;background:var(--s2);border-radius:12px;
-}
-.tech-item-icon{font-size:18px;margin-top:1px;flex-shrink:0;}
-.tech-item-body{}
-.tech-item-title{font-size:13px;font-weight:700;margin-bottom:3px;}
-.tech-item-desc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.6;}
-
-.about-no-cookies{
-  width:100%;
-  background:rgba(0,229,255,0.04);
-  border:1px solid rgba(0,229,255,0.12);
-  border-radius:18px;padding:24px;
-  display:flex;flex-direction:column;gap:10px;margin-bottom:14px;
-}
-.ncook-title{
-  display:flex;align-items:center;gap:10px;
-  font-size:16px;font-weight:800;letter-spacing:-.3px;
-}
-.ncook-title span{font-size:24px;}
-.ncook-desc{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.8;}
-.ncook-desc strong{color:var(--accent);}
-
-.about-disclaimer{
-  width:100%;
-  background:rgba(255,69,58,0.04);
-  border:1px solid rgba(255,69,58,0.12);
-  border-radius:18px;padding:22px;
-  display:flex;flex-direction:column;gap:8px;margin-bottom:14px;
-}
-.disc-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--red);}
-.disc-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;}
-.disc-body strong{color:var(--text);}
-
-.about-open{
   width:100%;background:var(--s1);border:1px solid var(--border);
-  border-radius:18px;padding:22px;
-  display:flex;align-items:center;gap:16px;margin-bottom:28px;
+  border-radius:14px;padding:18px 20px;
+  display:flex;flex-direction:column;gap:6px;
 }
-.open-icon{font-size:32px;flex-shrink:0;}
-.open-body h3{font-size:14px;font-weight:800;margin-bottom:6px;}
-.open-body p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;}
-.open-body a{color:var(--accent);text-decoration:none;}
-.open-body a:hover{text-decoration:underline;}
+.about-card-head{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;}
+.about-card-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;}
+.about-card-body strong{color:var(--text);}
 
-/* ════════════════════════════════════
-   FOOTER
-════════════════════════════════════ */
+.about-warn{
+  width:100%;background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.14);
+  border-radius:14px;padding:16px 18px;
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;
+}
+.about-warn strong{color:var(--warn);}
+
+.disclaimer{
+  width:100%;background:rgba(255,69,58,0.03);border:1px solid rgba(255,69,58,0.1);
+  border-radius:14px;padding:16px 18px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.disclaimer-title{font-size:13px;font-weight:800;color:var(--red);display:flex;align-items:center;gap:6px;}
+.disclaimer-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.75;}
+.disclaimer-body strong{color:var(--text);}
+
+/* ── FOOTER ── */
 footer{
-  position:relative;z-index:10;
-  padding:14px 36px;border-top:1px solid var(--border);
+  position:relative;z-index:10;padding:12px 32px;
+  border-top:1px solid var(--border);
   display:flex;align-items:center;justify-content:center;
 }
-.foot-txt{
+.foot{
   font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
 }
 .foot-sep{opacity:.25;}
 
-/* ════════════════════════════════════
-   RECEIVER SCREENS
-════════════════════════════════════ */
-#s-verify,#s-receiver{gap:22px;max-width:420px;width:100%;}
+/* ── RECEIVER PAGE ── */
+#s-receiver{gap:20px;max-width:400px;width:100%;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-
-/* Mode buttons */
-.mode-btn {
-  flex:1;display:flex;align-items:center;gap:10px;
-  padding:14px 16px;background:transparent;border:none;
-  cursor:pointer;font-family:'Syne',sans-serif;color:var(--muted);
-  transition:all .18s;text-align:left;
-}
-.mode-btn:hover{background:rgba(255,255,255,0.03);color:var(--text);}
-.mode-btn + .mode-btn{border-left:1px solid var(--border);}
-.mode-active{background:var(--s2)!important;color:var(--text)!important;}
-
-/* ════════════════════════════════════
-   RESPONSIVE
-════════════════════════════════════ */
-
-/* Tablet */
-@media(max-width:768px){
-  .about-grid{grid-template-columns:1fr;}
-  .about-open{flex-direction:column;text-align:center;}
-}
-
-/* Mobile */
+/* ── RESPONSIVE ── */
+@media(max-width:768px){.cmp{grid-template-columns:1fr;}}
 @media(max-width:480px){
-  /* Header */
-  header{padding:12px 16px;gap:8px;}
-  .logo{font-size:17px;}
-  .logo-beam{width:22px;height:6px;}
+  header{padding:12px 16px;}
   .chip{display:none;}
-  .nav-link{font-size:12px;padding:5px 9px;}
-
-  /* Main layout */
   main{padding:20px 12px;}
-
-  /* Hero */
-  .hero h1{font-size:28px;letter-spacing:-1.2px;}
-  .hero-sub{font-size:11px;}
-
-  /* Card & drop */
+  .hero h1{font-size:26px;letter-spacing:-1.2px;}
   .card{padding:16px 12px;border-radius:18px;}
-  .drop-zone{padding:34px 16px;border-radius:16px;}
-  .drop-icon{font-size:36px;}
-  .drop-title{font-size:15px;}
-
-  /* Tabs */
-  .tab{font-size:12px;padding:11px 8px;}
-
-  /* Features */
-  .feats{gap:8px;}
+  .drop-zone{padding:36px 16px;}
+  .tab{font-size:12px;padding:10px 6px;}
+  .feats{gap:6px;}
   .feat{font-size:10px;}
-
-  /* QR screen */
-  #qr-box{min-width:170px;min-height:170px;padding:10px;}
-
-  /* Drag pin slots */
-  .drop-slots{gap:5px;}
-  .drop-slot{width:58px;height:58px;font-size:22px;}
-  .edrag{font-size:22px;padding:6px 8px;}
-  .emoji-source{gap:6px;}
-
-  /* About page */
-  .about-hero h2{font-size:24px;}
-  .about-hero p{font-size:11px;}
-  .about-card{padding:16px;}
-  .about-tech{padding:18px;}
-  .tech-item{padding:10px;}
-  .about-no-cookies,.about-disclaimer,.about-open{padding:16px;}
-
-  /* Footer */
-  footer{padding:12px 16px;}
-  .foot-txt{font-size:10px;gap:8px;}
+  #qr-box{min-width:170px;min-height:170px;}
+  .nav-btn{font-size:12px;padding:5px 10px;}
+  footer{padding:10px 16px;}
+  .foot{font-size:10px;gap:8px;}
   .foot-sep{display:none;}
 }
-
-/* Very small screens */
 @media(max-width:360px){
-  .hero h1{font-size:24px;}
-  .drop-slot{width:50px;height:50px;font-size:18px;}
-  .nav-link{font-size:11px;padding:4px 7px;}
+  .hero h1{font-size:22px;}
 }
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════
-     HEADER
-════════════════════════════════════ -->
 <header>
   <div class="logo">
     <div class="logo-beam"></div>
     DropBeam
   </div>
-  <nav class="nav-links">
-    <button class="nav-link active" onclick="showPage('app')">Compartir</button>
-    <button class="nav-link" onclick="showPage('about')">Acerca de</button>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
+    <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
   </nav>
   <div class="chip">P2P · CIFRADO</div>
 </header>
 
-<!-- ════════════════════════════════════
-     MAIN
-════════════════════════════════════ -->
 <main>
 
-<!-- ══════════════ PAGE: APP ══════════════ -->
-<div id="page-app" class="page active" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+<!-- ══════════════════════════════
+     PAGE: APP
+══════════════════════════════ -->
+<div id="page-app" class="page active">
 
   <!-- S1: DROP -->
-  <div id="s-drop" class="screen active" style="gap:26px;max-width:560px;width:100%;">
+  <div id="s-drop" class="screen active">
 
     <div class="hero">
       <h1>Comparte archivos<br><em>sin intermediarios</em></h1>
-      <p class="hero-sub">
-        Sin servidores. Sin almacenamiento. De tu dispositivo al suyo, directo.<br>
-        Como Emule pero en el navegador — <strong>ningún servidor toca tus archivos</strong>.
-      </p>
+      <p>Transferencia directa entre dispositivos.<br>
+      Como AirDrop, pero en cualquier dispositivo. Sin instalar nada.</p>
     </div>
 
-    <!-- No cookies banner -->
-    <div style="
-      width:100%;display:flex;align-items:center;gap:10px;
-      background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.18);
-      border-radius:12px;padding:11px 16px;
-    ">
-      <span style="font-size:18px;">🍪</span>
-      <span style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(48,209,88,0.9);letter-spacing:.3px;">
-        Esta web <strong>no usa cookies</strong>. No hay nada que aceptar — por diseño, no por omisión.
-      </span>
+    <div class="ncstrip">
+      <span>🍪</span>
+      <span>Esta web <strong>no usa cookies</strong>. No hay nada que aceptar — por diseño, no por omisión.</span>
     </div>
 
-    <div id="brave-warn">
-      <div class="warn-title">⚠️ Brave detectado</div>
-      <div class="warn-steps">
-        Brave bloquea WebRTC por defecto. Para activarlo:<br><br>
+    <div class="brave-warn" id="brave-warn">
+      <div class="brave-title">⚠️ Brave detectado</div>
+      <div class="brave-steps">
+        Brave bloquea WebRTC por defecto. Para activarlo:<br>
         1 · Ve a <code>brave://settings/privacy</code><br>
-        2 · Busca <code>WebRTC IP handling policy</code><br>
-        3 · Selecciona <code>Default</code><br>
-        4 · Recarga esta página
+        2 · Busca <code>WebRTC IP handling policy</code> → selecciona <code>Default</code><br>
+        3 · Recarga esta página
       </div>
     </div>
 
@@ -696,106 +542,37 @@ footer{
       <div class="url-area">
         <div class="url-wrap">
           <span>🔗</span>
-          <input class="url-input" id="url-input" type="url" placeholder="https://...">
+          <input class="url-input-field" id="url-input" type="url" placeholder="https://...">
         </div>
-        <button class="btn btn-primary" onclick="handleUrl()">Generar QR para este enlace →</button>
+        <button class="btn btn-primary" onclick="handleUrl()">Generar QR →</button>
       </div>
     </div>
 
-    <!-- How it works — debajo del drop zone -->
-    <div style="
-      width:100%;background:var(--s1);border:1px solid var(--border);
-      border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;
-    ">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">
-        Cómo funciona
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div style="
-            width:24px;height:24px;border-radius:50%;
-            background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);
-            display:flex;align-items:center;justify-content:center;
-            font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);flex-shrink:0;margin-top:1px;
-          ">1</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;">
-            <strong style="color:var(--text);">Sube tu archivo o pega una URL.</strong> Aparece un código QR en tu pantalla.
-          </div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div style="
-            width:24px;height:24px;border-radius:50%;
-            background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);
-            display:flex;align-items:center;justify-content:center;
-            font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);flex-shrink:0;margin-top:1px;
-          ">2</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;">
-            <strong style="color:var(--text);">Tu amigo escanea el QR</strong> con la cámara del móvil. Sin instalar nada.
-          </div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <div style="
-            width:24px;height:24px;border-radius:50%;
-            background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);
-            display:flex;align-items:center;justify-content:center;
-            font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);flex-shrink:0;margin-top:1px;
-          ">3</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.6;">
-            <strong style="color:var(--text);">El archivo llega a su móvil</strong> — sin pasar por ningún servidor. Sin WhatsApp, sin email, sin Telegram.
-          </div>
-        </div>
-      </div>
-      <div style="
-        background:var(--s2);border-radius:10px;padding:12px 14px;
-        font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;
-        border-left:2px solid rgba(0,229,255,0.3);
-      ">
-        💡 <strong style="color:var(--text);">Ejemplo real:</strong> Estás con un amigo. Quieres pasarle un vídeo, una foto o un contrato. Subes el archivo, él escanea el QR de tu pantalla y en segundos lo tiene en su móvil. De dispositivo a dispositivo — como pasarle algo en mano.
-      </div>
-    </div>
-
-    <!-- Modo de seguridad -->
-    <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;">
-        Modo de transferencia
-      </div>
-      <div style="display:flex;border:1px solid var(--border);border-radius:12px;overflow:hidden;width:100%;">
-        <button id="mode-fast" class="mode-btn mode-active" onclick="setMode('fast')">
-          <span style="font-size:16px;">⚡</span>
-          <div>
-            <div style="font-size:13px;font-weight:700;">Rápido</div>
-            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Sin verificación · Estáis juntos</div>
-          </div>
-        </button>
-        <button id="mode-secure" class="mode-btn" onclick="setMode('secure')">
-          <span style="font-size:16px;">🔐</span>
-          <div>
-            <div style="font-size:13px;font-weight:700;">Seguro</div>
-            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Verificación con emojis</div>
-          </div>
-        </button>
-      </div>
-      <div id="mode-desc" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.6;">
-        El receptor escanea y recibe al instante. Ideal cuando estáis en la misma habitación.
+    <div class="how">
+      <div class="how-label">Cómo funciona</div>
+      <div class="how-steps">
+        <div class="how-step"><div class="how-num">1</div><span><strong>Arrastra tu archivo</strong> — aparece un QR en pantalla</span></div>
+        <div class="how-step"><div class="how-num">2</div><span><strong>Escanea el QR</strong> con la cámara del otro dispositivo</span></div>
+        <div class="how-step"><div class="how-num">3</div><span><strong>El archivo llega directo</strong> — sin almacenamiento intermedio</span></div>
       </div>
     </div>
 
     <div class="feats">
-      <div class="feat">Cifrado extremo a extremo</div>
-      <div class="feat">Sin cuenta</div>
-      <div class="feat">Sin cookies</div>
-      <div class="feat">P2P directo</div>
-      <div class="feat">Sin límite de tamaño</div>
-      <div class="feat">iOS · Android · PC</div>
+      <div class="feat">Sin instalar nada</div>
+      <div class="feat">Sin almacenamiento en servidores</div>
+      <div class="feat">iPhone · Android · Windows · Mac</div>
+      <div class="feat">Cifrado en tránsito</div>
+      <div class="feat">Sin cuenta ni registro</div>
+      <div class="feat">Varios receptores a la vez</div>
     </div>
   </div>
 
-  <!-- S2: QR SENDER -->
-  <div id="s-qr" class="screen" style="gap:22px;max-width:480px;width:100%;">
+  <!-- S2: QR + SENDER -->
+  <div id="s-qr" class="screen" style="gap:20px;max-width:460px;width:100%;">
     <div style="text-align:center;">
-      <h2 style="font-size:24px;font-weight:800;letter-spacing:-1px;">Escanea para recibir</h2>
-      <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-top:5px;">
-        Directo a quien escanee · nadie más lo ve
+      <h2 style="font-size:22px;font-weight:800;letter-spacing:-1px;">Escanea para recibir</h2>
+      <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;">
+        Transferencia directa · sin almacenamiento · cifrado en tránsito
       </p>
     </div>
     <div class="card">
@@ -808,27 +585,28 @@ footer{
       </div>
 
       <div id="qr-box">
-        <div class="qr-loading" id="qr-loading">⏳</div>
-        <canvas id="qr-canvas" style="display:none;border-radius:6px;"></canvas>
+        <div id="qr-loading">Generando QR...</div>
+        <canvas id="qr-canvas" style="display:none;border-radius:4px;"></canvas>
       </div>
 
-      <div class="pin-section" id="pin-section">
-        <div class="pin-label">Di este orden en voz alta al receptor</div>
-        <div class="pin-row" id="sender-pin"><span class="pin-emoji">⏳</span></div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;">
-          El receptor los arrastra en ese orden para verificar la conexión
+      <!-- Receiver counter -->
+      <div class="rcounter" id="rcounter" style="display:none;">
+        <div class="rcounter-header">
+          <div class="rcounter-label">Receptores</div>
+          <div class="rcounter-num" id="rcounter-num">0 conectados</div>
         </div>
+        <div class="rcounter-list" id="rcounter-list"></div>
       </div>
 
       <div class="status">
         <div class="sdot waiting" id="s-dot"></div>
-        <span id="s-status">Inicializando conexión segura...</span>
+        <span id="s-status">Conectando...</span>
       </div>
 
       <div class="prog-wrap" id="s-prog" style="display:none;">
         <div class="prog-bg"><div class="prog-fill" id="s-fill"></div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="speed-display" id="s-speed"></div>
+        <div class="prog-row">
+          <div class="speed-txt" id="s-speed"></div>
           <div class="prog-txt" id="s-prog-txt">0%</div>
         </div>
       </div>
@@ -839,48 +617,21 @@ footer{
   <!-- S3: DONE SENDER -->
   <div id="s-done" class="screen">
     <div class="done-circle">✅</div>
-    <div style="font-size:26px;font-weight:800;letter-spacing:-1px;">¡Enviado!</div>
-    <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">
+    <div style="font-size:24px;font-weight:800;letter-spacing:-1px;">¡Enviado!</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);text-align:center;" id="done-sub">
       Llegó de forma segura · sin pasar por ningún servidor
     </div>
-    <button class="btn btn-primary" style="margin-top:8px;" onclick="resetApp()">Compartir otro</button>
+    <button class="btn btn-primary" style="margin-top:4px;" onclick="resetApp()">Compartir otro</button>
   </div>
 
-  <!-- S4: VERIFY PIN (receptor) -->
-  <div id="s-verify" class="screen">
-    <div style="text-align:center;">
-      <div style="font-size:38px;margin-bottom:10px;">🔐</div>
-      <h2 style="font-size:20px;font-weight:800;letter-spacing:-.5px;">Verifica la conexión</h2>
-      <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px;line-height:1.7;">
-        El emisor te dice el orden en voz alta.<br>
-        Arrastra los emojis en ese orden exacto.
-      </p>
-    </div>
-    <div class="card" style="gap:18px;">
-      <div>
-        <div class="pin-label" style="text-align:center;margin-bottom:14px;">Arrastra aquí en el orden que te dicen</div>
-        <div class="drop-slots" id="drop-slots"></div>
-      </div>
-      <div>
-        <div class="pin-label" style="text-align:center;margin-bottom:10px;">Emojis disponibles — toca o arrastra</div>
-        <div class="emoji-source" id="emoji-source"></div>
-      </div>
-      <div class="vmsg" id="vmsg"></div>
-      <div style="display:flex;gap:8px;width:100%;">
-        <button class="btn-clr" onclick="clearSlots()">Borrar</button>
-        <button class="btn-verify" id="btn-verify" onclick="checkPin()">Confirmar orden →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- S5: RECEIVER -->
+  <!-- S4: RECEIVER -->
   <div id="s-receiver" class="screen">
     <div class="card">
-      <div style="font-size:46px;animation:float 3s ease-in-out infinite;">📡</div>
+      <div style="font-size:44px;animation:float 3s ease-in-out infinite;">📡</div>
       <div style="text-align:center;">
         <h2 style="font-size:20px;font-weight:800;letter-spacing:-.5px;" id="r-title">Conectando...</h2>
         <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;" id="r-sub">
-          Estableciendo conexión cifrada
+          Estableciendo canal seguro
         </p>
       </div>
 
@@ -895,7 +646,7 @@ footer{
       <img id="r-img" class="img-preview" style="display:none;" alt="preview">
 
       <div class="url-preview" id="r-url-preview" style="display:none;">
-        <div class="url-plabel">ENLACE RECIBIDO</div>
+        <div class="url-plabel">Enlace recibido</div>
         <a class="url-plink" id="r-url-link" href="#" target="_blank" rel="noopener">
           🔗 <span id="r-url-txt">-</span>
         </a>
@@ -904,8 +655,8 @@ footer{
 
       <div class="prog-wrap" id="r-prog">
         <div class="prog-bg"><div class="prog-fill" id="r-fill"></div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="speed-display" id="r-speed"></div>
+        <div class="prog-row">
+          <div class="speed-txt" id="r-speed"></div>
           <div class="prog-txt" id="r-prog-txt">Conectando...</div>
         </div>
       </div>
@@ -919,151 +670,121 @@ footer{
 
 </div><!-- /page-app -->
 
-<!-- ══════════════ PAGE: ABOUT ══════════════ -->
-<div id="page-about" class="page" style="width:100%;">
-  <div style="max-width:680px;width:100%;display:flex;flex-direction:column;align-items:center;gap:0;">
+<!-- ══════════════════════════════
+     PAGE: ABOUT
+══════════════════════════════ -->
+<div id="page-about" class="page">
+  <div class="about-section">
 
-    <div class="about-hero">
-      <h2>Por qué <em>DropBeam</em><br>es diferente</h2>
-      <p>
-        WeTransfer, Smash, Filemail y similares almacenan tus archivos en sus servidores.
-        DropBeam no almacena nada — porque técnicamente no puede hacerlo.
+    <div>
+      <div class="about-title">Por qué DropBeam<br><em>no es como los demás</em></div>
+      <p class="about-lead">
+        DropBeam no es un servicio de almacenamiento ni envío diferido como WeTransfer o Google Drive.<br>
+        Es una conexión directa entre dispositivos en tiempo real.
       </p>
     </div>
 
     <!-- Comparativa -->
-    <div style="width:100%;margin-bottom:14px;">
-      <div style="
-        display:grid;grid-template-columns:1fr 1fr;gap:12px;
-      ">
-        <div style="
-          background:rgba(255,69,58,0.04);border:1px solid rgba(255,69,58,0.12);
-          border-radius:16px;padding:20px;
-        ">
-          <div style="font-size:22px;margin-bottom:8px;">☁️</div>
-          <div style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text);">WeTransfer / Smash</div>
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;display:flex;flex-direction:column;gap:4px;">
-            <span>✗ Tu archivo va a sus servidores</span>
-            <span>✗ Lo almacenan durante días</span>
-            <span>✗ Pueden ver el contenido</span>
-            <span>✗ Límite de tamaño (2GB gratis)</span>
-            <span>✗ Requiere email</span>
-            <span>✗ Usan tus datos</span>
-          </div>
-        </div>
-        <div style="
-          background:rgba(48,209,88,0.04);border:1px solid rgba(48,209,88,0.15);
-          border-radius:16px;padding:20px;
-        ">
-          <div style="font-size:22px;margin-bottom:8px;">⚡</div>
-          <div style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text);">DropBeam</div>
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;display:flex;flex-direction:column;gap:4px;">
-            <span style="color:var(--green);">✓ Directo entre dispositivos</span>
-            <span style="color:var(--green);">✓ Sin almacenamiento</span>
-            <span style="color:var(--green);">✓ Nadie ve el contenido</span>
-            <span style="color:var(--green);">✓ Sin límite de tamaño</span>
-            <span style="color:var(--green);">✓ Sin cuenta ni email</span>
-            <span style="color:var(--green);">✓ Cero datos recopilados</span>
-          </div>
+    <div class="cmp">
+      <div class="cmp-col bad">
+        <div class="cmp-head">☁️ Servicios en la nube</div>
+        <div class="cmp-list">
+          <div class="cmp-item x">· Subes el archivo a un servidor</div>
+          <div class="cmp-item x">· Se almacena durante horas o días</div>
+          <div class="cmp-item x">· El receptor descarga cuando quiere</div>
+          <div class="cmp-item x">· Requiere infraestructura central</div>
+          <div class="cmp-item x">· Puede implicar cuentas o tracking</div>
         </div>
       </div>
-
-      <!-- La única limitación honesta -->
-      <div style="
-        margin-top:12px;
-        background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.15);
-        border-radius:14px;padding:16px 18px;
-        font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;
-      ">
-        <strong style="color:var(--warn);">⚠️ La única diferencia:</strong> emisor y receptor deben estar conectados al mismo tiempo. Como una llamada, no como un mensaje de voz. WeTransfer guarda el archivo y el receptor lo descarga cuando quiera — DropBeam no guarda nada, por eso ambos deben estar presentes.
-      </div>
-    </div>
-
-    <div class="about-grid">
-      <div class="about-card">
-        <div class="about-card-icon">🚫</div>
-        <h3>Sin servidores propios</h3>
-        <p>Tus archivos van <strong>directamente</strong> de tu dispositivo al del receptor. Ningún servidor de DropBeam los toca, almacena ni procesa jamás.</p>
-      </div>
-      <div class="about-card">
-        <div class="about-card-icon">🔒</div>
-        <h3>Cifrado de extremo a extremo</h3>
-        <p>WebRTC cifra cada byte con <strong>DTLS</strong> obligatoriamente. Nadie en la red puede leer lo que estás enviando, ni siquiera con acceso al servidor de señalización.</p>
-      </div>
-      <div class="about-card">
-        <div class="about-card-icon">🤖</div>
-        <h3>No entrena ninguna IA</h3>
-        <p>No vemos tus archivos. No podríamos usarlos aunque quisiéramos. <strong>Zero datos = zero entrenamiento.</strong></p>
-      </div>
-      <div class="about-card">
-        <div class="about-card-icon">👤</div>
-        <h3>Sin cuenta, sin rastro</h3>
-        <p>No pedimos email, nombre ni nada. Cada sesión es efímera. Cuando cierras la pestaña, <strong>no queda ningún registro</strong>.</p>
-      </div>
-    </div>
-
-    <div class="about-tech">
-      <h3>¿Cómo funciona técnicamente?</h3>
-      <div class="tech-list">
-        <div class="tech-item">
-          <div class="tech-item-icon">📡</div>
-          <div class="tech-item-body">
-            <div class="tech-item-title">WebRTC P2P</div>
-            <div class="tech-item-desc">Protocolo estándar del W3C implementado en todos los navegadores modernos. Crea un canal directo cifrado entre dos dispositivos sin intermediarios para los datos.</div>
-          </div>
-        </div>
-        <div class="tech-item">
-          <div class="tech-item-icon">🤝</div>
-          <div class="tech-item-body">
-            <div class="tech-item-title">Servidor de señalización (PeerJS)</div>
-            <div class="tech-item-desc">Necesario solo para que los dos dispositivos se "encuentren" en internet (intercambio de IPs). Dura segundos y nunca ve los archivos. Es como dar tu dirección para que alguien te mande una carta — el cartero no lee la carta.</div>
-          </div>
-        </div>
-        <div class="tech-item">
-          <div class="tech-item-icon">🔐</div>
-          <div class="tech-item-body">
-            <div class="tech-item-title">Verificación por emojis</div>
-            <div class="tech-item-desc">El PIN de 4 emojis se deriva criptográficamente del handshake de la conexión. Si hay un atacante en medio, los emojis no coincidirán — es matemáticamente imposible falsificarlos.</div>
-          </div>
-        </div>
-        <div class="tech-item">
-          <div class="tech-item-icon">💾</div>
-          <div class="tech-item-body">
-            <div class="tech-item-title">File System Access API</div>
-            <div class="tech-item-desc">Para archivos grandes, los datos se escriben directamente en disco en lugar de acumularse en RAM. Esto permite enviar archivos de cualquier tamaño sin limitaciones de memoria del navegador.</div>
-          </div>
+      <div class="cmp-col good">
+        <div class="cmp-head">⚡ DropBeam</div>
+        <div class="cmp-list">
+          <div class="cmp-item ok">✓ Conexión directa entre dispositivos</div>
+          <div class="cmp-item ok">✓ Sin almacenamiento en servidores</div>
+          <div class="cmp-item ok">✓ Transferencia en tiempo real</div>
+          <div class="cmp-item ok">✓ Sin cuentas ni registro</div>
+          <div class="cmp-item ok">✓ Cifrado en tránsito</div>
         </div>
       </div>
     </div>
 
-    <div class="about-no-cookies">
-      <div class="ncook-title"><span>🍪</span> Sin cookies — y no es un eslogan</div>
-      <div class="ncook-desc">
+    <!-- Cards de propuesta de valor -->
+    <div class="about-card">
+      <div class="about-card-head">🚫 Sin almacenamiento en servidores propios</div>
+      <div class="about-card-body">
+        Tus archivos van directamente de tu dispositivo al del receptor. <strong>Ningún servidor almacena ni tiene acceso al contenido transferido.</strong>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-head">🔒 Cifrado de extremo a extremo</div>
+      <div class="about-card-body">
+        WebRTC cifra cada byte con <strong>DTLS obligatoriamente</strong>. Nadie en la red puede leer lo que estás enviando, ni siquiera con acceso al servidor de señalización.
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-head">🤖 No entrena ninguna IA</div>
+      <div class="about-card-body">
+        No vemos tus archivos. No podríamos usarlos aunque quisiéramos. <strong>Zero datos = zero entrenamiento.</strong>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-head">👤 Sin cuenta, sin rastro</div>
+      <div class="about-card-body">
+        No pedimos email, nombre ni nada. Cada sesión es efímera. Cuando cierras la pestaña, <strong>no queda ningún registro</strong>.
+      </div>
+    </div>
+
+    <!-- Técnico -->
+    <div style="width:100%;margin-top:4px;">
+      <div class="about-card-head" style="margin-bottom:10px;font-size:13px;">¿Cómo funciona técnicamente?</div>
+
+      <div class="about-card" style="margin-bottom:10px;">
+        <div class="about-card-head">📡 WebRTC P2P</div>
+        <div class="about-card-body">
+          Protocolo estándar del W3C implementado en todos los navegadores modernos. Crea un canal directo cifrado entre dos dispositivos <strong>sin intermediarios para los datos</strong>.
+        </div>
+      </div>
+
+      <div class="about-card" style="margin-bottom:10px;">
+        <div class="about-card-head">🤝 Servidor de señalización (PeerJS)</div>
+        <div class="about-card-body">
+          Necesario solo para que los dos dispositivos se "encuentren" en internet (intercambio de IPs). Dura segundos y <strong>nunca ve los archivos</strong>. Es como dar tu dirección para que alguien te mande una carta — el cartero no lee la carta.
+        </div>
+      </div>
+
+      <div class="about-card" style="margin-bottom:10px;">
+        <div class="about-card-head">💾 File System Access API</div>
+        <div class="about-card-body">
+          Para archivos grandes, los datos se escriben directamente en disco en lugar de acumularse en RAM. Permite enviar archivos de <strong>cualquier tamaño sin limitaciones de memoria</strong> del navegador.
+        </div>
+      </div>
+    </div>
+
+    <div class="about-card">
+      <div class="about-card-head">🍪 Sin cookies — y no es un eslogan</div>
+      <div class="about-card-body">
         La mayoría de webs te piden aceptar cookies aunque no las necesiten. Nosotros no usamos cookies porque <strong>arquitectónicamente no las necesitamos</strong>. No hay sesiones que mantener, no hay usuarios que recordar, no hay analíticas que recoger.<br><br>
         Las fuentes tipográficas se sirven desde el mismo servidor que esta página — sin peticiones a Google Fonts ni a ningún CDN externo. <strong>Cero tracking. Cero banners. Por diseño.</strong>
       </div>
     </div>
 
-    <div class="about-open">
-      <div class="open-icon">📖</div>
-      <div class="open-body">
-        <h3>Código abierto y auditable</h3>
-        <p>
-          Todo el código de DropBeam es público y auditable en
-          <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>.
-          No tienes que confiar en nuestra palabra — puedes verificar exactamente qué hace el código.
-          Cualquier persona técnica puede revisarlo y confirmar que no hay puertas traseras.
-        </p>
+    <div class="about-card">
+      <div class="about-card-head">📖 Código abierto y auditable</div>
+      <div class="about-card-body">
+        Todo el código de DropBeam es público y auditable en GitHub. No tienes que confiar en nuestra palabra — puedes verificar exactamente qué hace el código. Cualquier persona técnica puede revisarlo y <strong>confirmar que no hay puertas traseras</strong>.
       </div>
     </div>
 
-    <div class="about-disclaimer">
-      <div class="disc-title">⚠️ Aviso legal y limitación de responsabilidad</div>
-      <div class="disc-body">
-        DropBeam es un servicio de infraestructura técnica para la transferencia directa de archivos entre dispositivos.<br><br>
-        <strong>No nos hacemos responsables del uso que los usuarios hagan del servicio.</strong> El usuario es el único responsable del contenido que comparte, de verificar que tiene los derechos necesarios para compartirlo y de asegurarse de que el receptor es quien dice ser.<br><br>
+    <div class="disclaimer">
+      <div class="disclaimer-title">⚠️ Aviso legal y limitación de responsabilidad</div>
+      <div class="disclaimer-body">
+        DropBeam es un servicio de infraestructura técnica para la transferencia directa de archivos entre dispositivos. <strong>No nos hacemos responsables del uso que los usuarios hagan del servicio.</strong> El usuario es el único responsable del contenido que comparte, de verificar que tiene los derechos necesarios para compartirlo y de asegurarse de que el receptor es quien dice ser.<br><br>
         DropBeam no almacena, procesa ni tiene acceso al contenido transferido. Por tanto, no puede ser considerado responsable de infracciones de derechos de autor, distribución de contenido ilegal o cualquier otro uso indebido realizado por los usuarios a través de la plataforma.<br><br>
-        El servicio se ofrece "tal cual" sin garantías de disponibilidad continua.
+        El servicio se ofrece "tal cual" sin garantías de disponibilidad continua.<br><br>
+        <strong style="color:var(--muted);">AirDrop® es marca registrada de Apple Inc. DropBeam no está afiliado ni respaldado por Apple.</strong>
       </div>
     </div>
 
@@ -1073,73 +794,50 @@ footer{
 </main>
 
 <footer>
-  <div class="foot-txt">
-    <span>🔒 Cifrado extremo a extremo</span>
+  <div class="foot">
+    <span>🔒 Cifrado en tránsito</span>
     <span class="foot-sep">|</span>
-    <span>Sin cookies · Sin servidores · Sin rastro</span>
+    <span>Sin almacenamiento en servidores · Sin cookies</span>
     <span class="foot-sep">|</span>
-    <span>P2P directo</span>
+    <span>Transferencia directa entre dispositivos</span>
   </div>
 </footer>
 
-<!-- PeerJS -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 // ════════════════════════════════════════════════════════
-// DROPBEAM v3.1 — Core Logic (robust connection)
+// DROPBEAM v4 — Multi-receiver, no PIN, clean
 // ════════════════════════════════════════════════════════
 
-// Emojis visualmente únicos y sin ambigüedad entre iOS/Android/Windows.
-// Sin duplicados de categoría, sin variantes similares.
-const POOL = [
-  '🦊','🐬','🌮','⚡','🎸',
-  '🌵','🔥','🎯','🦋','🍕',
-  '🚀','🐙','🎲','🦁','🌈',
-  '🍦','🎵','🍋','🎨','🐊',
-  '🧲','🎺','🌙','🍩','🦩',
-  '🧸','🎃','💎','🎪','🧊'
-];
+const ICE = { iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'stun:stun2.l.google.com:19302'},
+  {urls:'stun:stun3.l.google.com:19302'},
+  {urls:'stun:stun.cloudflare.com:3478'},
+]};
 
-// ICE servers — múltiples para máxima compatibilidad móvil
-const ICE = {
-  iceServers:[
-    {urls:'stun:stun.l.google.com:19302'},
-    {urls:'stun:stun1.l.google.com:19302'},
-    {urls:'stun:stun2.l.google.com:19302'},
-    {urls:'stun:stun3.l.google.com:19302'},
-    {urls:'stun:stun4.l.google.com:19302'},
-    {urls:'stun:stun.cloudflare.com:3478'},
-  ]
-};
-
-// Session state — controla quién puede conectar
-// 'waiting'   → acepta cualquier nueva conexión
-// 'verifying' → alguien conectó, esperando PIN (zombie timeout activo)
-// 'locked'    → PIN verificado, transferencia en curso, nadie más puede entrar
-let sessionState = 'waiting';
-let zombieTimeout = null;
-let secureMode = false; // false = rápido, true = verificación con emojis
-
-// State
-let peer=null, conn=null;
+// ── State ──
+let peer=null;
+let conns={}; // id → {conn, name, progress, done}
 let selectedFile=null, sharedUrl=null;
-let correctPin=[], slotValues=[null,null,null,null];
-let dragSrc=null;
+let isReceiver=false;
+let sessionLocked=false; // true cuando ya empezamos a enviar
 let receivedChunks=[], receivedSize=0, fileMeta=null;
 let fileWriter=null;
-let isReceiver=false;
-let receiverBytesSince=0, receiverLastTime=0;
-let senderBytesSince=0, senderLastTime=0;
+let rBytesSince=0, rLastTime=0;
+let sLastTime=0, sBytesSince=0;
+let connCount=0;
 
 // ── Init ──
-const params = new URLSearchParams(location.search);
-const receiverPeerId = params.get('id');
+const params=new URLSearchParams(location.search);
+const receiverPeerId=params.get('id');
 
 detectBrave();
 
-if (receiverPeerId) {
-  isReceiver = true;
-  document.querySelector('.nav-links').style.display='none';
+if(receiverPeerId){
+  isReceiver=true;
+  document.querySelector('.nav').style.display='none';
   showScreen('s-receiver');
   initReceiver(receiverPeerId);
 } else {
@@ -1147,36 +845,45 @@ if (receiverPeerId) {
 }
 
 // ════════════════════════════════════════
-// BRAVE DETECTION
+// BRAVE
 // ════════════════════════════════════════
-async function detectBrave() {
-  try {
-    const b = navigator.brave
-      ? await navigator.brave.isBrave().catch(()=>false)
-      : /Brave/.test(navigator.userAgent);
+async function detectBrave(){
+  try{
+    const b=navigator.brave?await navigator.brave.isBrave().catch(()=>false):/Brave/.test(navigator.userAgent);
     if(b) document.getElementById('brave-warn').classList.add('show');
-  } catch(e){}
+  }catch(e){}
 }
 
 // ════════════════════════════════════════
-// NAVIGATION
+// NAVIGATION — fix: oculta bien las páginas
 // ════════════════════════════════════════
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  document.querySelectorAll('.nav-link').forEach(l=>{
-    if(l.textContent.trim()===(name==='app'?'Compartir':'Acerca de'))
-      l.classList.add('active');
+function showPage(name){
+  // Ocultar todas las páginas
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.remove('active');
+    p.style.display='none';
+  });
+  // Activar la seleccionada
+  const target=document.getElementById('page-'+name);
+  target.style.display='flex';
+  // Forzar reflow para que la animación funcione
+  target.offsetHeight;
+  target.classList.add('active');
+  // Nav buttons
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    if((name==='app'&&b.textContent.trim()==='Compartir')||
+       (name==='about'&&b.textContent.trim()==='Acerca de'))
+      b.classList.add('active');
   });
 }
 
-function showScreen(id) {
+function showScreen(id){
   document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-function switchTab(tab) {
+function switchTab(tab){
   document.querySelectorAll('.tab').forEach((t,i)=>{
     t.classList.toggle('active',(tab==='file'&&i===0)||(tab==='url'&&i===1));
   });
@@ -1184,30 +891,21 @@ function switchTab(tab) {
   document.getElementById('tab-url').style.display=tab==='url'?'block':'none';
 }
 
-function setMode(mode) {
-  secureMode = (mode === 'secure');
-  document.getElementById('mode-fast').classList.toggle('mode-active', !secureMode);
-  document.getElementById('mode-secure').classList.toggle('mode-active', secureMode);
-  document.getElementById('mode-desc').textContent = secureMode
-    ? 'El receptor verifica 4 emojis antes de recibir. Ideal cuando no estáis juntos físicamente.'
-    : 'El receptor escanea y recibe al instante. Ideal cuando estáis en la misma habitación.';
-}
-
 // ════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════
-function fmtSize(b) {
+function fmtSize(b){
   if(!b||b<1024) return (b||0)+' B';
   if(b<1048576) return (b/1024).toFixed(1)+' KB';
   if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
   return (b/1073741824).toFixed(2)+' GB';
 }
-function fmtSpeed(bps) {
+function fmtSpeed(bps){
   if(bps<1024) return '<1 KB/s';
   if(bps<1048576) return (bps/1024).toFixed(0)+' KB/s';
   return (bps/1048576).toFixed(1)+' MB/s';
 }
-function fileIcon(n) {
+function fileIcon(n){
   if(!n) return '🔗';
   const e=n.split('.').pop().toLowerCase();
   return {jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',
@@ -1217,86 +915,50 @@ function fileIcon(n) {
     zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',
     js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',txt:'📄',md:'📄',json:'📋'}[e]||'📦';
 }
-function isImage(n) {
+function isImage(n){
   return ['jpg','jpeg','png','gif','webp','svg','heic','avif']
     .includes(n?.split('.').pop().toLowerCase());
 }
-function generatePin(id) {
-  let h=0;
-  for(let i=0;i<id.length;i++) h=Math.imul(31,h)+id.charCodeAt(i)|0;
-  const out=[]; let s=Math.abs(h);
-  while(out.length<4){
-    const idx=s%POOL.length;
-    if(!out.includes(POOL[idx])) out.push(POOL[idx]);
-    s=(s*1103515245+12345)&0x7fffffff;
-  }
-  return out;
-}
+function uid(){return Math.random().toString(36).slice(2,8);}
 
 // ════════════════════════════════════════
 // QR
 // ════════════════════════════════════════
-function drawQR(url) {
+function drawQR(url){
   const canvas=document.getElementById('qr-canvas');
   const loading=document.getElementById('qr-loading');
-  const SIZE=200;
+  const SIZE=196;
   const img=new Image();
   img.crossOrigin='anonymous';
   img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${SIZE}x${SIZE}&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=2`;
   img.onload=()=>{
-    canvas.width=SIZE; canvas.height=SIZE;
+    canvas.width=SIZE;canvas.height=SIZE;
     canvas.getContext('2d').drawImage(img,0,0,SIZE,SIZE);
     loading.style.display='none';
     canvas.style.display='block';
   };
   img.onerror=()=>{
-    canvas.width=SIZE; canvas.height=SIZE;
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,SIZE,SIZE);
-    ctx.fillStyle='#333'; ctx.font='11px monospace'; ctx.textAlign='center';
-    ctx.fillText('Escanea la URL:', SIZE/2, 80);
-    ctx.font='9px monospace'; ctx.fillStyle='#666';
-    // Show shortened URL
-    const short=url.replace(location.origin,'');
-    ctx.fillText(short.substring(0,30), SIZE/2, 100);
-    loading.style.display='none';
-    canvas.style.display='block';
+    loading.textContent='Abre: '+url.split('?')[0];
+    loading.style.fontSize='10px';
   };
 }
 
 // ════════════════════════════════════════
-// PEER FACTORY — limpio, con timeout
+// PEER FACTORY
 // ════════════════════════════════════════
-function makePeer(onOpen, onError) {
-  const p = new Peer({ config: ICE });
-  let opened = false;
-
-  // Timeout si no conecta en 10s
-  const timeout = setTimeout(()=>{
-    if(!opened) {
-      p.destroy();
-      onError('timeout');
-    }
-  }, 10000);
-
-  p.on('open', id=>{
-    opened=true;
-    clearTimeout(timeout);
-    onOpen(p, id);
-  });
-
-  p.on('error', err=>{
-    clearTimeout(timeout);
-    onError(err.type||'error');
-  });
-
+function makePeer(onOpen, onError){
+  const p=new Peer({config:ICE});
+  let opened=false;
+  const t=setTimeout(()=>{ if(!opened){p.destroy();onError('timeout');} },12000);
+  p.on('open',id=>{ opened=true;clearTimeout(t);onOpen(p,id); });
+  p.on('error',err=>{ clearTimeout(t);onError(err.type||'error'); });
   return p;
 }
 
 // ════════════════════════════════════════
 // SENDER UI
 // ════════════════════════════════════════
-function initSenderUI() {
+function initSenderUI(){
   const dz=document.getElementById('drop-zone');
   const fi=document.getElementById('file-input');
   dz.addEventListener('click',()=>fi.click());
@@ -1304,264 +966,264 @@ function initSenderUI() {
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
   dz.addEventListener('drop',e=>{
-    e.preventDefault(); dz.classList.remove('over');
+    e.preventDefault();dz.classList.remove('over');
     if(e.dataTransfer.files[0]) startWithFile(e.dataTransfer.files[0]);
   });
 }
 
-function handleUrl() {
+function handleUrl(){
   const val=document.getElementById('url-input').value.trim();
-  if(!val||!val.startsWith('http')) {
+  if(!val||!val.startsWith('http')){
     document.getElementById('url-input').style.outline='2px solid var(--red)';
     return;
   }
   sharedUrl=val; selectedFile=null;
-  setupSenderQR('🔗', val, 'Enlace compartido');
+  setupSender('🔗',val,'Enlace compartido');
 }
 
-function startWithFile(file) {
+function startWithFile(file){
   selectedFile=file; sharedUrl=null;
-  setupSenderQR(fileIcon(file.name), file.name, fmtSize(file.size));
+  setupSender(fileIcon(file.name),file.name,fmtSize(file.size));
 }
 
-function setSenderStatus(txt, dotClass) {
+function setSenderStatus(txt,dotClass){
   document.getElementById('s-status').textContent=txt;
   if(dotClass) document.getElementById('s-dot').className='sdot '+dotClass;
 }
 
-function setupSenderQR(icon, label, sub) {
+// ════════════════════════════════════════
+// SETUP SENDER — multi-receiver
+// ════════════════════════════════════════
+function setupSender(icon,label,sub){
   document.getElementById('s-icon').textContent=icon;
   document.getElementById('s-name').textContent=label;
   document.getElementById('s-size').textContent=sub;
   showScreen('s-qr');
-  setSenderStatus('Conectando al servidor de señalización...','waiting');
+  setSenderStatus('Conectando...','waiting');
 
-  if(peer) { try{peer.destroy();}catch(e){} peer=null; conn=null; }
+  if(peer){try{peer.destroy();}catch(e){} peer=null;}
+  conns={}; connCount=0; sessionLocked=false;
+  updateReceiverCounter();
 
   makePeer(
-    (p, id) => {
-      peer = p;
+    (p,id)=>{
+      peer=p;
       const url=`${location.origin}${location.pathname}?id=${id}`;
       drawQR(url);
-      correctPin=generatePin(id);
-      document.getElementById('sender-pin').innerHTML=
-        correctPin.map(e=>`<span class="pin-emoji">${e}</span>`).join('');
-      // Mostrar u ocultar PIN según modo
-      document.getElementById('pin-section').style.display = secureMode ? 'flex' : 'none';
       setSenderStatus('Listo — esperando que escaneen el QR','waiting');
 
-      // Register connection handler BEFORE anyone connects
-      p.on('connection', incoming=>{
+      p.on('connection',incoming=>{
+        // Bloqueamos solo si ya terminamos de enviar
+        if(sessionLocked){ incoming.close(); return; }
 
-        // Solo bloqueamos si ya está locked (transferencia en curso)
-        if(sessionState === 'locked') {
-          incoming.close();
-          return;
-        }
+        const cid=uid();
+        const rec={conn:incoming, name:'Dispositivo '+(Object.keys(conns).length+1), progress:0, done:false, speed:''};
+        conns[cid]=rec;
+        connCount++;
+        updateReceiverCounter();
 
-        // Si había una conexión zombie anterior, la cerramos limpiamente
-        if(conn) {
-          try { conn.close(); } catch(e){}
-          clearTimeout(zombieTimeout);
-        }
-
-        conn = incoming;
-        sessionState = 'verifying';
-
-        // Zombie timeout: si en 60s no verifica el PIN, liberamos la conexión
-        zombieTimeout = setTimeout(()=>{
-          if(sessionState === 'verifying') {
-            try { conn.close(); } catch(e){}
-            conn = null;
-            sessionState = 'waiting';
-            setSenderStatus('Tiempo agotado — esperando nuevo escaneo','waiting');
-          }
-        }, 60000);
-
-        // Register data handler immediately, before open
-        conn.on('data', data=>{
-          if(data.type==='pin-ok'){
-            clearTimeout(zombieTimeout);
-            sessionState = 'locked';
-            setSenderStatus('✓ Verificado · Enviando...','sending');
-            document.getElementById('s-prog').style.display='flex';
-            startSending();
-          } else if(data.type==='pin-fail'){
-            // PIN incorrecto: liberamos para que pueda reintentar
-            setSenderStatus('⚠️ PIN incorrecto. Reintentando...','waiting');
-            // No cerramos la conexión — el receptor puede volver a intentarlo
+        // Data handler ANTES del open
+        incoming.on('data',data=>{
+          if(data.type==='ready'){
+            // Este receptor está listo — empezar a enviarle
+            sendToOne(cid);
           }
         });
 
-        conn.on('open',()=>{
-          setSenderStatus('¡Receptor conectado! Verificando emojis...','connected');
-          if(secureMode) {
-            // Modo seguro: enviar PIN al receptor
-            document.getElementById('pin-section').style.display='flex';
-            conn.send({ type:'pin-challenge', pin: correctPin });
+        incoming.on('open',()=>{
+          setSenderStatus(`${connCount} receptor${connCount>1?'es':''} conectado${connCount>1?'s':''}...`,'connected');
+          updateReceiverCounter();
+          // Enviar metadatos inmediatamente
+          if(sharedUrl){
+            incoming.send({type:'url',url:sharedUrl});
+            rec.done=true; rec.progress=100;
+            updateReceiverCounter();
+            checkAllDone();
           } else {
-            // Modo rápido: saltar verificación, empezar directo
-            document.getElementById('pin-section').style.display='none';
-            clearTimeout(zombieTimeout);
-            sessionState = 'locked';
-            conn.send({ type:'skip-verify' });
-            setSenderStatus('✓ Conectado · Enviando...','sending');
-            document.getElementById('s-prog').style.display='flex';
-            startSending();
+            incoming.send({
+              type:'metadata',
+              name:selectedFile.name,
+              size:selectedFile.size,
+              mime:selectedFile.type,
+              isImage:isImage(selectedFile.name)
+            });
+            // El receptor responde con 'ready' cuando está preparado
           }
         });
 
-        conn.on('error', ()=>{
-          clearTimeout(zombieTimeout);
-          conn=null; sessionState='waiting';
-          setSenderStatus('Error de conexión — esperando nuevo escaneo','waiting');
+        incoming.on('close',()=>{
+          if(conns[cid] && !conns[cid].done){
+            delete conns[cid];
+            connCount=Math.max(0,connCount-1);
+            updateReceiverCounter();
+          }
         });
 
-        conn.on('close',()=>{
-          clearTimeout(zombieTimeout);
-          // Solo resetear si no estamos en medio de envío
-          if(sessionState !== 'locked'){
-            conn=null; sessionState='waiting';
-            setSenderStatus('Receptor desconectado — listo para nuevo escaneo','waiting');
-          }
+        incoming.on('error',()=>{
+          delete conns[cid];
+          connCount=Math.max(0,connCount-1);
+          updateReceiverCounter();
         });
       });
     },
-    (errType) => {
-      setSenderStatus(`Error: ${errType} — recarga la página`,'waiting');
-    }
+    (errType)=>{ setSenderStatus(`Error: ${errType} — recarga la página`,'waiting'); }
   );
 }
 
 // ════════════════════════════════════════
-// SEND — adaptive chunks
+// SEND TO ONE RECEIVER
 // ════════════════════════════════════════
-function startSending() {
-  if(sharedUrl){
-    conn.send({type:'url', url:sharedUrl});
-    setTimeout(()=>showScreen('s-done'), 300);
-    return;
-  }
+function sendToOne(cid){
+  const rec=conns[cid];
+  if(!rec||!selectedFile) return;
 
-  conn.send({
-    type:'metadata',
-    name:selectedFile.name,
-    size:selectedFile.size,
-    mime:selectedFile.type,
-    isImage:isImage(selectedFile.name)
-  });
+  document.getElementById('s-prog').style.display='flex';
+  setSenderStatus(`Enviando a ${Object.keys(conns).length} receptor${Object.keys(conns).length>1?'es':''}...`,'sending');
 
-  let offset=0, chunkSize=64*1024;
-  senderBytesSince=0; senderLastTime=Date.now();
+  const CHUNK=65536;
+  let offset=0, chunkSize=CHUNK;
+  sLastTime=Date.now(); sBytesSince=0;
   const reader=new FileReader();
 
   function nextChunk(){
+    if(!conns[cid]){ return; } // receptor desconectado
     if(offset>=selectedFile.size){
-      conn.send({type:'done'});
-      showScreen('s-done');
+      rec.conn.send({type:'done'});
+      rec.done=true; rec.progress=100;
+      updateReceiverCounter();
+      // Progreso global
+      updateGlobalProgress();
+      checkAllDone();
       return;
     }
-    reader.readAsArrayBuffer(selectedFile.slice(offset, offset+chunkSize));
+    reader.readAsArrayBuffer(selectedFile.slice(offset,offset+chunkSize));
   }
 
   reader.onload=e=>{
     const buf=e.target.result;
-    try { conn.send({type:'chunk', data:buf}); } catch(err){ return; }
+    try{ rec.conn.send({type:'chunk',data:buf}); }catch(err){ return; }
     offset+=buf.byteLength;
-    senderBytesSince+=buf.byteLength;
+    sBytesSince+=buf.byteLength;
 
-    const now=Date.now(), elapsed=(now-senderLastTime)/1000;
+    // Speed & adaptive chunks
+    const now=Date.now(), elapsed=(now-sLastTime)/1000;
     if(elapsed>=0.5){
-      const bps=senderBytesSince/elapsed;
-      chunkSize = bps>2097152 ? 262144 : bps>524288 ? 131072 : 65536;
+      const bps=sBytesSince/elapsed;
+      chunkSize=bps>2097152?262144:bps>524288?131072:65536;
       document.getElementById('s-speed').textContent=fmtSpeed(bps);
-      senderBytesSince=0; senderLastTime=now;
+      sBytesSince=0; sLastTime=now;
     }
 
-    const pct=Math.round(offset/selectedFile.size*100);
-    document.getElementById('s-fill').style.width=pct+'%';
-    document.getElementById('s-prog-txt').textContent=
-      `${fmtSize(offset)} / ${fmtSize(selectedFile.size)} · ${pct}%`;
-
-    // Small delay to let the data channel breathe
-    setTimeout(nextChunk, 1);
+    rec.progress=Math.round(offset/selectedFile.size*100);
+    updateReceiverCounter();
+    updateGlobalProgress();
+    setTimeout(nextChunk,1);
   };
 
   nextChunk();
 }
 
+function updateGlobalProgress(){
+  const vals=Object.values(conns);
+  if(!vals.length) return;
+  const avg=vals.reduce((a,r)=>a+r.progress,0)/vals.length;
+  document.getElementById('s-fill').style.width=avg+'%';
+  document.getElementById('s-prog-txt').textContent=Math.round(avg)+'%';
+}
+
+function checkAllDone(){
+  const vals=Object.values(conns);
+  if(vals.length>0 && vals.every(r=>r.done)){
+    sessionLocked=true;
+    const n=vals.length;
+    document.getElementById('done-sub').textContent=
+      `Recibido por ${n} dispositivo${n>1?'s':''} · sin pasar por ningún servidor`;
+    setTimeout(()=>showScreen('s-done'),400);
+  }
+}
+
 // ════════════════════════════════════════
-// RECEIVER — robust with retry message
+// RECEIVER COUNTER UI
 // ════════════════════════════════════════
-function setReceiverStatus(txt, dotClass, title, sub) {
+function updateReceiverCounter(){
+  const vals=Object.values(conns);
+  const el=document.getElementById('rcounter');
+  const list=document.getElementById('rcounter-list');
+  const num=document.getElementById('rcounter-num');
+
+  if(vals.length===0){ el.style.display='none'; return; }
+  el.style.display='flex';
+  num.textContent=`${vals.length} conectado${vals.length>1?'s':''}`;
+
+  list.innerHTML='';
+  vals.forEach(rec=>{
+    const item=document.createElement('div');
+    item.className='rcounter-item';
+    const icon=rec.done?'✅':rec.progress>0?'📥':'📱';
+    item.innerHTML=`
+      <div class="rcounter-icon">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;">
+          <div class="rcounter-name">${rec.name}</div>
+          <div class="rcounter-pct">${rec.done?'✓':rec.progress+'%'}</div>
+        </div>
+        <div class="rcounter-bar">
+          <div class="rcounter-fill" style="width:${rec.progress}%"></div>
+        </div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ════════════════════════════════════════
+// RECEIVER
+// ════════════════════════════════════════
+function setReceiverStatus(txt,dotClass,title,sub){
   if(txt) document.getElementById('r-status').textContent=txt;
   if(dotClass) document.getElementById('r-dot').className='sdot '+dotClass;
   if(title) document.getElementById('r-title').textContent=title;
   if(sub) document.getElementById('r-sub').textContent=sub;
 }
 
-function initReceiver(senderId) {
-  setReceiverStatus('Conectando...','waiting','Iniciando...','Creando peer local...');
+function initReceiver(senderId){
+  setReceiverStatus('Conectando...','waiting','Iniciando...','');
 
   makePeer(
-    (p, myId) => {
-      peer = p;
-      setReceiverStatus('Conectando con el emisor...','waiting','Conectando...','Estableciendo canal seguro');
+    (p)=>{
+      peer=p;
+      setReceiverStatus('Conectando con el emisor...','waiting','Conectando...','Canal seguro');
 
-      conn = p.connect(senderId, {
-        reliable: true,
-        serialization: 'binary'
+      const conn=p.connect(senderId,{reliable:true,serialization:'binary'});
+
+      conn.on('data',handleReceiverData);
+
+      conn.on('open',()=>{
+        setReceiverStatus('Conectado · esperando archivo...','connected','Conectado ✓','Canal P2P cifrado activo');
+        // Indicar que estamos listos
+        conn.send({type:'ready'});
       });
 
-      // Register data BEFORE open to avoid missing first message
-      conn.on('data', data => {
-        // Modo rápido — sin verificación
-        if(data.type === 'skip-verify') {
-          showScreen('s-receiver');
-          setReceiverStatus('Esperando el archivo...','connected','Conectado ✓','Canal seguro establecido');
-          return;
-        }
-        // Modo seguro — PIN viene del emisor
-        if(data.type === 'pin-challenge') {
-          correctPin = data.pin;
-          buildDragPin(correctPin);
-          showScreen('s-verify');
-          return;
-        }
-        handleReceiverData(data);
+      conn.on('error',()=>{
+        setReceiverStatus('Error de conexión — vuelve a escanear el QR','waiting','Error','');
       });
-
-      conn.on('open', ()=>{
-        // Solo mostrar "conectando" — el PIN llegará via pin-challenge
-        setReceiverStatus('Conectado · esperando verificación...','connected','Conectado','Canal seguro establecido');
-      });
-
-      conn.on('error', err=>{
-        setReceiverStatus(
-          'Error de conexión — el QR puede haber expirado',
-          'waiting','Error','Vuelve a escanear el QR');
-      });
-
-      conn.on('close', ()=>{
-        // Only show error if we were still receiving
-        if(fileMeta && receivedSize < fileMeta.size){
+      conn.on('close',()=>{
+        if(fileMeta && receivedSize<fileMeta.size){
           setReceiverStatus('Conexión cerrada antes de terminar','waiting');
         }
       });
     },
-    (errType) => {
-      setReceiverStatus(
-        `No se pudo conectar (${errType}). Vuelve a escanear el QR.`,
-        'waiting','Error de red','Prueba con Chrome o Safari');
+    (errType)=>{
+      setReceiverStatus(`No se pudo conectar (${errType}). Vuelve a escanear.`,'waiting','Error de red','Prueba con Chrome o Safari');
     }
   );
 }
 
-async function handleReceiverData(data) {
+async function handleReceiverData(data){
   if(data.type==='metadata'){
     fileMeta=data; receivedChunks=[]; receivedSize=0;
-    receiverBytesSince=0; receiverLastTime=Date.now();
-    showScreen('s-receiver');
+    rBytesSince=0; rLastTime=Date.now();
+
     document.getElementById('r-icon').textContent=fileIcon(data.name);
     document.getElementById('r-name').textContent=data.name;
     document.getElementById('r-size').textContent=fmtSize(data.size);
@@ -1569,24 +1231,23 @@ async function handleReceiverData(data) {
     setReceiverStatus('Recibiendo...','sending','Recibiendo...','Conexión P2P cifrada activa');
 
     if(data.size>52428800 && 'showSaveFilePicker' in window){
-      try {
+      try{
         const fh=await window.showSaveFilePicker({suggestedName:data.name});
         fileWriter=await fh.createWritable();
-      } catch(e){ fileWriter=null; }
+      }catch(e){ fileWriter=null; }
     }
 
   } else if(data.type==='chunk'){
     const buf=data.data;
     if(fileWriter) await fileWriter.write(buf);
     else receivedChunks.push(buf);
-
     receivedSize+=buf.byteLength;
-    receiverBytesSince+=buf.byteLength;
+    rBytesSince+=buf.byteLength;
 
-    const now=Date.now(), elapsed=(now-receiverLastTime)/1000;
+    const now=Date.now(), elapsed=(now-rLastTime)/1000;
     if(elapsed>=0.5){
-      document.getElementById('r-speed').textContent=fmtSpeed(receiverBytesSince/elapsed);
-      receiverBytesSince=0; receiverLastTime=now;
+      document.getElementById('r-speed').textContent=fmtSpeed(rBytesSince/elapsed);
+      rBytesSince=0; rLastTime=now;
     }
 
     if(fileMeta){
@@ -1608,7 +1269,6 @@ async function handleReceiverData(data) {
     }
 
   } else if(data.type==='url'){
-    showScreen('s-receiver');
     setReceiverStatus('Recibido ✓','done','¡Enlace recibido!','Toca para abrirlo');
     document.getElementById('r-prog').style.display='none';
     const preview=document.getElementById('r-url-preview');
@@ -1623,8 +1283,8 @@ function assembleAndDeliver(){
   const blob=new Blob(receivedChunks,{type:fileMeta?.mime||'application/octet-stream'});
   if(fileMeta?.isImage){
     const url=URL.createObjectURL(blob);
-    const img=document.getElementById('r-img');
-    img.src=url; img.style.display='block';
+    document.getElementById('r-img').src=url;
+    document.getElementById('r-img').style.display='block';
     setReceiverStatus('Mantén pulsado para guardar','done','¡Imagen recibida!','');
   } else {
     const url=URL.createObjectURL(blob);
@@ -1638,150 +1298,27 @@ function assembleAndDeliver(){
 }
 
 // ════════════════════════════════════════
-// DRAG & DROP PIN
-// ════════════════════════════════════════
-function buildDragPin(pin){
-  // Decoys: los 2 primeros del POOL que NO están en el PIN
-  // Deterministas — siempre los mismos para el mismo PIN
-  const decoys = POOL.filter(e => !pin.includes(e)).slice(0, 2);
-  // Mezcla determinista usando el primer emoji del PIN como semilla
-  const seed = pin[0].codePointAt(0);
-  const all = [...pin, ...decoys];
-  // Fisher-Yates con semilla fija
-  for(let i = all.length - 1; i > 0; i--){
-    const j = (seed * (i + 1)) % (i + 1);
-    [all[i], all[j]] = [all[j], all[i]];
-  }
-  // Si la mezcla deja el orden idéntico al PIN, rotar uno
-  const allMatch = all.slice(0,4).every((e,i) => e === pin[i]);
-  if(allMatch) { const tmp=all[0]; all[0]=all[1]; all[1]=tmp; }
-
-  slotValues=[null,null,null,null];
-
-  const slotsEl=document.getElementById('drop-slots');
-  slotsEl.innerHTML='';
-  for(let i=0;i<4;i++){
-    const s=document.createElement('div');
-    s.className='drop-slot'; s.dataset.idx=i;
-    const num=document.createElement('span');
-    num.className='snum'; num.textContent=i+1;
-    s.appendChild(num);
-    s.addEventListener('dragover',e=>{e.preventDefault();s.classList.add('drag-target');});
-    s.addEventListener('dragleave',()=>s.classList.remove('drag-target'));
-    s.addEventListener('drop',e=>{
-      e.preventDefault();s.classList.remove('drag-target');
-      if(dragSrc!==null) placeEmoji(i,s,dragSrc);
-      dragSrc=null;
-    });
-    s.addEventListener('click',()=>{ if(slotValues[i]!==null) removeFromSlot(i,s); });
-    slotsEl.appendChild(s);
-  }
-
-  const srcEl=document.getElementById('emoji-source');
-  srcEl.innerHTML='';
-  all.forEach(emoji=>{
-    const el=document.createElement('div');
-    el.className='edrag'; el.textContent=emoji; el.dataset.emoji=emoji;
-    el.draggable=true;
-    el.addEventListener('dragstart',e=>{
-      dragSrc=emoji; el.classList.add('dragging');
-      e.dataTransfer.effectAllowed='move';
-    });
-    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
-    el.addEventListener('click',()=>{
-      if(el.classList.contains('used')) return;
-      const idx=slotValues.indexOf(null);
-      if(idx===-1) return;
-      placeEmoji(idx, slotsEl.children[idx], emoji);
-    });
-    srcEl.appendChild(el);
-  });
-}
-
-function placeEmoji(idx, slotEl, emoji){
-  if(slotValues[idx]!==null){
-    document.querySelector(`.edrag[data-emoji="${slotValues[idx]}"]`)?.classList.remove('used');
-  }
-  slotValues[idx]=emoji;
-  slotEl.textContent=emoji;
-  const num=document.createElement('span');
-  num.className='snum'; num.textContent=parseInt(slotEl.dataset.idx)+1;
-  slotEl.appendChild(num);
-  slotEl.classList.add('filled'); slotEl.classList.remove('wrong');
-  document.querySelector(`.edrag[data-emoji="${emoji}"]`)?.classList.add('used');
-  clearVmsg(); updateVerifyBtn();
-}
-
-function removeFromSlot(idx, slotEl){
-  document.querySelector(`.edrag[data-emoji="${slotValues[idx]}"]`)?.classList.remove('used');
-  slotValues[idx]=null;
-  slotEl.textContent='';
-  const num=document.createElement('span');
-  num.className='snum'; num.textContent=idx+1;
-  slotEl.appendChild(num);
-  slotEl.classList.remove('filled','wrong');
-  clearVmsg(); updateVerifyBtn();
-}
-
-function clearSlots(){
-  slotValues=[null,null,null,null];
-  document.querySelectorAll('.drop-slot').forEach((s,i)=>{
-    s.textContent='';
-    const n=document.createElement('span');
-    n.className='snum'; n.textContent=i+1; s.appendChild(n);
-    s.classList.remove('filled','wrong');
-  });
-  document.querySelectorAll('.edrag').forEach(e=>e.classList.remove('used'));
-  clearVmsg(); updateVerifyBtn();
-}
-
-function updateVerifyBtn(){
-  document.getElementById('btn-verify').classList.toggle('ready',slotValues.every(v=>v!==null));
-}
-
-function clearVmsg(){
-  const m=document.getElementById('vmsg');
-  m.textContent=''; m.className='vmsg';
-}
-
-function checkPin(){
-  const ok=slotValues.every((v,i)=>v===correctPin[i]);
-  const m=document.getElementById('vmsg');
-  if(ok){
-    m.className='vmsg ok'; m.textContent='✓ Orden correcto — Conexión verificada';
-    if(conn) conn.send({type:'pin-ok'});
-    setTimeout(()=>{
-      showScreen('s-receiver');
-      setReceiverStatus('Esperando el archivo...','connected','Verificado ✓','Canal seguro establecido');
-    },600);
-  } else {
-    m.className='vmsg err'; m.textContent='✗ Orden incorrecto — Inténtalo de nuevo';
-    document.querySelectorAll('.drop-slot.filled').forEach(s=>s.classList.add('wrong'));
-    if(conn) conn.send({type:'pin-fail'});
-    setTimeout(clearSlots, 1000);
-  }
-}
-
-// ════════════════════════════════════════
 // RESET
 // ════════════════════════════════════════
 function resetApp(){
-  if(peer){ try{peer.destroy();}catch(e){} peer=null; }
-  conn=null; selectedFile=null; sharedUrl=null;
+  if(peer){try{peer.destroy();}catch(e){} peer=null;}
+  Object.values(conns).forEach(r=>{try{r.conn.close();}catch(e){}});
+  conns={}; connCount=0; sessionLocked=false;
+  selectedFile=null; sharedUrl=null;
   receivedChunks=[]; receivedSize=0; fileMeta=null; fileWriter=null;
-  slotValues=[null,null,null,null];
-  sessionState='waiting';
-  clearTimeout(zombieTimeout);
+
   document.getElementById('file-input').value='';
   document.getElementById('url-input').value='';
   document.getElementById('qr-canvas').style.display='none';
   document.getElementById('qr-loading').style.display='flex';
+  document.getElementById('qr-loading').textContent='Generando QR...';
   document.getElementById('s-prog').style.display='none';
   document.getElementById('s-fill').style.width='0%';
-  document.getElementById('sender-pin').innerHTML='<span class="pin-emoji">⏳</span>';
+  document.getElementById('rcounter').style.display='none';
   document.getElementById('r-img').style.display='none';
   document.getElementById('r-url-preview').style.display='none';
   document.getElementById('r-strip').style.display='none';
+
   history.replaceState({},'',location.pathname);
   showScreen('s-drop');
 }
