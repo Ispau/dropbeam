@@ -806,8 +806,710 @@ footer{
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 // ════════════════════════════════════════════════════════
-// DROPBEAM v4 — Multi-receiver, no PIN, clean
+// DROPBEAM v4.1 — JS limpio, sin bugs de protocolo
 // ════════════════════════════════════════════════════════
+
+const ICE = { iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'stun:stun2.l.google.com:19302'},
+  {urls:'stun:stun3.l.google.com:19302'},
+  {urls:'stun:stun.cloudflare.com:3478'},
+]};
+
+// ── Estado global ──
+let peer        = null;
+let conns       = {};        // cid → { conn, name, progress, done, started }
+let selectedFile= null;
+let sharedUrl   = null;
+let sessionLocked = false;
+let fileBuffer  = null;      // ArrayBuffer del archivo (cacheado)
+
+// Estado receptor
+let receivedChunks = [];
+let receivedSize   = 0;
+let fileMeta       = null;
+let rLastTime      = 0;
+let rBytesSince    = 0;
+
+// ── Detección de modo ──
+const params         = new URLSearchParams(location.search);
+const receiverPeerId = params.get('id');
+
+// ── Arranque ──
+detectBrave();
+
+if(receiverPeerId){
+  // MODO RECEPTOR
+  document.querySelector('.nav').style.display = 'none';
+  const pageApp = document.getElementById('page-app');
+  pageApp.style.display = 'flex';
+  pageApp.classList.add('active');
+  showScreen('s-receiver');
+  initReceiver(receiverPeerId);
+} else {
+  // MODO EMISOR
+  initSenderUI();
+}
+
+// ════════════════════════════════════════
+// BRAVE DETECTION
+// ════════════════════════════════════════
+async function detectBrave(){
+  try{
+    const isBrave = navigator.brave
+      ? await navigator.brave.isBrave().catch(()=>false)
+      : /Brave/.test(navigator.userAgent);
+    if(isBrave){
+      const warn = document.getElementById('brave-warn');
+      if(warn) warn.classList.add('show');
+    }
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// NAVEGACIÓN
+// ════════════════════════════════════════
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  const target = document.getElementById('page-'+name);
+  target.style.display = 'flex';
+  target.offsetHeight; // reflow para animación
+  target.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.toggle('active',
+      (name==='app'   && b.textContent.trim()==='Compartir') ||
+      (name==='about' && b.textContent.trim()==='Acerca de')
+    );
+  });
+}
+
+function showScreen(id){
+  document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',(tab==='file'&&i===0)||(tab==='url'&&i===1));
+  });
+  document.getElementById('tab-file').style.display = tab==='file'?'block':'none';
+  document.getElementById('tab-url').style.display  = tab==='url' ?'block':'none';
+}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function fmtSize(b){
+  if(!b||b<1024)    return (b||0)+' B';
+  if(b<1048576)     return (b/1024).toFixed(1)+' KB';
+  if(b<1073741824)  return (b/1048576).toFixed(1)+' MB';
+  return (b/1073741824).toFixed(2)+' GB';
+}
+function fmtSpeed(bps){
+  if(bps<1024)    return '<1 KB/s';
+  if(bps<1048576) return (bps/1024).toFixed(0)+' KB/s';
+  return (bps/1048576).toFixed(1)+' MB/s';
+}
+function fileIcon(n){
+  if(!n) return '🔗';
+  const e = n.split('.').pop().toLowerCase();
+  return ({
+    jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',
+    mp4:'🎬',mov:'🎬',avi:'🎬',mkv:'🎬',webm:'🎬',
+    mp3:'🎵',wav:'🎵',flac:'🎵',aac:'🎵',ogg:'🎵',
+    pdf:'📕',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',
+    zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',
+    js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',txt:'📄',md:'📄',json:'📋'
+  }[e])||'📦';
+}
+function isImage(n){
+  return ['jpg','jpeg','png','gif','webp','svg','heic','avif']
+    .includes(n?.split('.').pop().toLowerCase());
+}
+function uid(){ return Math.random().toString(36).slice(2,8); }
+
+// Normaliza cualquier dato binario a ArrayBuffer
+function toArrayBuffer(data){
+  if(data instanceof ArrayBuffer) return data;
+  if(ArrayBuffer.isView(data))    return data.buffer.slice(data.byteOffset, data.byteOffset+data.byteLength);
+  return null;
+}
+
+// ════════════════════════════════════════
+// QR
+// ════════════════════════════════════════
+function drawQR(url){
+  const canvas  = document.getElementById('qr-canvas');
+  const loading = document.getElementById('qr-loading');
+  const SIZE = 196;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${SIZE}x${SIZE}&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=2`;
+  img.onload = ()=>{
+    canvas.width = SIZE; canvas.height = SIZE;
+    canvas.getContext('2d').drawImage(img,0,0,SIZE,SIZE);
+    loading.style.display = 'none';
+    canvas.style.display  = 'block';
+  };
+  img.onerror = ()=>{
+    loading.textContent = 'Escanea o abre: '+location.origin;
+    loading.style.fontSize = '10px';
+  };
+}
+
+// ════════════════════════════════════════
+// PEER FACTORY — con timeout
+// ════════════════════════════════════════
+function makePeer(onOpen, onError){
+  const p = new Peer({ config: ICE });
+  let opened = false;
+  const t = setTimeout(()=>{
+    if(!opened){ p.destroy(); onError('timeout'); }
+  }, 15000);
+  p.on('open', id=>{ opened=true; clearTimeout(t); onOpen(p,id); });
+  p.on('error', err=>{ clearTimeout(t); onError(err.type||'error'); });
+  return p;
+}
+
+// ════════════════════════════════════════
+// SENDER UI — drop zone y tabs
+// ════════════════════════════════════════
+function initSenderUI(){
+  const dz = document.getElementById('drop-zone');
+  const fi = document.getElementById('file-input');
+  dz.addEventListener('click', ()=>fi.click());
+  fi.addEventListener('change', e=>{ if(e.target.files[0]) startWithFile(e.target.files[0]); });
+  dz.addEventListener('dragover',  e=>{ e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('over');
+    if(e.dataTransfer.files[0]) startWithFile(e.dataTransfer.files[0]);
+  });
+}
+
+function handleUrl(){
+  const val = document.getElementById('url-input').value.trim();
+  if(!val || !val.startsWith('http')){
+    document.getElementById('url-input').style.outline = '2px solid var(--red)';
+    return;
+  }
+  sharedUrl = val; selectedFile = null;
+  setupSender('🔗', val, 'Enlace compartido');
+}
+
+function startWithFile(file){
+  selectedFile = file; sharedUrl = null;
+  setupSender(fileIcon(file.name), file.name, fmtSize(file.size));
+}
+
+function setSenderStatus(txt, dotClass){
+  document.getElementById('s-status').textContent = txt;
+  if(dotClass) document.getElementById('s-dot').className = 'sdot '+dotClass;
+}
+
+// ════════════════════════════════════════
+// SETUP SENDER — crea peer y espera conexiones
+// ════════════════════════════════════════
+function setupSender(icon, label, sub){
+  document.getElementById('s-icon').textContent = icon;
+  document.getElementById('s-name').textContent = label;
+  document.getElementById('s-size').textContent = sub;
+  showScreen('s-qr');
+  setSenderStatus('Conectando...','waiting');
+
+  // Reset estado
+  if(peer){ try{peer.destroy();}catch(e){} peer=null; }
+  conns = {}; sessionLocked = false; fileBuffer = null;
+  updateReceiverCounter();
+
+  makePeer(
+    (p, id)=>{
+      peer = p;
+      const url = `${location.origin}${location.pathname}?id=${id}`;
+      drawQR(url);
+      setSenderStatus('Listo — esperando que escaneen el QR','waiting');
+
+      p.on('connection', incoming=>{
+        if(sessionLocked){ incoming.close(); return; }
+
+        const cid = uid();
+        conns[cid] = {
+          conn: incoming,
+          name: 'Dispositivo '+( Object.keys(conns).length+1 ),
+          progress: 0,
+          done: false,
+          started: false
+        };
+        updateReceiverCounter();
+
+        // ── Protocolo correcto:
+        // 1. Emisor open → envía metadata
+        // 2. Receptor recibe metadata → envía 'ready'
+        // 3. Emisor recibe 'ready' → empieza a enviar chunks
+        // Así garantizamos que el receptor tiene fileMeta antes de recibir chunks.
+
+        incoming.on('open',()=>{
+          setSenderStatus(
+            `${Object.keys(conns).length} receptor${Object.keys(conns).length>1?'es':''} conectado${Object.keys(conns).length>1?'s':''}...`,
+            'connected'
+          );
+          updateReceiverCounter();
+
+          if(sharedUrl){
+            // URLs: enviar directamente, no hace falta 'ready'
+            incoming.send({ type:'url', url:sharedUrl });
+            conns[cid].done = true; conns[cid].progress = 100;
+            updateReceiverCounter();
+            checkAllDone();
+          } else {
+            // Archivo: enviar metadata y esperar 'ready' del receptor
+            incoming.send({
+              type: 'metadata',
+              name:    selectedFile.name,
+              size:    selectedFile.size,
+              mime:    selectedFile.type,
+              isImage: isImage(selectedFile.name)
+            });
+          }
+        });
+
+        incoming.on('data', data=>{
+          if(data && data.type === 'ready'){
+            // Receptor confirmó metadata → empezamos a enviar
+            sendToOne(cid);
+          }
+        });
+
+        incoming.on('close',()=>{
+          if(conns[cid] && !conns[cid].done){
+            delete conns[cid];
+            updateReceiverCounter();
+            if(Object.keys(conns).length===0)
+              setSenderStatus('Receptor desconectado — esperando nuevo escaneo','waiting');
+          }
+        });
+
+        incoming.on('error', ()=>{
+          delete conns[cid];
+          updateReceiverCounter();
+        });
+      });
+    },
+    (errType)=>{ setSenderStatus(`Error: ${errType} — recarga la página`,'waiting'); }
+  );
+}
+
+// ════════════════════════════════════════
+// ENVÍO — archivos pequeños en buffer, grandes por slice
+// ════════════════════════════════════════
+function sendToOne(cid){
+  const rec = conns[cid];
+  if(!rec || !selectedFile || rec.started) return;
+
+  document.getElementById('s-prog').style.display = 'flex';
+  setSenderStatus(
+    `Enviando a ${Object.keys(conns).length} receptor${Object.keys(conns).length>1?'es':''}...`,
+    'sending'
+  );
+
+  // Archivos grandes (>100MB): slice directo, no acumular en RAM
+  if(selectedFile.size > 100 * 1024 * 1024){
+    streamSlice(cid);
+    return;
+  }
+
+  // Si ya está cacheado en memoria, enviar directo
+  if(fileBuffer){
+    streamBuffer(cid, fileBuffer);
+    return;
+  }
+
+  // Primera vez: leer el archivo completo una sola vez
+  const reader = new FileReader();
+  reader.onload = e=>{
+    fileBuffer = e.target.result;
+    // Arrancar todos los receptores que estén esperando
+    Object.keys(conns).forEach(id=>{
+      if(!conns[id].started) streamBuffer(id, fileBuffer);
+    });
+  };
+  reader.onerror = ()=> setSenderStatus('Error leyendo el archivo','waiting');
+  reader.readAsArrayBuffer(selectedFile);
+}
+
+function streamBuffer(cid, buffer){
+  const rec = conns[cid];
+  if(!rec || rec.started) return;
+  rec.started = true;
+
+  const CHUNK = 65536;
+  let offset = 0;
+  let lastTime = Date.now(), bytesSince = 0;
+
+  function next(){
+    if(!conns[cid]) return; // desconectado
+
+    if(offset >= buffer.byteLength){
+      try{ rec.conn.send({ type:'done' }); }catch(e){}
+      rec.done = true; rec.progress = 100;
+      updateReceiverCounter();
+      updateGlobalProgress();
+      checkAllDone();
+      return;
+    }
+
+    const chunk = buffer.slice(offset, offset + CHUNK);
+    try{ rec.conn.send({ type:'chunk', data: chunk }); }catch(e){ return; }
+    offset += chunk.byteLength;
+    bytesSince += chunk.byteLength;
+
+    const now = Date.now(), elapsed = (now - lastTime)/1000;
+    if(elapsed >= 0.5){
+      document.getElementById('s-speed').textContent = fmtSpeed(bytesSince/elapsed);
+      bytesSince = 0; lastTime = now;
+    }
+
+    rec.progress = Math.round(offset / buffer.byteLength * 100);
+    updateReceiverCounter();
+    updateGlobalProgress();
+    setTimeout(next, 1);
+  }
+  next();
+}
+
+function streamSlice(cid){
+  const rec = conns[cid];
+  if(!rec || rec.started) return;
+  rec.started = true;
+
+  const reader = new FileReader();
+  let offset = 0, chunkSize = 65536;
+  let lastTime = Date.now(), bytesSince = 0;
+
+  function next(){
+    if(!conns[cid]) return;
+    if(offset >= selectedFile.size){
+      try{ rec.conn.send({ type:'done' }); }catch(e){}
+      rec.done = true; rec.progress = 100;
+      updateReceiverCounter();
+      updateGlobalProgress();
+      checkAllDone();
+      return;
+    }
+    reader.readAsArrayBuffer(selectedFile.slice(offset, offset+chunkSize));
+  }
+
+  reader.onload = e=>{
+    const buf = e.target.result;
+    try{ rec.conn.send({ type:'chunk', data: buf }); }catch(e){ return; }
+    offset += buf.byteLength;
+    bytesSince += buf.byteLength;
+
+    const now = Date.now(), elapsed = (now-lastTime)/1000;
+    if(elapsed >= 0.5){
+      const bps = bytesSince/elapsed;
+      chunkSize = bps>2097152 ? 262144 : bps>524288 ? 131072 : 65536;
+      document.getElementById('s-speed').textContent = fmtSpeed(bps);
+      bytesSince = 0; lastTime = now;
+    }
+
+    rec.progress = Math.round(offset / selectedFile.size * 100);
+    updateReceiverCounter();
+    updateGlobalProgress();
+    setTimeout(next, 1);
+  };
+
+  reader.onerror = ()=>{ delete conns[cid]; updateReceiverCounter(); };
+  next();
+}
+
+function updateGlobalProgress(){
+  const vals = Object.values(conns);
+  if(!vals.length) return;
+  const avg = vals.reduce((a,r)=>a+r.progress,0) / vals.length;
+  document.getElementById('s-fill').style.width  = avg+'%';
+  document.getElementById('s-prog-txt').textContent = Math.round(avg)+'%';
+}
+
+function checkAllDone(){
+  const vals = Object.values(conns);
+  if(vals.length > 0 && vals.every(r=>r.done)){
+    sessionLocked = true;
+    const n = vals.length;
+    document.getElementById('done-sub').textContent =
+      `Recibido por ${n} dispositivo${n>1?'s':''} · sin almacenamiento intermedio`;
+    setTimeout(()=>showScreen('s-done'), 400);
+  }
+}
+
+// ════════════════════════════════════════
+// CONTADOR DE RECEPTORES
+// ════════════════════════════════════════
+function updateReceiverCounter(){
+  const vals  = Object.values(conns);
+  const el    = document.getElementById('rcounter');
+  const list  = document.getElementById('rcounter-list');
+  const num   = document.getElementById('rcounter-num');
+
+  if(vals.length === 0){ el.style.display='none'; return; }
+  el.style.display = 'flex';
+
+  const done  = vals.filter(r=>r.done).length;
+  const total = vals.length;
+  num.textContent = (done===total && total>0)
+    ? `✓ ${total} completado${total>1?'s':''}`
+    : `${total} conectado${total>1?'s':''} · ${done} listo${done!==1?'s':''}`;
+
+  list.innerHTML = '';
+  vals.forEach(rec=>{
+    const icon     = rec.done ? '✅' : rec.progress>0 ? '📥' : '📱';
+    const pctLabel = rec.done ? '✓'  : rec.started ? rec.progress+'%' : 'esperando...';
+    const item     = document.createElement('div');
+    item.className = 'rcounter-item';
+    item.innerHTML = `
+      <div class="rcounter-icon">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="rcounter-name">${rec.name}</div>
+          <div class="rcounter-pct">${pctLabel}</div>
+        </div>
+        <div class="rcounter-bar">
+          <div class="rcounter-fill" style="width:${rec.progress}%"></div>
+        </div>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+// ════════════════════════════════════════
+// RECEPTOR — initReceiver
+// ════════════════════════════════════════
+function setReceiverStatus(txt, dotClass, title, sub){
+  if(txt)      document.getElementById('r-status').textContent = txt;
+  if(dotClass) document.getElementById('r-dot').className = 'sdot '+dotClass;
+  if(title)    document.getElementById('r-title').textContent  = title;
+  if(sub!==undefined) document.getElementById('r-sub').textContent = sub;
+}
+
+function initReceiver(senderId){
+  setReceiverStatus('Conectando...','waiting','Iniciando...','');
+
+  makePeer(
+    (p)=>{
+      peer = p;
+      setReceiverStatus('Conectando con el emisor...','waiting','Conectando...','');
+
+      const conn = p.connect(senderId, { reliable: true });
+
+      // Timeout de conexión
+      const connTimeout = setTimeout(()=>{
+        if(!fileMeta){
+          setReceiverStatus(
+            'No se pudo conectar — el QR puede haber expirado',
+            'waiting','Sin conexión',
+            'Pide al emisor un nuevo QR'
+          );
+        }
+      }, 15000);
+
+      conn.on('open',()=>{
+        clearTimeout(connTimeout);
+        setReceiverStatus(
+          'Conectado — esperando datos del emisor...',
+          'connected','Conectado ✓','Canal cifrado activo'
+        );
+        // NO enviamos 'ready' aquí.
+        // Lo enviaremos cuando recibamos metadata,
+        // garantizando que fileMeta está listo antes de los chunks.
+      });
+
+      conn.on('data', data=>{
+        if(!data) return;
+        handleReceiverData(data, conn);
+      });
+
+      conn.on('error', err=>{
+        clearTimeout(connTimeout);
+        console.error('conn error', err);
+        setReceiverStatus(
+          'Error de conexión — vuelve a escanear',
+          'waiting','Error','');
+      });
+
+      conn.on('close',()=>{
+        clearTimeout(connTimeout);
+        if(fileMeta && receivedSize < fileMeta.size){
+          setReceiverStatus('Conexión cerrada antes de terminar','waiting');
+        }
+      });
+    },
+    (errType)=>{
+      setReceiverStatus(
+        `No se pudo conectar (${errType}).`,
+        'waiting','Error de red','Prueba con Chrome o Safari'
+      );
+    }
+  );
+}
+
+// ════════════════════════════════════════
+// MANEJADOR DE DATOS — receptor
+// ════════════════════════════════════════
+function handleReceiverData(data, conn){
+
+  // ── METADATA: el emisor nos dice qué archivo viene
+  if(data.type === 'metadata'){
+    fileMeta       = data;
+    receivedChunks = [];
+    receivedSize   = 0;
+    rLastTime      = Date.now(); // inicializar AQUÍ, no en 0
+    rBytesSince    = 0;
+
+    document.getElementById('r-icon').textContent = fileIcon(data.name);
+    document.getElementById('r-name').textContent = data.name;
+    document.getElementById('r-size').textContent = fmtSize(data.size);
+    document.getElementById('r-strip').style.display = 'flex';
+    setReceiverStatus('Recibiendo...','sending','Recibiendo...','Conexión P2P cifrada activa');
+
+    // Ahora sí enviamos 'ready' — fileMeta está listo, podemos recibir chunks
+    conn.send({ type: 'ready' });
+    return;
+  }
+
+  // ── CHUNK: datos del archivo
+  if(data.type === 'chunk'){
+    // Normalizar a ArrayBuffer — compatibilidad con todos los navegadores
+    let buf = null;
+    if(data.data instanceof ArrayBuffer){
+      buf = data.data;
+    } else if(ArrayBuffer.isView(data.data)){
+      buf = data.data.buffer.slice(
+        data.data.byteOffset,
+        data.data.byteOffset + data.data.byteLength
+      );
+    }
+
+    if(!buf) return; // chunk inválido, ignorar
+
+    receivedChunks.push(buf);
+    receivedSize  += buf.byteLength;
+    rBytesSince   += buf.byteLength;
+
+    // Progreso
+    const now = Date.now(), elapsed = (now - rLastTime)/1000;
+    if(elapsed >= 0.5){
+      document.getElementById('r-speed').textContent = fmtSpeed(rBytesSince/elapsed);
+      rBytesSince = 0; rLastTime = now;
+    }
+    if(fileMeta && fileMeta.size > 0){
+      const pct = Math.min(100, Math.round(receivedSize/fileMeta.size*100));
+      document.getElementById('r-fill').style.width = pct+'%';
+      document.getElementById('r-prog-txt').textContent =
+        `${fmtSize(receivedSize)} / ${fmtSize(fileMeta.size)} · ${pct}%`;
+    }
+    return;
+  }
+
+  // ── DONE: transferencia completa
+  if(data.type === 'done'){
+    document.getElementById('r-fill').style.width  = '100%';
+    document.getElementById('r-speed').textContent = '';
+    document.getElementById('r-prog-txt').textContent = '✓ Completado';
+    assembleAndDeliver();
+    return;
+  }
+
+  // ── URL: el emisor comparte un enlace
+  if(data.type === 'url'){
+    setReceiverStatus('Recibido ✓','done','¡Enlace recibido!','Toca para abrirlo');
+    document.getElementById('r-prog').style.display = 'none';
+    const preview = document.getElementById('r-url-preview');
+    preview.style.display = 'flex';
+    document.getElementById('r-url-txt').textContent = data.url;
+    document.getElementById('r-url-link').href       = data.url;
+    document.getElementById('r-url-btn').onclick     = ()=>window.open(data.url,'_blank','noopener');
+    return;
+  }
+}
+
+// ════════════════════════════════════════
+// ENSAMBLAR Y ENTREGAR
+// ════════════════════════════════════════
+function assembleAndDeliver(){
+  if(!fileMeta || receivedChunks.length === 0){
+    setReceiverStatus('Error: no se recibieron datos','waiting','Error','');
+    return;
+  }
+
+  const blob = new Blob(receivedChunks, {
+    type: fileMeta.mime || 'application/octet-stream'
+  });
+
+  if(fileMeta.isImage){
+    // Mostrar imagen en pantalla
+    const url = URL.createObjectURL(blob);
+    const img = document.getElementById('r-img');
+    img.src = url;
+    img.style.display = 'block';
+    setReceiverStatus('Mantén pulsado para guardar','done','¡Imagen recibida!','');
+  } else {
+    // Descargar archivo
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = fileMeta.name || 'archivo';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
+    setReceiverStatus('Descarga iniciada ✓','done','¡Archivo recibido!','');
+  }
+}
+
+// ════════════════════════════════════════
+// RESET
+// ════════════════════════════════════════
+function resetApp(){
+  if(peer){ try{peer.destroy();}catch(e){} peer=null; }
+  Object.values(conns).forEach(r=>{ try{r.conn.close();}catch(e){} });
+  conns          = {};
+  sessionLocked  = false;
+  fileBuffer     = null;
+  selectedFile   = null;
+  sharedUrl      = null;
+  receivedChunks = [];
+  receivedSize   = 0;
+  fileMeta       = null;
+
+  // Reset UI emisor
+  const fi = document.getElementById('file-input');
+  if(fi) fi.value = '';
+  const ui = document.getElementById('url-input');
+  if(ui) ui.value = '';
+  document.getElementById('qr-canvas').style.display  = 'none';
+  document.getElementById('qr-loading').style.display = 'flex';
+  document.getElementById('qr-loading').textContent   = 'Generando QR...';
+  document.getElementById('s-prog').style.display     = 'none';
+  document.getElementById('s-fill').style.width       = '0%';
+  document.getElementById('s-speed').textContent      = '';
+  document.getElementById('rcounter').style.display   = 'none';
+
+  // Reset UI receptor
+  document.getElementById('r-img').style.display         = 'none';
+  document.getElementById('r-url-preview').style.display = 'none';
+  document.getElementById('r-strip').style.display       = 'none';
+  document.getElementById('r-fill').style.width          = '0%';
+  document.getElementById('r-prog-txt').textContent      = 'Conectando...';
+  document.getElementById('r-speed').textContent         = '';
+
+  history.replaceState({}, '', location.pathname);
+  showScreen('s-drop');
+}
+</script>
 
 const ICE = { iceServers:[
   {urls:'stun:stun.l.google.com:19302'},
@@ -838,6 +1540,10 @@ detectBrave();
 if(receiverPeerId){
   isReceiver=true;
   document.querySelector('.nav').style.display='none';
+  // Asegurar que page-app está visible antes de mostrar la pantalla del receptor
+  const pageApp = document.getElementById('page-app');
+  pageApp.style.display='flex';
+  pageApp.classList.add('active');
   showScreen('s-receiver');
   initReceiver(receiverPeerId);
 } else {
@@ -1002,7 +1708,7 @@ function setupSender(icon,label,sub){
   setSenderStatus('Conectando...','waiting');
 
   if(peer){try{peer.destroy();}catch(e){} peer=null;}
-  conns={}; connCount=0; sessionLocked=false;
+  conns={}; connCount=0; sessionLocked=false; fileBuffer=null;
   updateReceiverCounter();
 
   makePeer(
@@ -1071,56 +1777,140 @@ function setupSender(icon,label,sub){
 }
 
 // ════════════════════════════════════════
-// SEND TO ONE RECEIVER
+// SEND — multi-receiver con progreso individual
 // ════════════════════════════════════════
+
+// Buffer precargado del archivo (se carga una vez, se envía a todos)
+let fileBuffer = null;
+
 function sendToOne(cid){
-  const rec=conns[cid];
-  if(!rec||!selectedFile) return;
+  const rec = conns[cid];
+  if(!rec || !selectedFile) return;
 
   document.getElementById('s-prog').style.display='flex';
-  setSenderStatus(`Enviando a ${Object.keys(conns).length} receptor${Object.keys(conns).length>1?'es':''}...`,'sending');
+  updateSenderStatusFromConns();
 
-  const CHUNK=65536;
-  let offset=0, chunkSize=CHUNK;
-  sLastTime=Date.now(); sBytesSince=0;
-  const reader=new FileReader();
+  // Si ya tenemos el buffer precargado, enviamos directo
+  if(fileBuffer){
+    streamBufferToReceiver(cid, fileBuffer);
+    return;
+  }
+
+  // Primera vez: leer el archivo completo en memoria
+  // Para archivos grandes (>200MB) usamos slice por receptor
+  if(selectedFile.size > 200 * 1024 * 1024){
+    streamSliceToReceiver(cid);
+    return;
+  }
+
+  // Leer una vez y cachear
+  const reader = new FileReader();
+  reader.onload = e => {
+    fileBuffer = e.target.result;
+    // Enviar a todos los que ya estén esperando
+    Object.keys(conns).forEach(id => {
+      if(!conns[id].started) streamBufferToReceiver(id, fileBuffer);
+    });
+  };
+  reader.onerror = () => setSenderStatus('Error leyendo el archivo','waiting');
+  reader.readAsArrayBuffer(selectedFile);
+}
+
+// Enviar desde buffer precargado (archivo ya en memoria)
+function streamBufferToReceiver(cid, buffer){
+  const rec = conns[cid];
+  if(!rec || rec.started) return;
+  rec.started = true;
+
+  const CHUNK = 65536;
+  let offset = 0;
+  let lastTime = Date.now(), bytesSince = 0;
 
   function nextChunk(){
-    if(!conns[cid]){ return; } // receptor desconectado
-    if(offset>=selectedFile.size){
-      rec.conn.send({type:'done'});
-      rec.done=true; rec.progress=100;
+    if(!conns[cid]) return; // desconectado
+    if(offset >= buffer.byteLength){
+      try{ rec.conn.send({type:'done'}); }catch(e){}
+      rec.done = true; rec.progress = 100;
       updateReceiverCounter();
-      // Progreso global
       updateGlobalProgress();
       checkAllDone();
       return;
     }
-    reader.readAsArrayBuffer(selectedFile.slice(offset,offset+chunkSize));
-  }
+    const chunk = buffer.slice(offset, offset + CHUNK);
+    try{ rec.conn.send({type:'chunk', data:chunk}); }catch(e){ return; }
+    offset += chunk.byteLength;
+    bytesSince += chunk.byteLength;
 
-  reader.onload=e=>{
-    const buf=e.target.result;
-    try{ rec.conn.send({type:'chunk',data:buf}); }catch(err){ return; }
-    offset+=buf.byteLength;
-    sBytesSince+=buf.byteLength;
-
-    // Speed & adaptive chunks
-    const now=Date.now(), elapsed=(now-sLastTime)/1000;
-    if(elapsed>=0.5){
-      const bps=sBytesSince/elapsed;
-      chunkSize=bps>2097152?262144:bps>524288?131072:65536;
-      document.getElementById('s-speed').textContent=fmtSpeed(bps);
-      sBytesSince=0; sLastTime=now;
+    // Speed display (global aproximado)
+    const now = Date.now(), elapsed = (now - lastTime) / 1000;
+    if(elapsed >= 0.5){
+      const bps = bytesSince / elapsed;
+      document.getElementById('s-speed').textContent = fmtSpeed(bps);
+      bytesSince = 0; lastTime = now;
     }
 
-    rec.progress=Math.round(offset/selectedFile.size*100);
+    rec.progress = Math.round(offset / buffer.byteLength * 100);
     updateReceiverCounter();
     updateGlobalProgress();
-    setTimeout(nextChunk,1);
+    setTimeout(nextChunk, 1);
+  }
+
+  nextChunk();
+}
+
+// Para archivos >200MB: slice por receptor (no caben en RAM)
+function streamSliceToReceiver(cid){
+  const rec = conns[cid];
+  if(!rec || rec.started) return;
+  rec.started = true;
+
+  const CHUNK = 65536;
+  let offset = 0, chunkSize = CHUNK;
+  let lastTime = Date.now(), bytesSince = 0;
+  const reader = new FileReader();
+
+  function nextChunk(){
+    if(!conns[cid]) return;
+    if(offset >= selectedFile.size){
+      try{ rec.conn.send({type:'done'}); }catch(e){}
+      rec.done = true; rec.progress = 100;
+      updateReceiverCounter();
+      updateGlobalProgress();
+      checkAllDone();
+      return;
+    }
+    reader.readAsArrayBuffer(selectedFile.slice(offset, offset + chunkSize));
+  }
+
+  reader.onload = e => {
+    const buf = e.target.result;
+    try{ rec.conn.send({type:'chunk', data:buf}); }catch(e){ return; }
+    offset += buf.byteLength;
+    bytesSince += buf.byteLength;
+
+    const now = Date.now(), elapsed = (now - lastTime) / 1000;
+    if(elapsed >= 0.5){
+      const bps = bytesSince / elapsed;
+      chunkSize = bps > 2097152 ? 262144 : bps > 524288 ? 131072 : 65536;
+      document.getElementById('s-speed').textContent = fmtSpeed(bps);
+      bytesSince = 0; lastTime = now;
+    }
+
+    rec.progress = Math.round(offset / selectedFile.size * 100);
+    updateReceiverCounter();
+    updateGlobalProgress();
+    setTimeout(nextChunk, 1);
   };
 
   nextChunk();
+}
+
+function updateSenderStatusFromConns(){
+  const n = Object.keys(conns).length;
+  setSenderStatus(
+    `Enviando a ${n} receptor${n > 1 ? 'es' : ''}...`,
+    'sending'
+  );
 }
 
 function updateGlobalProgress(){
@@ -1153,19 +1943,25 @@ function updateReceiverCounter(){
 
   if(vals.length===0){ el.style.display='none'; return; }
   el.style.display='flex';
-  num.textContent=`${vals.length} conectado${vals.length>1?'s':''}`;
+
+  const done=vals.filter(r=>r.done).length;
+  const total=vals.length;
+  num.textContent = done===total && total>0
+    ? `✓ ${total} completado${total>1?'s':''}`
+    : `${total} conectado${total>1?'s':''} · ${done} completado${done!==1?'s':''}`;
 
   list.innerHTML='';
   vals.forEach(rec=>{
     const item=document.createElement('div');
     item.className='rcounter-item';
-    const icon=rec.done?'✅':rec.progress>0?'📥':'📱';
+    const icon = rec.done ? '✅' : rec.progress>0 ? '📥' : '📱';
+    const pctLabel = rec.done ? '✓' : rec.started ? rec.progress+'%' : 'esperando...';
     item.innerHTML=`
       <div class="rcounter-icon">${icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="rcounter-name">${rec.name}</div>
-          <div class="rcounter-pct">${rec.done?'✓':rec.progress+'%'}</div>
+          <div class="rcounter-pct">${pctLabel}</div>
         </div>
         <div class="rcounter-bar">
           <div class="rcounter-fill" style="width:${rec.progress}%"></div>
@@ -1354,7 +2150,7 @@ function assembleAndDeliver(){
 function resetApp(){
   if(peer){try{peer.destroy();}catch(e){} peer=null;}
   Object.values(conns).forEach(r=>{try{r.conn.close();}catch(e){}});
-  conns={}; connCount=0; sessionLocked=false;
+  conns={}; connCount=0; sessionLocked=false; fileBuffer=null;
   selectedFile=null; sharedUrl=null;
   receivedChunks=[]; receivedSize=0; fileMeta=null; fileWriter=null;
 
