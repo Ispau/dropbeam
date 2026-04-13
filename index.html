@@ -3,2220 +3,1131 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DropBeam — AirDrop para cualquier dispositivo. Sin instalar nada.</title>
-<meta name="description" content="Transfiere archivos entre iPhone, Android, Windows o Mac al instante. Como AirDrop pero entre cualquier dispositivo — desde el navegador, sin cuenta, sin almacenamiento en servidores.">
-<meta name="keywords" content="airdrop alternativa, transferir archivos entre dispositivos, compartir archivos sin registro, enviar archivo del pc al movil, transferencia directa dispositivos, sin instalar nada">
-<meta property="og:title" content="DropBeam — AirDrop para cualquier dispositivo">
-<meta property="og:description" content="Transfiere archivos entre iPhone, Android y PC en tiempo real. Sin almacenamiento en servidores. Sin cuenta. Sin instalar nada.">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="DropBeam — Transferencia directa entre dispositivos">
-<meta name="twitter:description" content="Como AirDrop pero para cualquier dispositivo. Desde el navegador, sin instalar nada, sin almacenamiento en servidores.">
+<title>DropBeam — Comparte archivos al instante</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-@font-face {
-  font-family:'Syne';src:url('fonts/Syne-Regular.woff2') format('woff2');
-  font-weight:400;font-display:swap;
-}
-@font-face {
-  font-family:'Syne';src:url('fonts/Syne-Bold.woff2') format('woff2');
-  font-weight:700;font-display:swap;
-}
-@font-face {
-  font-family:'Syne';src:url('fonts/Syne-ExtraBold.woff2') format('woff2');
-  font-weight:800;font-display:swap;
-}
-@font-face {
-  font-family:'DM Mono';src:url('fonts/DMMono-Light.woff2') format('woff2');
-  font-weight:300;font-display:swap;
-}
-@font-face {
-  font-family:'DM Mono';src:url('fonts/DMMono-Regular.woff2') format('woff2');
-  font-weight:400;font-display:swap;
-}
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
-:root {
-  --bg:#07070d;--s1:#0f0f1a;--s2:#161625;--s3:#1e1e30;
-  --accent:#00e5ff;--accent2:#bf5af2;
-  --green:#30d158;--red:#ff453a;--warn:#ffd60a;
-  --text:#f2f2f7;--muted:#636380;
-  --border:rgba(255,255,255,0.07);
-  --glow:rgba(0,229,255,0.12);
-}
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --accent: #00ff88;
+    --accent2: #7c3aed;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --border: rgba(255,255,255,0.06);
+    --glow: 0 0 40px rgba(0,255,136,0.15);
+  }
 
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body{
-  background:var(--bg);color:var(--text);
-  font-family:'Syne',system-ui,sans-serif;
-  min-height:100vh;display:flex;flex-direction:column;
-  overflow-x:hidden;
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
 
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:
-    linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);
-  background-size:48px 48px;pointer-events:none;z-index:0;
-}
-body::after{
-  content:'';position:fixed;width:600px;height:600px;
-  background:radial-gradient(circle,rgba(191,90,242,0.08) 0%,transparent 65%);
-  top:-200px;right:-200px;pointer-events:none;z-index:0;
-}
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-/* ── HEADER ── */
-header{
-  position:relative;z-index:100;
-  padding:16px 32px;
-  display:flex;align-items:center;gap:12px;
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(12px);
-}
-.logo{
-  font-size:19px;font-weight:800;letter-spacing:-.5px;
-  display:flex;align-items:center;gap:10px;flex:1;
-}
-.logo-beam{
-  width:26px;height:6px;
-  background:linear-gradient(90deg,var(--accent2),var(--accent));
-  border-radius:100px;box-shadow:0 0 12px var(--accent);
-  animation:beam 2.5s ease-in-out infinite;
-}
-@keyframes beam{0%,100%{opacity:1;transform:scaleX(1)}50%{opacity:.4;transform:scaleX(.6)}}
+  /* Glow orb */
+  body::after {
+    content: '';
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-.nav{display:flex;gap:2px;}
-.nav-btn{
-  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
-  color:var(--muted);padding:6px 14px;border-radius:8px;
-  cursor:pointer;border:none;background:transparent;
-  transition:all .15s;
-}
-.nav-btn:hover{color:var(--text);background:rgba(255,255,255,0.05);}
-.nav-btn.active{color:var(--accent);background:rgba(0,229,255,0.08);}
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
 
-.chip{
-  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;
-  color:var(--accent);background:rgba(0,229,255,0.08);
-  border:1px solid rgba(0,229,255,0.18);
-  padding:3px 9px;border-radius:100px;
-}
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-/* ── MAIN ── */
-main{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:36px 20px;position:relative;z-index:10;
-}
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
 
-/* ── PAGES ── */
-.page{display:none;width:100%;flex-direction:column;align-items:center;}
-.page.active{display:flex;animation:fadeUp .35s cubic-bezier(.16,1,.3,1);}
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--accent);
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.2);
+    padding: 3px 8px;
+    border-radius: 100px;
+    letter-spacing: 1px;
+  }
 
-/* ── SCREENS (dentro de page-app) ── */
-.screen{display:none;flex-direction:column;align-items:center;}
-.screen.active{display:flex;animation:fadeUp .3s cubic-bezier(.16,1,.3,1);}
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 10;
+  }
 
-/* ═══════════════════════════
-   PAGE APP — PANTALLA DROP
-═══════════════════════════ */
-#s-drop{gap:20px;max-width:520px;width:100%;}
+  /* SCREEN: DROP ZONE */
+  #screen-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    max-width: 560px;
+    width: 100%;
+  }
 
-.hero{text-align:center;}
-.hero h1{
-  font-size:clamp(30px,5vw,48px);font-weight:800;
-  line-height:1.05;letter-spacing:-2px;
-}
-.hero h1 em{
-  font-style:normal;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.hero p{
-  margin-top:10px;font-family:'DM Mono',monospace;
-  font-size:12px;color:var(--muted);line-height:1.7;
-}
+  .hero-text {
+    text-align: center;
+  }
 
-/* No-cookies strip */
-.ncstrip{
-  width:100%;display:flex;align-items:flex-start;gap:8px;
-  background:rgba(48,209,88,0.05);border:1px solid rgba(48,209,88,0.15);
-  border-radius:10px;padding:10px 14px;
-  font-family:'DM Mono',monospace;font-size:11px;
-  color:rgba(48,209,88,0.85);line-height:1.5;
-}
-.ncstrip span{flex-shrink:0;}
+  .hero-text h1 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+  }
 
-/* Brave warning */
-.brave-warn{
-  display:none;width:100%;
-  background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.18);
-  border-radius:12px;padding:16px 18px;
-  flex-direction:column;gap:8px;
-}
-.brave-warn.show{display:flex;}
-.brave-title{font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px;}
-.brave-steps{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.9;}
-.brave-steps code{color:var(--warn);background:rgba(255,214,10,0.1);padding:1px 5px;border-radius:4px;font-size:10px;}
+  .hero-text h1 span {
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(0,255,136,0.4);
+  }
 
-/* Tabs */
-.tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;width:100%;}
-.tab{
-  flex:1;padding:11px;text-align:center;cursor:pointer;
-  font-size:13px;font-weight:700;color:var(--muted);
-  background:transparent;border:none;font-family:'Syne',sans-serif;
-  transition:all .15s;
-}
-.tab.active{background:var(--s2);color:var(--text);}
-.tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,0.03);}
+  .hero-text p {
+    margin-top: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
 
-/* Drop zone */
-.drop-zone{
-  width:100%;border:2px dashed rgba(0,229,255,0.18);
-  border-radius:18px;padding:48px 32px;text-align:center;
-  cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);
-  background:rgba(0,229,255,0.015);position:relative;overflow:hidden;
-}
-.drop-zone::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(circle at center,rgba(0,229,255,0.07) 0%,transparent 70%);
-  opacity:0;transition:opacity .2s;
-}
-.drop-zone:hover::before,.drop-zone.over::before{opacity:1;}
-.drop-zone:hover,.drop-zone.over{
-  border-color:rgba(0,229,255,0.5);transform:scale(1.005);
-}
-.drop-icon{font-size:40px;margin-bottom:10px;display:block;transition:transform .2s;}
-.drop-zone:hover .drop-icon{transform:translateY(-4px) scale(1.05);}
-.drop-title{font-size:16px;font-weight:700;margin-bottom:5px;}
-.drop-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
-#file-input{display:none;}
+  .drop-zone {
+    width: 100%;
+    border: 2px dashed rgba(0,255,136,0.2);
+    border-radius: 20px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(0,255,136,0.02);
+    position: relative;
+    overflow: hidden;
+  }
 
-/* URL area */
-.url-area{width:100%;display:flex;flex-direction:column;gap:10px;}
-.url-wrap{
-  display:flex;gap:8px;background:var(--s2);
-  border:1px solid var(--border);border-radius:12px;padding:12px 14px;
-  transition:border-color .2s;
-}
-.url-wrap:focus-within{border-color:rgba(0,229,255,0.35);}
-.url-wrap span{font-size:16px;}
-.url-input-field{
-  flex:1;background:transparent;border:none;outline:none;
-  color:var(--text);font-family:'DM Mono',monospace;font-size:13px;
-}
-.url-input-field::placeholder{color:var(--muted);}
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0,255,136,0.06) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
 
-/* How it works — compact */
-.how{
-  width:100%;background:var(--s1);border:1px solid var(--border);
-  border-radius:14px;padding:16px 18px;
-  display:flex;flex-direction:column;gap:10px;
-}
-.how-label{
-  font-family:'DM Mono',monospace;font-size:9px;
-  color:var(--muted);letter-spacing:2px;text-transform:uppercase;
-}
-.how-steps{display:flex;flex-direction:column;gap:7px;}
-.how-step{
-  display:flex;align-items:center;gap:10px;
-  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
-}
-.how-num{
-  width:20px;height:20px;border-radius:50%;flex-shrink:0;
-  background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.18);
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;color:var(--accent);font-weight:700;
-}
-.how-step strong{color:var(--text);}
+  .drop-zone:hover::before,
+  .drop-zone.drag-over::before {
+    opacity: 1;
+  }
 
-/* Features */
-.feats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
-.feat{
-  font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);
-  display:flex;align-items:center;gap:4px;
-}
-.feat::before{content:'✓';color:var(--accent);font-weight:700;}
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    border-color: rgba(0,255,136,0.6);
+    background: rgba(0,255,136,0.04);
+    transform: scale(1.01);
+  }
 
-/* ── BUTTONS ── */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  padding:12px 22px;border-radius:11px;
-  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
-  cursor:pointer;border:none;transition:all .18s cubic-bezier(.16,1,.3,1);
-  letter-spacing:-.3px;
-}
-.btn:active{transform:scale(.97);}
-.btn-primary{
-  background:linear-gradient(135deg,var(--accent2),var(--accent));
-  color:#000;box-shadow:0 0 20px rgba(0,229,255,0.15);width:100%;
-}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 32px rgba(0,229,255,0.28);}
-.btn-ghost{
-  background:transparent;color:var(--muted);
-  border:1px solid var(--border);font-size:13px;
-}
-.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.14);}
+  .drop-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+  }
 
-/* ── CARD ── */
-.card{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:22px;padding:24px;
-  display:flex;flex-direction:column;align-items:center;gap:16px;
-  box-shadow:0 0 50px var(--glow),0 32px 64px rgba(0,0,0,0.5);
-  width:100%;
-}
+  .drop-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
 
-/* File strip */
-.fstrip{
-  display:flex;align-items:center;gap:10px;
-  background:var(--s2);padding:10px 14px;border-radius:10px;width:100%;
-}
-.ficon{font-size:20px;}
-.fdet{flex:1;min-width:0;}
-.fname{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fsize{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px;}
+  .drop-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
 
-/* QR */
-#qr-box{
-  background:#fff;padding:12px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  min-width:196px;min-height:196px;position:relative;
-}
-#qr-loading{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  border-radius:12px;background:#fff;font-size:13px;color:#666;
-  font-family:'DM Mono',monospace;
-}
+  #file-input { display: none; }
 
-/* ── RECEIVER COUNTER ── */
-.rcounter{
-  width:100%;display:flex;flex-direction:column;gap:8px;
-}
-.rcounter-header{
-  display:flex;align-items:center;justify-content:space-between;
-}
-.rcounter-label{
-  font-family:'DM Mono',monospace;font-size:10px;
-  color:var(--muted);letter-spacing:1px;text-transform:uppercase;
-}
-.rcounter-num{
-  font-family:'DM Mono',monospace;font-size:11px;
-  color:var(--accent);font-weight:700;
-}
-.rcounter-list{
-  display:flex;flex-direction:column;gap:6px;
-  max-height:120px;overflow-y:auto;
-}
-.rcounter-item{
-  display:flex;align-items:center;gap:8px;
-  background:var(--s2);border-radius:8px;padding:8px 10px;
-  transition:all .2s;
-}
-.rcounter-icon{font-size:14px;flex-shrink:0;}
-.rcounter-name{
-  flex:1;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.rcounter-pct{
-  font-family:'DM Mono',monospace;font-size:11px;
-  color:var(--accent);font-weight:700;min-width:32px;text-align:right;
-}
-.rcounter-bar{
-  width:100%;height:2px;background:var(--s3);border-radius:100px;margin-top:4px;overflow:hidden;
-}
-.rcounter-fill{
-  height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));
-  border-radius:100px;transition:width .15s ease-out;
-  box-shadow:0 0 6px rgba(0,229,255,0.4);
-}
+  .features {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 
-/* Status */
-.status{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:12px;}
-.sdot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
-.sdot.waiting{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:sdp 1.5s infinite;}
-.sdot.connected{background:var(--green);box-shadow:0 0 8px var(--green);}
-.sdot.sending{background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:sdp .8s infinite;}
-.sdot.done{background:var(--accent);box-shadow:0 0 8px var(--accent);}
-@keyframes sdp{0%,100%{opacity:1}50%{opacity:.35}}
+  .feature {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 
-/* Progress */
-.prog-wrap{width:100%;display:flex;flex-direction:column;gap:5px;}
-.prog-bg{height:4px;background:var(--s3);border-radius:100px;overflow:hidden;}
-.prog-fill{
-  height:100%;width:0%;
-  background:linear-gradient(90deg,var(--accent2),var(--accent));
-  border-radius:100px;transition:width .15s ease-out;
-  box-shadow:0 0 8px rgba(0,229,255,0.4);
-}
-.prog-row{display:flex;justify-content:space-between;align-items:center;}
-.prog-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
-.speed-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);}
+  .feature::before {
+    content: '✓';
+    color: var(--accent);
+    font-weight: 700;
+  }
 
-/* Done */
-#s-done{gap:16px;text-align:center;}
-.done-circle{
-  width:72px;height:72px;border-radius:50%;
-  background:rgba(48,209,88,0.1);border:2px solid rgba(48,209,88,0.3);
-  display:flex;align-items:center;justify-content:center;font-size:32px;
-  animation:pop .4s cubic-bezier(.175,.885,.32,1.275);
-}
-@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  /* SCREEN: QR */
+  #screen-qr {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    max-width: 480px;
+    width: 100%;
+  }
 
-/* Image preview */
-.img-preview{width:100%;max-height:260px;border-radius:12px;object-fit:contain;background:var(--s2);}
+  .qr-header {
+    text-align: center;
+  }
 
-/* URL preview */
-.url-preview{
-  width:100%;background:var(--s2);border:1px solid var(--border);
-  border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;
-}
-.url-plabel{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
-.url-plink{
-  display:flex;align-items:center;gap:8px;color:var(--accent);
-  font-family:'DM Mono',monospace;font-size:12px;
-  text-decoration:none;word-break:break-all;
-}
-.url-plink:hover{text-decoration:underline;}
+  .qr-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
 
-/* ═══════════════════════════
-   PAGE ABOUT
-═══════════════════════════ */
-#page-about{max-width:640px;}
+  .qr-header p {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
 
-.about-section{
-  width:100%;display:flex;flex-direction:column;gap:14px;padding:8px 0;
-}
+  .qr-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.4);
+    width: 100%;
+  }
 
-.about-title{
-  font-size:clamp(24px,4vw,34px);font-weight:800;
-  letter-spacing:-1.5px;text-align:center;line-height:1.1;margin-bottom:4px;
-}
-.about-title em{
-  font-style:normal;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.about-lead{
-  font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);
-  text-align:center;line-height:1.7;margin-bottom:8px;
-}
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface2);
+    padding: 12px 16px;
+    border-radius: 12px;
+    width: 100%;
+  }
 
-/* Comparison table */
-.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
-.cmp-col{border-radius:14px;padding:18px;}
-.cmp-col.bad{background:rgba(255,69,58,0.04);border:1px solid rgba(255,69,58,0.1);}
-.cmp-col.good{background:rgba(48,209,88,0.04);border:1px solid rgba(48,209,88,0.13);}
-.cmp-head{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.cmp-list{display:flex;flex-direction:column;gap:5px;}
-.cmp-item{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;}
-.cmp-item.x{color:rgba(255,69,58,0.7);}
-.cmp-item.ok{color:rgba(48,209,88,0.85);}
+  .file-icon {
+    font-size: 24px;
+  }
 
-.about-card{
-  width:100%;background:var(--s1);border:1px solid var(--border);
-  border-radius:14px;padding:18px 20px;
-  display:flex;flex-direction:column;gap:6px;
-}
-.about-card-head{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;}
-.about-card-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;}
-.about-card-body strong{color:var(--text);}
+  .file-details {
+    flex: 1;
+    min-width: 0;
+  }
 
-.about-warn{
-  width:100%;background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.14);
-  border-radius:14px;padding:16px 18px;
-  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;
-}
-.about-warn strong{color:var(--warn);}
+  .file-name {
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-.disclaimer{
-  width:100%;background:rgba(255,69,58,0.03);border:1px solid rgba(255,69,58,0.1);
-  border-radius:14px;padding:16px 18px;
-  display:flex;flex-direction:column;gap:6px;
-}
-.disclaimer-title{font-size:13px;font-weight:800;color:var(--red);display:flex;align-items:center;gap:6px;}
-.disclaimer-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.75;}
-.disclaimer-body strong{color:var(--text);}
+  .file-size {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
 
-/* ── FOOTER ── */
-footer{
-  position:relative;z-index:10;padding:12px 32px;
-  border-top:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-}
-.foot{
-  font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
-}
-.foot-sep{opacity:.25;}
+  #qr-container {
+    background: white;
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-/* ── RECEIVER PAGE ── */
-#s-receiver{gap:20px;max-width:400px;width:100%;}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .pin-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
 
-/* ── RESPONSIVE ── */
-@media(max-width:768px){.cmp{grid-template-columns:1fr;}}
-@media(max-width:480px){
-  header{padding:12px 16px;}
-  .chip{display:none;}
-  main{padding:20px 12px;}
-  .hero h1{font-size:26px;letter-spacing:-1.2px;}
-  .card{padding:16px 12px;border-radius:18px;}
-  .drop-zone{padding:36px 16px;}
-  .tab{font-size:12px;padding:10px 6px;}
-  .feats{gap:6px;}
-  .feat{font-size:10px;}
-  #qr-box{min-width:170px;min-height:170px;}
-  .nav-btn{font-size:12px;padding:5px 10px;}
-  footer{padding:10px 16px;}
-  .foot{font-size:10px;gap:8px;}
-  .foot-sep{display:none;}
-}
-@media(max-width:360px){
-  .hero h1{font-size:22px;}
-}
+  .pin-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .pin-emojis {
+    display: flex;
+    gap: 12px;
+    font-size: 28px;
+    background: var(--surface2);
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .status-dot.waiting {
+    background: #f59e0b;
+    box-shadow: 0 0 8px #f59e0b;
+    animation: pulse 1.5s infinite;
+  }
+
+  .status-dot.connected {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .status-dot.sending {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    animation: pulse 0.8s infinite;
+  }
+
+  /* Progress */
+  .progress-wrap {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 100px;
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(0,255,136,0.5);
+  }
+
+  .progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* SCREEN: DONE */
+  #screen-done {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .done-icon {
+    font-size: 64px;
+    animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes pop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .done-title {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .done-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* SCREEN: RECEIVER */
+  #screen-receiver {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .receiver-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--glow), 0 40px 80px rgba(0,0,0,0.4);
+  }
+
+  .receiver-icon {
+    font-size: 56px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    letter-spacing: -0.3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 20px rgba(0,255,136,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0,255,136,0.5);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  /* SCREEN: VERIFY PIN */
+  #screen-verify {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .verify-card {
+    background: var(--surface);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 0 40px rgba(245,158,11,0.1), 0 40px 80px rgba(0,0,0,0.4);
+  }
+
+  .verify-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .verify-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .verify-emojis {
+    display: flex;
+    gap: 16px;
+    font-size: 36px;
+    background: var(--surface2);
+    padding: 16px 28px;
+    border-radius: 16px;
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+
+  .verify-question {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f59e0b;
+  }
+
+  .verify-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.3);
+    flex: 1;
+  }
+
+  .btn-confirm {
+    background: var(--accent);
+    color: #000;
+    flex: 1;
+  }
+
+  footer {
+    position: relative;
+    z-index: 10;
+    padding: 16px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .footer-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .footer-sep { opacity: 0.3; }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 480px) {
+    header { padding: 16px 20px; }
+    .drop-zone { padding: 40px 20px; }
+    .qr-card { padding: 24px 20px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-beam"></div>
+    <div class="logo-dot"></div>
     DropBeam
   </div>
-  <nav class="nav">
-    <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
-    <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
-  </nav>
-  <div class="chip">P2P · CIFRADO</div>
+  <div class="badge">P2P · CIFRADO</div>
 </header>
 
 <main>
 
-<!-- ══════════════════════════════
-     PAGE: APP
-══════════════════════════════ -->
-<div id="page-app" class="page active">
-
-  <!-- S1: DROP -->
-  <div id="s-drop" class="screen active">
-
-    <div class="hero">
-      <h1>Comparte archivos<br><em>sin intermediarios</em></h1>
-      <p>Transferencia directa entre dispositivos.<br>
-      Como AirDrop, pero en cualquier dispositivo. Sin instalar nada.</p>
+  <!-- PANTALLA 1: DROP ZONE (emisor) -->
+  <div id="screen-drop" class="fade-in">
+    <div class="hero-text">
+      <h1>Comparte archivos<br><span>al instante</span></h1>
+      <p>Sin servidores. Sin cuenta. Directo al receptor.</p>
     </div>
 
-    <div class="ncstrip">
-      <span>🍪</span>
-      <span>Esta web <strong>no usa cookies</strong>. No hay nada que aceptar — por diseño, no por omisión.</span>
+    <div class="drop-zone" id="drop-zone">
+      <span class="drop-icon">📦</span>
+      <div class="drop-title">Arrastra tu archivo aquí</div>
+      <div class="drop-sub">o haz clic para seleccionar · cualquier formato · sin límite de tamaño</div>
+      <input type="file" id="file-input">
     </div>
 
-    <div class="brave-warn" id="brave-warn">
-      <div class="brave-title">⚠️ Brave detectado</div>
-      <div class="brave-steps">
-        Brave bloquea WebRTC por defecto. Para activarlo:<br>
-        1 · Ve a <code>brave://settings/privacy</code><br>
-        2 · Busca <code>WebRTC IP handling policy</code> → selecciona <code>Default</code><br>
-        3 · Recarga esta página
-      </div>
-    </div>
-
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('file')">📦 Archivo</button>
-      <button class="tab" onclick="switchTab('url')">🔗 Enlace URL</button>
-    </div>
-
-    <div id="tab-file" style="width:100%;">
-      <div class="drop-zone" id="drop-zone">
-        <span class="drop-icon">📦</span>
-        <div class="drop-title">Arrastra tu archivo aquí</div>
-        <div class="drop-sub">o haz clic · cualquier formato · sin límite de tamaño</div>
-        <input type="file" id="file-input">
-      </div>
-    </div>
-
-    <div id="tab-url" style="display:none;width:100%;">
-      <div class="url-area">
-        <div class="url-wrap">
-          <span>🔗</span>
-          <input class="url-input-field" id="url-input" type="url" placeholder="https://...">
-        </div>
-        <button class="btn btn-primary" onclick="handleUrl()">Generar QR →</button>
-      </div>
-    </div>
-
-    <div class="how">
-      <div class="how-label">Cómo funciona</div>
-      <div class="how-steps">
-        <div class="how-step"><div class="how-num">1</div><span><strong>Arrastra tu archivo</strong> — aparece un QR en pantalla</span></div>
-        <div class="how-step"><div class="how-num">2</div><span><strong>Escanea el QR</strong> con la cámara del otro dispositivo</span></div>
-        <div class="how-step"><div class="how-num">3</div><span><strong>El archivo llega directo</strong> — sin almacenamiento intermedio</span></div>
-      </div>
-    </div>
-
-    <div class="feats">
-      <div class="feat">Sin instalar nada</div>
-      <div class="feat">Sin almacenamiento en servidores</div>
-      <div class="feat">iPhone · Android · Windows · Mac</div>
-      <div class="feat">Cifrado en tránsito</div>
-      <div class="feat">Sin cuenta ni registro</div>
-      <div class="feat">Varios receptores a la vez</div>
+    <div class="features">
+      <div class="feature">Cifrado WebRTC</div>
+      <div class="feature">Sin registro</div>
+      <div class="feature">P2P directo</div>
+      <div class="feature">iOS · Android · PC</div>
     </div>
   </div>
 
-  <!-- S2: QR + SENDER -->
-  <div id="s-qr" class="screen" style="gap:20px;max-width:460px;width:100%;">
-    <div style="text-align:center;">
-      <h2 style="font-size:22px;font-weight:800;letter-spacing:-1px;">Escanea para recibir</h2>
-      <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;">
-        Transferencia directa · sin almacenamiento · cifrado en tránsito
-      </p>
+  <!-- PANTALLA 2: QR (emisor esperando) -->
+  <div id="screen-qr" class="fade-in">
+    <div class="qr-header">
+      <h2>Escanea para recibir</h2>
+      <p>El archivo viaja directo a quien escanee · nadie más lo ve</p>
     </div>
-    <div class="card">
-      <div class="fstrip" id="s-strip">
-        <div class="ficon" id="s-icon">📄</div>
-        <div class="fdet">
-          <div class="fname" id="s-name">-</div>
-          <div class="fsize" id="s-size">-</div>
+
+    <div class="qr-card">
+      <div class="file-info">
+        <div class="file-icon" id="file-icon">📄</div>
+        <div class="file-details">
+          <div class="file-name" id="file-name-display">archivo.jpg</div>
+          <div class="file-size" id="file-size-display">0 MB</div>
         </div>
       </div>
 
-      <div id="qr-box">
-        <div id="qr-loading">Generando QR...</div>
-        <canvas id="qr-canvas" style="display:none;border-radius:4px;"></canvas>
+      <div id="qr-container"></div>
+
+      <div class="pin-display">
+        <div class="pin-label">Verifica estos emojis con el receptor</div>
+        <div class="pin-emojis" id="pin-emojis">⏳</div>
       </div>
 
-      <!-- Receiver counter -->
-      <div class="rcounter" id="rcounter" style="display:none;">
-        <div class="rcounter-header">
-          <div class="rcounter-label">Receptores</div>
-          <div class="rcounter-num" id="rcounter-num">0 conectados</div>
+      <div class="status-indicator">
+        <div class="status-dot waiting" id="status-dot"></div>
+        <span id="status-text">Esperando que alguien escanee...</span>
+      </div>
+
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-fill"></div>
         </div>
-        <div class="rcounter-list" id="rcounter-list"></div>
-      </div>
-
-      <div class="status">
-        <div class="sdot waiting" id="s-dot"></div>
-        <span id="s-status">Conectando...</span>
-      </div>
-
-      <div class="prog-wrap" id="s-prog" style="display:none;">
-        <div class="prog-bg"><div class="prog-fill" id="s-fill"></div></div>
-        <div class="prog-row">
-          <div class="speed-txt" id="s-speed"></div>
-          <div class="prog-txt" id="s-prog-txt">0%</div>
-        </div>
+        <div class="progress-text" id="progress-text">0%</div>
       </div>
     </div>
-    <button class="btn btn-ghost" onclick="resetApp()">← Compartir otro</button>
+
+    <button class="btn btn-ghost" onclick="resetApp()">← Enviar otro archivo</button>
   </div>
 
-  <!-- S3: DONE SENDER -->
-  <div id="s-done" class="screen">
-    <div class="done-circle">✅</div>
-    <div style="font-size:24px;font-weight:800;letter-spacing:-1px;">¡Enviado!</div>
-    <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);text-align:center;" id="done-sub">
-      Llegó de forma segura · sin pasar por ningún servidor
-    </div>
-    <button class="btn btn-primary" style="margin-top:4px;" onclick="resetApp()">Compartir otro</button>
+  <!-- PANTALLA 3: DONE (emisor) -->
+  <div id="screen-done">
+    <div class="done-icon">✅</div>
+    <div class="done-title">¡Enviado!</div>
+    <div class="done-sub">El archivo llegó al receptor de forma segura</div>
+    <button class="btn btn-primary" onclick="resetApp()">Enviar otro archivo</button>
   </div>
 
-  <!-- S4: RECEIVER -->
-  <div id="s-receiver" class="screen">
-    <div class="card">
-      <div style="font-size:44px;animation:float 3s ease-in-out infinite;">📡</div>
-      <div style="text-align:center;">
-        <h2 style="font-size:20px;font-weight:800;letter-spacing:-.5px;" id="r-title">Conectando...</h2>
-        <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;" id="r-sub">
-          Estableciendo canal seguro
-        </p>
+  <!-- PANTALLA 4: RECEPTOR (quien escanea el QR) -->
+  <div id="screen-receiver">
+    <div class="receiver-card">
+      <div class="receiver-icon">📡</div>
+      <div>
+        <h2 style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">Conectando...</h2>
+        <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-top:6px;">Estableciendo conexión segura con el emisor</p>
       </div>
 
-      <div class="fstrip" id="r-strip" style="display:none;">
-        <div class="ficon" id="r-icon">📄</div>
-        <div class="fdet">
-          <div class="fname" id="r-name">-</div>
-          <div class="fsize" id="r-size">-</div>
+      <div class="file-info" id="receiver-file-info" style="display:none;">
+        <div class="file-icon" id="receiver-file-icon">📄</div>
+        <div class="file-details">
+          <div class="file-name" id="receiver-file-name">-</div>
+          <div class="file-size" id="receiver-file-size">-</div>
         </div>
       </div>
 
-      <img id="r-img" class="img-preview" style="display:none;" alt="preview">
-
-      <div class="url-preview" id="r-url-preview" style="display:none;">
-        <div class="url-plabel">Enlace recibido</div>
-        <a class="url-plink" id="r-url-link" href="#" target="_blank" rel="noopener">
-          🔗 <span id="r-url-txt">-</span>
-        </a>
-        <button class="btn btn-primary" id="r-url-btn" style="margin-top:4px;">Abrir enlace →</button>
-      </div>
-
-      <div class="prog-wrap" id="r-prog">
-        <div class="prog-bg"><div class="prog-fill" id="r-fill"></div></div>
-        <div class="prog-row">
-          <div class="speed-txt" id="r-speed"></div>
-          <div class="prog-txt" id="r-prog-txt">Conectando...</div>
+      <div class="progress-wrap" id="receiver-progress-wrap" style="display:flex;">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="receiver-progress-fill"></div>
         </div>
+        <div class="progress-text" id="receiver-progress-text">Conectando...</div>
       </div>
 
-      <div class="status">
-        <div class="sdot waiting" id="r-dot"></div>
-        <span id="r-status">Buscando al emisor...</span>
+      <div class="status-indicator">
+        <div class="status-dot waiting" id="receiver-status-dot"></div>
+        <span id="receiver-status-text">Buscando al emisor...</span>
       </div>
-
-      <!-- DEBUG PANEL -->
-      <div id="debug-panel" style="
-        width:100%;background:#000;border:1px solid #333;
-        border-radius:8px;padding:10px;
-        font-family:'DM Mono',monospace;font-size:10px;
-        color:#0f0;line-height:1.6;max-height:160px;overflow-y:auto;
-      ">
-        <div style="color:#888;margin-bottom:4px;">🔍 DEBUG — copia esto si hay error:</div>
-        <div id="debug-log"></div>
-      </div>
-      <button onclick="copyDebug()" style="
-        font-family:'DM Mono',monospace;font-size:10px;
-        background:transparent;border:1px solid #333;color:#666;
-        padding:4px 10px;border-radius:6px;cursor:pointer;width:100%;
-      ">📋 Copiar log de debug</button>
     </div>
   </div>
 
-</div><!-- /page-app -->
-
-<!-- ══════════════════════════════
-     PAGE: ABOUT
-══════════════════════════════ -->
-<div id="page-about" class="page">
-  <div class="about-section">
-
-    <div>
-      <div class="about-title">Por qué DropBeam<br><em>no es como los demás</em></div>
-      <p class="about-lead">
-        DropBeam no es un servicio de almacenamiento ni envío diferido como WeTransfer o Google Drive.<br>
-        Es una conexión directa entre dispositivos en tiempo real.
-      </p>
-    </div>
-
-    <!-- Comparativa -->
-    <div class="cmp">
-      <div class="cmp-col bad">
-        <div class="cmp-head">☁️ Servicios en la nube</div>
-        <div class="cmp-list">
-          <div class="cmp-item x">· Subes el archivo a un servidor</div>
-          <div class="cmp-item x">· Se almacena durante horas o días</div>
-          <div class="cmp-item x">· El receptor descarga cuando quiere</div>
-          <div class="cmp-item x">· Requiere infraestructura central</div>
-          <div class="cmp-item x">· Puede implicar cuentas o tracking</div>
-        </div>
-      </div>
-      <div class="cmp-col good">
-        <div class="cmp-head">⚡ DropBeam</div>
-        <div class="cmp-list">
-          <div class="cmp-item ok">✓ Conexión directa entre dispositivos</div>
-          <div class="cmp-item ok">✓ Sin almacenamiento en servidores</div>
-          <div class="cmp-item ok">✓ Transferencia en tiempo real</div>
-          <div class="cmp-item ok">✓ Sin cuentas ni registro</div>
-          <div class="cmp-item ok">✓ Cifrado en tránsito</div>
-        </div>
+  <!-- PANTALLA 5: VERIFICAR PIN (receptor) -->
+  <div id="screen-verify">
+    <div class="verify-card">
+      <div style="font-size:32px;">🔐</div>
+      <div class="verify-title">Verifica la conexión</div>
+      <div class="verify-sub">Asegúrate de que el emisor ve<br>exactamente estos mismos emojis</div>
+      <div class="verify-emojis" id="verify-emojis">⏳</div>
+      <div class="verify-question">¿Coinciden en la pantalla del emisor?</div>
+      <div class="verify-buttons">
+        <button class="btn btn-danger" onclick="rejectConnection()">✗ No coinciden</button>
+        <button class="btn btn-confirm btn-primary" onclick="acceptConnection()">✓ Sí, coinciden</button>
       </div>
     </div>
-
-    <!-- Cards de propuesta de valor -->
-    <div class="about-card">
-      <div class="about-card-head">🚫 Sin almacenamiento en servidores propios</div>
-      <div class="about-card-body">
-        Tus archivos van directamente de tu dispositivo al del receptor. <strong>Ningún servidor almacena ni tiene acceso al contenido transferido.</strong>
-      </div>
-    </div>
-
-    <div class="about-card">
-      <div class="about-card-head">🔒 Cifrado de extremo a extremo</div>
-      <div class="about-card-body">
-        WebRTC cifra cada byte con <strong>DTLS obligatoriamente</strong>. Nadie en la red puede leer lo que estás enviando, ni siquiera con acceso al servidor de señalización.
-      </div>
-    </div>
-
-    <div class="about-card">
-      <div class="about-card-head">🤖 No entrena ninguna IA</div>
-      <div class="about-card-body">
-        No vemos tus archivos. No podríamos usarlos aunque quisiéramos. <strong>Zero datos = zero entrenamiento.</strong>
-      </div>
-    </div>
-
-    <div class="about-card">
-      <div class="about-card-head">👤 Sin cuenta, sin rastro</div>
-      <div class="about-card-body">
-        No pedimos email, nombre ni nada. Cada sesión es efímera. Cuando cierras la pestaña, <strong>no queda ningún registro</strong>.
-      </div>
-    </div>
-
-    <!-- Técnico -->
-    <div style="width:100%;margin-top:4px;">
-      <div class="about-card-head" style="margin-bottom:10px;font-size:13px;">¿Cómo funciona técnicamente?</div>
-
-      <div class="about-card" style="margin-bottom:10px;">
-        <div class="about-card-head">📡 WebRTC P2P</div>
-        <div class="about-card-body">
-          Protocolo estándar del W3C implementado en todos los navegadores modernos. Crea un canal directo cifrado entre dos dispositivos <strong>sin intermediarios para los datos</strong>.
-        </div>
-      </div>
-
-      <div class="about-card" style="margin-bottom:10px;">
-        <div class="about-card-head">🤝 Servidor de señalización (PeerJS)</div>
-        <div class="about-card-body">
-          Necesario solo para que los dos dispositivos se "encuentren" en internet (intercambio de IPs). Dura segundos y <strong>nunca ve los archivos</strong>. Es como dar tu dirección para que alguien te mande una carta — el cartero no lee la carta.
-        </div>
-      </div>
-
-      <div class="about-card" style="margin-bottom:10px;">
-        <div class="about-card-head">💾 File System Access API</div>
-        <div class="about-card-body">
-          Para archivos grandes, los datos se escriben directamente en disco en lugar de acumularse en RAM. Permite enviar archivos de <strong>cualquier tamaño sin limitaciones de memoria</strong> del navegador.
-        </div>
-      </div>
-    </div>
-
-    <div class="about-card">
-      <div class="about-card-head">🍪 Sin cookies — y no es un eslogan</div>
-      <div class="about-card-body">
-        La mayoría de webs te piden aceptar cookies aunque no las necesiten. Nosotros no usamos cookies porque <strong>arquitectónicamente no las necesitamos</strong>. No hay sesiones que mantener, no hay usuarios que recordar, no hay analíticas que recoger.<br><br>
-        Las fuentes tipográficas se sirven desde el mismo servidor que esta página — sin peticiones a Google Fonts ni a ningún CDN externo. <strong>Cero tracking. Cero banners. Por diseño.</strong>
-      </div>
-    </div>
-
-    <div class="about-card">
-      <div class="about-card-head">📖 Código abierto y auditable</div>
-      <div class="about-card-body">
-        Todo el código de DropBeam es público y auditable en GitHub. No tienes que confiar en nuestra palabra — puedes verificar exactamente qué hace el código. Cualquier persona técnica puede revisarlo y <strong>confirmar que no hay puertas traseras</strong>.
-      </div>
-    </div>
-
-    <div class="disclaimer">
-      <div class="disclaimer-title">⚠️ Aviso legal y limitación de responsabilidad</div>
-      <div class="disclaimer-body">
-        DropBeam es un servicio de infraestructura técnica para la transferencia directa de archivos entre dispositivos. <strong>No nos hacemos responsables del uso que los usuarios hagan del servicio.</strong> El usuario es el único responsable del contenido que comparte, de verificar que tiene los derechos necesarios para compartirlo y de asegurarse de que el receptor es quien dice ser.<br><br>
-        DropBeam no almacena, procesa ni tiene acceso al contenido transferido. Por tanto, no puede ser considerado responsable de infracciones de derechos de autor, distribución de contenido ilegal o cualquier otro uso indebido realizado por los usuarios a través de la plataforma.<br><br>
-        El servicio se ofrece "tal cual" sin garantías de disponibilidad continua.<br><br>
-        <strong style="color:var(--muted);">AirDrop® es marca registrada de Apple Inc. DropBeam no está afiliado ni respaldado por Apple.</strong>
-      </div>
-    </div>
-
   </div>
-</div><!-- /page-about -->
 
 </main>
 
 <footer>
-  <div class="foot">
-    <span>🔒 Cifrado en tránsito</span>
-    <span class="foot-sep">|</span>
-    <span>Sin almacenamiento en servidores · Sin cookies</span>
-    <span class="foot-sep">|</span>
-    <span>Transferencia directa entre dispositivos</span>
+  <div class="footer-text">
+    <span>🔒 Cifrado de extremo a extremo</span>
+    <span class="footer-sep">|</span>
+    <span>Los archivos nunca tocan ningún servidor</span>
+    <span class="footer-sep">|</span>
+    <span>P2P directo</span>
   </div>
 </footer>
 
+<!-- PeerJS desde CDN -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
 <script>
-// ════════════════════════════════════════════════════════
-// DROPBEAM v4.1 — JS limpio, sin bugs de protocolo
-// ════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// DROPBEAM — Lógica principal
+// ═══════════════════════════════════════════════════
 
-// ── DEBUG ──
-const debugLines = [];
-function dbg(msg, color){
-  const t = new Date().toISOString().slice(11,23);
-  const line = `[${t}] ${msg}`;
-  debugLines.push(line);
-  console.log(line);
-  const el = document.getElementById('debug-log');
-  if(el){
-    const d = document.createElement('div');
-    d.style.color = color||'#0f0';
-    d.textContent = line;
-    el.appendChild(d);
-    el.scrollTop = el.scrollHeight;
-  }
-}
-function copyDebug(){
-  const txt = debugLines.join('\n');
-  navigator.clipboard.writeText(txt).then(()=>alert('Log copiado')).catch(()=>{
-    prompt('Copia esto:', txt);
-  });
-}
+const EMOJI_SET = ['🦊','🌮','⚡','🎸','🐬','🌵','🔥','🎯','🦋','🌊',
+                   '🍕','🎪','🦄','🌈','🎭','🚀','🐙','🍄','🎲','🦁'];
 
-const ICE = { iceServers:[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'},
-  {urls:'stun:stun2.l.google.com:19302'},
-  {urls:'stun:stun3.l.google.com:19302'},
-  {urls:'stun:stun.cloudflare.com:3478'},
-]};
-
-// ── Estado global ──
-let peer        = null;
-let conns       = {};        // cid → { conn, name, progress, done, started }
-let selectedFile= null;
-let sharedUrl   = null;
-let sessionLocked = false;
-let fileBuffer  = null;      // ArrayBuffer del archivo (cacheado)
-
-// Estado receptor
+let peer = null;
+let conn = null;
+let selectedFile = null;
 let receivedChunks = [];
-let receivedSize   = 0;
-let fileMeta       = null;
-let rLastTime      = 0;
-let rBytesSince    = 0;
+let receivedSize = 0;
+let fileMetadata = null;
+let isReceiver = false;
+let pendingConn = null;
+let connectionVerified = false;
 
-// ── Detección de modo ──
-const params         = new URLSearchParams(location.search);
-const receiverPeerId = params.get('id');
+// ── Detectar si somos receptor (hay ?id= en la URL) ──
+const urlParams = new URLSearchParams(window.location.search);
+const receiverPeerId = urlParams.get('id');
 
-// ── Arranque ──
-detectBrave();
-
-if(receiverPeerId){
-  // MODO RECEPTOR
-  document.querySelector('.nav').style.display = 'none';
-  const pageApp = document.getElementById('page-app');
-  pageApp.style.display = 'flex';
-  pageApp.classList.add('active');
-  showScreen('s-receiver');
+if (receiverPeerId) {
+  isReceiver = true;
+  showScreen('receiver');
   initReceiver(receiverPeerId);
 } else {
-  // MODO EMISOR
-  initSenderUI();
+  initSender();
 }
 
-// ════════════════════════════════════════
-// BRAVE DETECTION
-// ════════════════════════════════════════
-async function detectBrave(){
-  try{
-    const isBrave = navigator.brave
-      ? await navigator.brave.isBrave().catch(()=>false)
-      : /Brave/.test(navigator.userAgent);
-    if(isBrave){
-      const warn = document.getElementById('brave-warn');
-      if(warn) warn.classList.add('show');
-    }
-  }catch(e){}
+// ── Generar PIN de emojis a partir de un string ──
+function generatePin(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const emojis = [];
+  let seed = Math.abs(hash);
+  for (let i = 0; i < 4; i++) {
+    emojis.push(EMOJI_SET[seed % EMOJI_SET.length]);
+    seed = Math.floor(seed / EMOJI_SET.length) + (i * 7919);
+  }
+  return emojis.join(' ');
 }
 
-// ════════════════════════════════════════
-// NAVEGACIÓN
-// ════════════════════════════════════════
-function showPage(name){
-  document.querySelectorAll('.page').forEach(p=>{
-    p.classList.remove('active');
-    p.style.display = 'none';
+// ── Formatear tamaño ──
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+// ── Icono por tipo de archivo ──
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = {
+    jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️',
+    mp4: '🎬', mov: '🎬', avi: '🎬', mkv: '🎬', webm: '🎬',
+    mp3: '🎵', wav: '🎵', flac: '🎵', aac: '🎵',
+    pdf: '📕', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📋', pptx: '📋',
+    zip: '🗜️', rar: '🗜️', '7z': '🗜️', tar: '🗜️',
+    js: '⚙️', ts: '⚙️', py: '🐍', html: '🌐', css: '🎨',
+    txt: '📄', md: '📄',
+  };
+  return icons[ext] || '📦';
+}
+
+// ── Mostrar pantalla ──
+function showScreen(name) {
+  const screens = ['screen-drop', 'screen-qr', 'screen-done', 'screen-receiver', 'screen-verify'];
+  screens.forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = 'none';
+    el.classList.remove('fade-in');
   });
-  const target = document.getElementById('page-'+name);
+  const target = document.getElementById('screen-' + name);
   target.style.display = 'flex';
-  target.offsetHeight; // reflow para animación
-  target.classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b=>{
-    b.classList.toggle('active',
-      (name==='app'   && b.textContent.trim()==='Compartir') ||
-      (name==='about' && b.textContent.trim()==='Acerca de')
-    );
+  setTimeout(() => target.classList.add('fade-in'), 10);
+}
+
+// ════════════════════════════════════════
+// EMISOR
+// ════════════════════════════════════════
+
+function initSender() {
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   });
 }
 
-function showScreen(id){
-  document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+function handleFile(file) {
+  if (!file) return;
+  selectedFile = file;
 
-function switchTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('active',(tab==='file'&&i===0)||(tab==='url'&&i===1));
+  // UI
+  document.getElementById('file-name-display').textContent = file.name;
+  document.getElementById('file-size-display').textContent = formatSize(file.size);
+  document.getElementById('file-icon').textContent = getFileIcon(file.name);
+  showScreen('qr');
+
+  // Crear peer con ID aleatorio
+  peer = new Peer({
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    }
   });
-  document.getElementById('tab-file').style.display = tab==='file'?'block':'none';
-  document.getElementById('tab-url').style.display  = tab==='url' ?'block':'none';
-}
 
-// ════════════════════════════════════════
-// HELPERS
-// ════════════════════════════════════════
-function fmtSize(b){
-  if(!b||b<1024)    return (b||0)+' B';
-  if(b<1048576)     return (b/1024).toFixed(1)+' KB';
-  if(b<1073741824)  return (b/1048576).toFixed(1)+' MB';
-  return (b/1073741824).toFixed(2)+' GB';
-}
-function fmtSpeed(bps){
-  if(bps<1024)    return '<1 KB/s';
-  if(bps<1048576) return (bps/1024).toFixed(0)+' KB/s';
-  return (bps/1048576).toFixed(1)+' MB/s';
-}
-function fileIcon(n){
-  if(!n) return '🔗';
-  const e = n.split('.').pop().toLowerCase();
-  return ({
-    jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',
-    mp4:'🎬',mov:'🎬',avi:'🎬',mkv:'🎬',webm:'🎬',
-    mp3:'🎵',wav:'🎵',flac:'🎵',aac:'🎵',ogg:'🎵',
-    pdf:'📕',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',
-    zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',
-    js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',txt:'📄',md:'📄',json:'📋'
-  }[e])||'📦';
-}
-function isImage(n){
-  return ['jpg','jpeg','png','gif','webp','svg','heic','avif']
-    .includes(n?.split('.').pop().toLowerCase());
-}
-function uid(){ return Math.random().toString(36).slice(2,8); }
-
-// Normaliza cualquier dato binario a ArrayBuffer
-function toArrayBuffer(data){
-  if(data instanceof ArrayBuffer) return data;
-  if(ArrayBuffer.isView(data))    return data.buffer.slice(data.byteOffset, data.byteOffset+data.byteLength);
-  return null;
-}
-
-// ════════════════════════════════════════
-// QR
-// ════════════════════════════════════════
-function drawQR(url){
-  const canvas  = document.getElementById('qr-canvas');
-  const loading = document.getElementById('qr-loading');
-  const SIZE = 196;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${SIZE}x${SIZE}&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=2`;
-  img.onload = ()=>{
-    canvas.width = SIZE; canvas.height = SIZE;
-    canvas.getContext('2d').drawImage(img,0,0,SIZE,SIZE);
-    loading.style.display = 'none';
-    canvas.style.display  = 'block';
-  };
-  img.onerror = ()=>{
-    loading.textContent = 'Escanea o abre: '+location.origin;
-    loading.style.fontSize = '10px';
-  };
-}
-
-// ════════════════════════════════════════
-// PEER FACTORY — con timeout
-// ════════════════════════════════════════
-function makePeer(onOpen, onError){
-  const p = new Peer({ config: ICE });
-  let opened = false;
-  dbg('makePeer: creando peer...');
-  const t = setTimeout(()=>{
-    if(!opened){ p.destroy(); dbg('makePeer: TIMEOUT','#f00'); onError('timeout'); }
-  }, 15000);
-  p.on('open', id=>{ opened=true; clearTimeout(t); dbg('makePeer: open id='+id.slice(0,8)+'...'); onOpen(p,id); });
-  p.on('error', err=>{ clearTimeout(t); dbg('makePeer: ERROR type='+err.type+' msg='+(err.message||''),'#f00'); onError(err.type||'error'); });
-  return p;
-}
-
-// ════════════════════════════════════════
-// SENDER UI — drop zone y tabs
-// ════════════════════════════════════════
-function initSenderUI(){
-  const dz = document.getElementById('drop-zone');
-  const fi = document.getElementById('file-input');
-  dz.addEventListener('click', ()=>fi.click());
-  fi.addEventListener('change', e=>{ if(e.target.files[0]) startWithFile(e.target.files[0]); });
-  dz.addEventListener('dragover',  e=>{ e.preventDefault(); dz.classList.add('over'); });
-  dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
-  dz.addEventListener('drop', e=>{
-    e.preventDefault(); dz.classList.remove('over');
-    if(e.dataTransfer.files[0]) startWithFile(e.dataTransfer.files[0]);
-  });
-}
-
-function handleUrl(){
-  const val = document.getElementById('url-input').value.trim();
-  if(!val || !val.startsWith('http')){
-    document.getElementById('url-input').style.outline = '2px solid var(--red)';
-    return;
-  }
-  sharedUrl = val; selectedFile = null;
-  setupSender('🔗', val, 'Enlace compartido');
-}
-
-function startWithFile(file){
-  selectedFile = file; sharedUrl = null;
-  setupSender(fileIcon(file.name), file.name, fmtSize(file.size));
-}
-
-function setSenderStatus(txt, dotClass){
-  document.getElementById('s-status').textContent = txt;
-  if(dotClass) document.getElementById('s-dot').className = 'sdot '+dotClass;
-}
-
-// ════════════════════════════════════════
-// SETUP SENDER — crea peer y espera conexiones
-// ════════════════════════════════════════
-function setupSender(icon, label, sub){
-  document.getElementById('s-icon').textContent = icon;
-  document.getElementById('s-name').textContent = label;
-  document.getElementById('s-size').textContent = sub;
-  showScreen('s-qr');
-  setSenderStatus('Conectando...','waiting');
-
-  // Reset estado
-  if(peer){ try{peer.destroy();}catch(e){} peer=null; }
-  conns = {}; sessionLocked = false; fileBuffer = null;
-  updateReceiverCounter();
-
-  makePeer(
-    (p, id)=>{
-      peer = p;
-      const url = `${location.origin}${location.pathname}?id=${id}`;
-      drawQR(url);
-      setSenderStatus('Listo — esperando que escaneen el QR','waiting');
-
-      p.on('connection', incoming=>{
-        dbg('SENDER: incoming connection');
-        if(sessionLocked){ incoming.close(); dbg('SENDER: rechazado (sessionLocked)','#f80'); return; }
-
-        const cid = uid();
-        conns[cid] = {
-          conn: incoming,
-          name: 'Dispositivo '+( Object.keys(conns).length+1 ),
-          progress: 0,
-          done: false,
-          started: false
-        };
-        updateReceiverCounter();
-
-        // ── Protocolo correcto:
-        // 1. Emisor open → envía metadata
-        // 2. Receptor recibe metadata → envía 'ready'
-        // 3. Emisor recibe 'ready' → empieza a enviar chunks
-        // Así garantizamos que el receptor tiene fileMeta antes de recibir chunks.
-
-        incoming.on('open',()=>{
-          setSenderStatus(
-            `${Object.keys(conns).length} receptor${Object.keys(conns).length>1?'es':''} conectado${Object.keys(conns).length>1?'s':''}...`,
-            'connected'
-          );
-          updateReceiverCounter();
-
-          if(sharedUrl){
-            // URLs: enviar directamente, no hace falta 'ready'
-            incoming.send({ type:'url', url:sharedUrl });
-            conns[cid].done = true; conns[cid].progress = 100;
-            updateReceiverCounter();
-            checkAllDone();
-          } else {
-            // Archivo: enviar metadata y esperar 'ready' del receptor
-            incoming.send({
-              type: 'metadata',
-              name:    selectedFile.name,
-              size:    selectedFile.size,
-              mime:    selectedFile.type,
-              isImage: isImage(selectedFile.name)
-            });
-          }
-        });
-
-        incoming.on('data', data=>{
-          if(data && data.type === 'ready'){
-            dbg('SENDER: recibido ready de '+conns[cid]?.name+', iniciando envío');
-            sendToOne(cid);
-          }
-        });
-
-        incoming.on('close',()=>{
-          if(conns[cid] && !conns[cid].done){
-            delete conns[cid];
-            updateReceiverCounter();
-            if(Object.keys(conns).length===0)
-              setSenderStatus('Receptor desconectado — esperando nuevo escaneo','waiting');
-          }
-        });
-
-        incoming.on('error', ()=>{
-          delete conns[cid];
-          updateReceiverCounter();
-        });
-      });
-    },
-    (errType)=>{ setSenderStatus(`Error: ${errType} — recarga la página`,'waiting'); }
-  );
-}
-
-// ════════════════════════════════════════
-// ENVÍO — archivos pequeños en buffer, grandes por slice
-// ════════════════════════════════════════
-function sendToOne(cid){
-  const rec = conns[cid];
-  if(!rec || !selectedFile || rec.started) return;
-
-  document.getElementById('s-prog').style.display = 'flex';
-  setSenderStatus(
-    `Enviando a ${Object.keys(conns).length} receptor${Object.keys(conns).length>1?'es':''}...`,
-    'sending'
-  );
-
-  // Archivos grandes (>100MB): slice directo, no acumular en RAM
-  if(selectedFile.size > 100 * 1024 * 1024){
-    streamSlice(cid);
-    return;
-  }
-
-  // Si ya está cacheado en memoria, enviar directo
-  if(fileBuffer){
-    streamBuffer(cid, fileBuffer);
-    return;
-  }
-
-  // Primera vez: leer el archivo completo una sola vez
-  const reader = new FileReader();
-  reader.onload = e=>{
-    fileBuffer = e.target.result;
-    // Arrancar todos los receptores que estén esperando
-    Object.keys(conns).forEach(id=>{
-      if(!conns[id].started) streamBuffer(id, fileBuffer);
+  peer.on('open', id => {
+    // Generar QR con la URL completa
+    const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
+    
+    document.getElementById('qr-container').innerHTML = '';
+    new QRCode(document.getElementById('qr-container'), {
+      text: url,
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
     });
-  };
-  reader.onerror = ()=> setSenderStatus('Error leyendo el archivo','waiting');
-  reader.readAsArrayBuffer(selectedFile);
-}
 
-function streamBuffer(cid, buffer){
-  const rec = conns[cid];
-  if(!rec || rec.started) return;
-  rec.started = true;
+    // Mostrar PIN inicial (basado en el ID del peer)
+    const pin = generatePin(id);
+    document.getElementById('pin-emojis').textContent = pin;
+  });
 
-  const CHUNK = 65536;
-  let offset = 0;
-  let lastTime = Date.now(), bytesSince = 0;
-
-  function next(){
-    if(!conns[cid]) return; // desconectado
-
-    if(offset >= buffer.byteLength){
-      try{ rec.conn.send({ type:'done' }); }catch(e){}
-      rec.done = true; rec.progress = 100;
-      updateReceiverCounter();
-      updateGlobalProgress();
-      checkAllDone();
+  peer.on('connection', incomingConn => {
+    // Solo aceptar una conexión
+    if (conn) {
+      incomingConn.close();
       return;
     }
 
-    const chunk = buffer.slice(offset, offset + CHUNK);
-    try{ rec.conn.send({ type:'chunk', data: chunk }); }catch(e){ return; }
-    offset += chunk.byteLength;
-    bytesSince += chunk.byteLength;
+    pendingConn = incomingConn;
 
-    const now = Date.now(), elapsed = (now - lastTime)/1000;
-    if(elapsed >= 0.5){
-      document.getElementById('s-speed').textContent = fmtSpeed(bytesSince/elapsed);
-      bytesSince = 0; lastTime = now;
-    }
+    incomingConn.on('open', () => {
+      // Recibir el PIN del receptor para verificar
+      incomingConn.on('data', data => {
+        if (data.type === 'pin-verify') {
+          // El receptor nos manda su versión del PIN para que lo verifiquemos visualmente
+          // En esta implementación el emisor ya muestra el pin derivado del peer ID
+          // La verificación es que ambos vean el mismo valor
+          updateSenderStatus('connected', '¡Receptor conectado! Verifica los emojis');
+          document.getElementById('status-dot').className = 'status-dot connected';
+          conn = incomingConn;
+          
+          // Esperar confirmación del receptor
+          incomingConn.on('data', data2 => {
+            if (data2.type === 'accepted') {
+              startSending();
+            } else if (data2.type === 'rejected') {
+              updateSenderStatus('waiting', 'Conexión rechazada. Esperando...');
+              document.getElementById('status-dot').className = 'status-dot waiting';
+              conn = null;
+            }
+          });
+        }
+      });
+    });
+  });
 
-    rec.progress = Math.round(offset / buffer.byteLength * 100);
-    updateReceiverCounter();
-    updateGlobalProgress();
-    setTimeout(next, 1);
-  }
-  next();
+  peer.on('error', err => {
+    console.error('Peer error:', err);
+    updateSenderStatus('waiting', 'Error de conexión. Intenta de nuevo.');
+  });
 }
 
-function streamSlice(cid){
-  const rec = conns[cid];
-  if(!rec || rec.started) return;
-  rec.started = true;
+function updateSenderStatus(state, text) {
+  document.getElementById('status-text').textContent = text;
+}
 
+function startSending() {
+  if (!conn || !selectedFile) return;
+
+  updateSenderStatus('sending', 'Enviando archivo...');
+  document.getElementById('status-dot').className = 'status-dot sending';
+  document.getElementById('progress-wrap').style.display = 'flex';
+
+  // Enviar metadatos primero
+  conn.send({
+    type: 'metadata',
+    name: selectedFile.name,
+    size: selectedFile.size,
+    fileType: selectedFile.type
+  });
+
+  // Enviar archivo en chunks
+  const CHUNK_SIZE = 64 * 1024; // 64KB por chunk
   const reader = new FileReader();
-  let offset = 0, chunkSize = 65536;
-  let lastTime = Date.now(), bytesSince = 0;
+  let offset = 0;
 
-  function next(){
-    if(!conns[cid]) return;
-    if(offset >= selectedFile.size){
-      try{ rec.conn.send({ type:'done' }); }catch(e){}
-      rec.done = true; rec.progress = 100;
-      updateReceiverCounter();
-      updateGlobalProgress();
-      checkAllDone();
+  function sendNextChunk() {
+    if (offset >= selectedFile.size) {
+      conn.send({ type: 'done' });
+      showScreen('done');
       return;
     }
-    reader.readAsArrayBuffer(selectedFile.slice(offset, offset+chunkSize));
+
+    const slice = selectedFile.slice(offset, offset + CHUNK_SIZE);
+    reader.readAsArrayBuffer(slice);
   }
 
-  reader.onload = e=>{
-    const buf = e.target.result;
-    try{ rec.conn.send({ type:'chunk', data: buf }); }catch(e){ return; }
-    offset += buf.byteLength;
-    bytesSince += buf.byteLength;
-
-    const now = Date.now(), elapsed = (now-lastTime)/1000;
-    if(elapsed >= 0.5){
-      const bps = bytesSince/elapsed;
-      chunkSize = bps>2097152 ? 262144 : bps>524288 ? 131072 : 65536;
-      document.getElementById('s-speed').textContent = fmtSpeed(bps);
-      bytesSince = 0; lastTime = now;
-    }
-
-    rec.progress = Math.round(offset / selectedFile.size * 100);
-    updateReceiverCounter();
-    updateGlobalProgress();
-    setTimeout(next, 1);
+  reader.onload = e => {
+    conn.send({ type: 'chunk', data: e.target.result });
+    offset += e.target.result.byteLength;
+    
+    const pct = Math.round((offset / selectedFile.size) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = 
+      `${formatSize(offset)} de ${formatSize(selectedFile.size)} · ${pct}%`;
+    
+    // Pequeño delay para no saturar el canal
+    setTimeout(sendNextChunk, 0);
   };
 
-  reader.onerror = ()=>{ delete conns[cid]; updateReceiverCounter(); };
-  next();
-}
-
-function updateGlobalProgress(){
-  const vals = Object.values(conns);
-  if(!vals.length) return;
-  const avg = vals.reduce((a,r)=>a+r.progress,0) / vals.length;
-  document.getElementById('s-fill').style.width  = avg+'%';
-  document.getElementById('s-prog-txt').textContent = Math.round(avg)+'%';
-}
-
-function checkAllDone(){
-  const vals = Object.values(conns);
-  if(vals.length > 0 && vals.every(r=>r.done)){
-    sessionLocked = true;
-    const n = vals.length;
-    document.getElementById('done-sub').textContent =
-      `Recibido por ${n} dispositivo${n>1?'s':''} · sin almacenamiento intermedio`;
-    setTimeout(()=>showScreen('s-done'), 400);
-  }
+  sendNextChunk();
 }
 
 // ════════════════════════════════════════
-// CONTADOR DE RECEPTORES
+// RECEPTOR
 // ════════════════════════════════════════
-function updateReceiverCounter(){
-  const vals  = Object.values(conns);
-  const el    = document.getElementById('rcounter');
-  const list  = document.getElementById('rcounter-list');
-  const num   = document.getElementById('rcounter-num');
 
-  if(vals.length === 0){ el.style.display='none'; return; }
-  el.style.display = 'flex';
+function initReceiver(senderPeerId) {
+  peer = new Peer({
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    }
+  });
 
-  const done  = vals.filter(r=>r.done).length;
-  const total = vals.length;
-  num.textContent = (done===total && total>0)
-    ? `✓ ${total} completado${total>1?'s':''}`
-    : `${total} conectado${total>1?'s':''} · ${done} listo${done!==1?'s':''}`;
+  peer.on('open', myId => {
+    // Conectar al emisor
+    conn = peer.connect(senderPeerId, { reliable: true });
 
-  list.innerHTML = '';
-  vals.forEach(rec=>{
-    const icon     = rec.done ? '✅' : rec.progress>0 ? '📥' : '📱';
-    const pctLabel = rec.done ? '✓'  : rec.started ? rec.progress+'%' : 'esperando...';
-    const item     = document.createElement('div');
-    item.className = 'rcounter-item';
-    item.innerHTML = `
-      <div class="rcounter-icon">${icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="rcounter-name">${rec.name}</div>
-          <div class="rcounter-pct">${pctLabel}</div>
-        </div>
-        <div class="rcounter-bar">
-          <div class="rcounter-fill" style="width:${rec.progress}%"></div>
-        </div>
-      </div>`;
-    list.appendChild(item);
+    conn.on('open', () => {
+      // Generar PIN compartido (basado en el ID del emisor, que ambos conocen)
+      const pin = generatePin(senderPeerId);
+      
+      // Enviar nuestro PIN al emisor para verificación cruzada
+      conn.send({ type: 'pin-verify', pin: pin });
+
+      // Mostrar pantalla de verificación
+      document.getElementById('verify-emojis').textContent = pin;
+      showScreen('verify');
+    });
+
+    conn.on('data', data => {
+      if (data.type === 'metadata') {
+        fileMetadata = data;
+        receivedChunks = [];
+        receivedSize = 0;
+        
+        document.getElementById('receiver-file-icon').textContent = getFileIcon(data.name);
+        document.getElementById('receiver-file-name').textContent = data.name;
+        document.getElementById('receiver-file-size').textContent = formatSize(data.size);
+        document.getElementById('receiver-file-info').style.display = 'flex';
+        
+        showScreen('receiver');
+        document.getElementById('receiver-status-text').textContent = 'Recibiendo archivo...';
+        document.getElementById('receiver-status-dot').className = 'status-dot sending';
+        document.getElementById('receiver-progress-wrap').style.display = 'flex';
+
+      } else if (data.type === 'chunk') {
+        receivedChunks.push(data.data);
+        receivedSize += data.data.byteLength;
+        
+        if (fileMetadata) {
+          const pct = Math.round((receivedSize / fileMetadata.size) * 100);
+          document.getElementById('receiver-progress-fill').style.width = pct + '%';
+          document.getElementById('receiver-progress-text').textContent = 
+            `${formatSize(receivedSize)} de ${formatSize(fileMetadata.size)} · ${pct}%`;
+        }
+
+      } else if (data.type === 'done') {
+        // Ensamblar y descargar el archivo
+        const blob = new Blob(receivedChunks, { type: fileMetadata?.fileType || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileMetadata?.name || 'archivo';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Mostrar éxito en el receptor
+        showScreen('receiver');
+        document.getElementById('receiver-status-dot').className = 'status-dot connected';
+        document.getElementById('receiver-status-text').textContent = '¡Archivo recibido!';
+        document.getElementById('receiver-progress-fill').style.width = '100%';
+        document.getElementById('receiver-progress-text').textContent = '✓ Completado';
+      }
+    });
+
+    conn.on('error', err => {
+      console.error('Connection error:', err);
+      document.getElementById('receiver-status-text').textContent = 'Error de conexión';
+    });
+  });
+
+  peer.on('error', err => {
+    console.error('Peer error:', err);
+    document.getElementById('receiver-status-text').textContent = 
+      'No se pudo conectar. El QR puede haber expirado.';
   });
 }
 
-// ════════════════════════════════════════
-// RECEPTOR — initReceiver
-// ════════════════════════════════════════
-function setReceiverStatus(txt, dotClass, title, sub){
-  if(txt)      document.getElementById('r-status').textContent = txt;
-  if(dotClass) document.getElementById('r-dot').className = 'sdot '+dotClass;
-  if(title)    document.getElementById('r-title').textContent  = title;
-  if(sub!==undefined) document.getElementById('r-sub').textContent = sub;
-}
-
-function initReceiver(senderId){
-  dbg('initReceiver: senderId='+senderId.slice(0,8)+'...');
-  setReceiverStatus('Conectando...','waiting','Iniciando...','');
-
-  makePeer(
-    (p)=>{
-      peer = p;
-      dbg('initReceiver: mi peer listo, conectando con emisor...');
-      setReceiverStatus('Conectando con el emisor...','waiting','Conectando...','');
-
-      const conn = p.connect(senderId, { reliable: true });
-      dbg('initReceiver: p.connect() llamado');
-
-      const connTimeout = setTimeout(()=>{
-        if(!fileMeta){
-          dbg('initReceiver: TIMEOUT sin metadata','#f00');
-          setReceiverStatus(
-            'No se pudo conectar — el QR puede haber expirado',
-            'waiting','Sin conexión',
-            'Pide al emisor un nuevo QR'
-          );
-        }
-      }, 15000);
-
-      conn.on('open',()=>{
-        clearTimeout(connTimeout);
-        dbg('initReceiver: conn.open OK');
-        setReceiverStatus(
-          'Conectado — esperando datos del emisor...',
-          'connected','Conectado ✓','Canal cifrado activo'
-        );
-      });
-
-      conn.on('data', data=>{
-        if(!data){ dbg('initReceiver: data NULL','#f80'); return; }
-        dbg('initReceiver: data recibida type='+(data.type||typeof data));
-        handleReceiverData(data, conn);
-      });
-
-      conn.on('error', err=>{
-        clearTimeout(connTimeout);
-        dbg('initReceiver: conn ERROR '+JSON.stringify(err),'#f00');
-        setReceiverStatus(
-          'Error de conexión — vuelve a escanear',
-          'waiting','Error','');
-      });
-
-      conn.on('close',()=>{
-        clearTimeout(connTimeout);
-        dbg('initReceiver: conn CLOSED. fileMeta='+(fileMeta?'sí':'no')+' receivedSize='+receivedSize,'#f80');
-        if(fileMeta && receivedSize < fileMeta.size){
-          setReceiverStatus('Conexión cerrada antes de terminar','waiting');
-        }
-      });
-    },
-    (errType)=>{
-      dbg('initReceiver: makePeer ERROR: '+errType,'#f00');
-      setReceiverStatus(
-        `No se pudo conectar (${errType}).`,
-        'waiting','Error de red','Prueba con Chrome o Safari'
-      );
-    }
-  );
-}
-
-// ════════════════════════════════════════
-// MANEJADOR DE DATOS — receptor
-// ════════════════════════════════════════
-function handleReceiverData(data, conn){
-
-  if(data.type === 'metadata'){
-    dbg('RX metadata: '+data.name+' size='+data.size);
-    fileMeta       = data;
-    receivedChunks = [];
-    receivedSize   = 0;
-    rLastTime      = Date.now();
-    rBytesSince    = 0;
-
-    document.getElementById('r-icon').textContent = fileIcon(data.name);
-    document.getElementById('r-name').textContent = data.name;
-    document.getElementById('r-size').textContent = fmtSize(data.size);
-    document.getElementById('r-strip').style.display = 'flex';
-    setReceiverStatus('Recibiendo...','sending','Recibiendo...','Conexión P2P cifrada activa');
-
-    dbg('RX: enviando ready al emisor');
-    conn.send({ type: 'ready' });
-    return;
-  }
-
-  if(data.type === 'chunk'){
-    let buf = null;
-    if(data.data instanceof ArrayBuffer){
-      buf = data.data;
-    } else if(ArrayBuffer.isView(data.data)){
-      buf = data.data.buffer.slice(
-        data.data.byteOffset,
-        data.data.byteOffset + data.data.byteLength
-      );
-    }
-
-    if(!buf){
-      dbg('RX chunk: buf NULL, tipo='+typeof data.data+'  constructor='+(data.data?.constructor?.name||'?'),'#f80');
-      return;
-    }
-
-    receivedChunks.push(buf);
-    receivedSize  += buf.byteLength;
-    rBytesSince   += buf.byteLength;
-
-    const now = Date.now(), elapsed = (now - rLastTime)/1000;
-    if(elapsed >= 0.5){
-      document.getElementById('r-speed').textContent = fmtSpeed(rBytesSince/elapsed);
-      rBytesSince = 0; rLastTime = now;
-    }
-    if(fileMeta && fileMeta.size > 0){
-      const pct = Math.min(100, Math.round(receivedSize/fileMeta.size*100));
-      document.getElementById('r-fill').style.width = pct+'%';
-      document.getElementById('r-prog-txt').textContent =
-        `${fmtSize(receivedSize)} / ${fmtSize(fileMeta.size)} · ${pct}%`;
-    }
-    return;
-  }
-
-  if(data.type === 'done'){
-    dbg('RX done: chunks='+receivedChunks.length+' totalBytes='+receivedSize);
-    document.getElementById('r-fill').style.width  = '100%';
-    document.getElementById('r-speed').textContent = '';
-    document.getElementById('r-prog-txt').textContent = '✓ Completado';
-    assembleAndDeliver();
-    return;
-  }
-
-  if(data.type === 'url'){
-    dbg('RX url: '+data.url);
-    setReceiverStatus('Recibido ✓','done','¡Enlace recibido!','Toca para abrirlo');
-    document.getElementById('r-prog').style.display = 'none';
-    const preview = document.getElementById('r-url-preview');
-    preview.style.display = 'flex';
-    document.getElementById('r-url-txt').textContent = data.url;
-    document.getElementById('r-url-link').href       = data.url;
-    document.getElementById('r-url-btn').onclick     = ()=>window.open(data.url,'_blank','noopener');
-    return;
-  }
-
-  dbg('RX: tipo desconocido: '+JSON.stringify(Object.keys(data||{})),'#f80');
-}
-
-// ════════════════════════════════════════
-// ENSAMBLAR Y ENTREGAR
-// ════════════════════════════════════════
-function assembleAndDeliver(){
-  dbg('assembleAndDeliver: chunks='+receivedChunks.length+' size='+receivedSize+' fileMeta='+(fileMeta?fileMeta.name:'NULL'));
-  if(!fileMeta || receivedChunks.length === 0){
-    dbg('assembleAndDeliver: ERROR sin datos','#f00');
-    setReceiverStatus('Error: no se recibieron datos','waiting','Error','');
-    return;
-  }
-
-  const blob = new Blob(receivedChunks, {
-    type: fileMeta.mime || 'application/octet-stream'
-  });
-
-  if(fileMeta.isImage){
-    // Mostrar imagen en pantalla
-    const url = URL.createObjectURL(blob);
-    const img = document.getElementById('r-img');
-    img.src = url;
-    img.style.display = 'block';
-    setReceiverStatus('Mantén pulsado para guardar','done','¡Imagen recibida!','');
-  } else {
-    // Descargar archivo
-    const url = URL.createObjectURL(blob);
-    const a   = document.createElement('a');
-    a.href     = url;
-    a.download = fileMeta.name || 'archivo';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url), 10000);
-    setReceiverStatus('Descarga iniciada ✓','done','¡Archivo recibido!','');
+function acceptConnection() {
+  if (conn) {
+    conn.send({ type: 'accepted' });
+    showScreen('receiver');
+    document.getElementById('receiver-file-info').style.display = 'none';
+    document.getElementById('receiver-status-text').textContent = 'Esperando el archivo...';
+    document.getElementById('receiver-status-dot').className = 'status-dot connected';
   }
 }
 
-// ════════════════════════════════════════
-// RESET
-// ════════════════════════════════════════
-function resetApp(){
-  if(peer){ try{peer.destroy();}catch(e){} peer=null; }
-  Object.values(conns).forEach(r=>{ try{r.conn.close();}catch(e){} });
-  conns          = {};
-  sessionLocked  = false;
-  fileBuffer     = null;
-  selectedFile   = null;
-  sharedUrl      = null;
+function rejectConnection() {
+  if (conn) {
+    conn.send({ type: 'rejected' });
+    conn.close();
+  }
+  document.getElementById('receiver-status-text').textContent = 'Conexión cancelada';
+  showScreen('receiver');
+}
+
+// ── Reset ──
+function resetApp() {
+  if (peer) { peer.destroy(); peer = null; }
+  conn = null;
+  selectedFile = null;
   receivedChunks = [];
-  receivedSize   = 0;
-  fileMeta       = null;
-
-  // Reset UI emisor
-  const fi = document.getElementById('file-input');
-  if(fi) fi.value = '';
-  const ui = document.getElementById('url-input');
-  if(ui) ui.value = '';
-  document.getElementById('qr-canvas').style.display  = 'none';
-  document.getElementById('qr-loading').style.display = 'flex';
-  document.getElementById('qr-loading').textContent   = 'Generando QR...';
-  document.getElementById('s-prog').style.display     = 'none';
-  document.getElementById('s-fill').style.width       = '0%';
-  document.getElementById('s-speed').textContent      = '';
-  document.getElementById('rcounter').style.display   = 'none';
-
-  // Reset UI receptor
-  document.getElementById('r-img').style.display         = 'none';
-  document.getElementById('r-url-preview').style.display = 'none';
-  document.getElementById('r-strip').style.display       = 'none';
-  document.getElementById('r-fill').style.width          = '0%';
-  document.getElementById('r-prog-txt').textContent      = 'Conectando...';
-  document.getElementById('r-speed').textContent         = '';
-
-  history.replaceState({}, '', location.pathname);
-  showScreen('s-drop');
-}
-</script>
-
-const ICE = { iceServers:[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'},
-  {urls:'stun:stun2.l.google.com:19302'},
-  {urls:'stun:stun3.l.google.com:19302'},
-  {urls:'stun:stun.cloudflare.com:3478'},
-]};
-
-// ── State ──
-let peer=null;
-let conns={}; // id → {conn, name, progress, done}
-let selectedFile=null, sharedUrl=null;
-let isReceiver=false;
-let sessionLocked=false; // true cuando ya empezamos a enviar
-let receivedChunks=[], receivedSize=0, fileMeta=null;
-let fileWriter=null;
-let rBytesSince=0, rLastTime=0;
-let sLastTime=0, sBytesSince=0;
-let connCount=0;
-
-// ── Init ──
-const params=new URLSearchParams(location.search);
-const receiverPeerId=params.get('id');
-
-detectBrave();
-
-if(receiverPeerId){
-  isReceiver=true;
-  document.querySelector('.nav').style.display='none';
-  // Asegurar que page-app está visible antes de mostrar la pantalla del receptor
-  const pageApp = document.getElementById('page-app');
-  pageApp.style.display='flex';
-  pageApp.classList.add('active');
-  showScreen('s-receiver');
-  initReceiver(receiverPeerId);
-} else {
-  initSenderUI();
-}
-
-// ════════════════════════════════════════
-// BRAVE
-// ════════════════════════════════════════
-async function detectBrave(){
-  try{
-    const b=navigator.brave?await navigator.brave.isBrave().catch(()=>false):/Brave/.test(navigator.userAgent);
-    if(b) document.getElementById('brave-warn').classList.add('show');
-  }catch(e){}
-}
-
-// ════════════════════════════════════════
-// NAVIGATION — fix: oculta bien las páginas
-// ════════════════════════════════════════
-function showPage(name){
-  // Ocultar todas las páginas
-  document.querySelectorAll('.page').forEach(p=>{
-    p.classList.remove('active');
-    p.style.display='none';
-  });
-  // Activar la seleccionada
-  const target=document.getElementById('page-'+name);
-  target.style.display='flex';
-  // Forzar reflow para que la animación funcione
-  target.offsetHeight;
-  target.classList.add('active');
-  // Nav buttons
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>{
-    if((name==='app'&&b.textContent.trim()==='Compartir')||
-       (name==='about'&&b.textContent.trim()==='Acerca de'))
-      b.classList.add('active');
-  });
-}
-
-function showScreen(id){
-  document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function switchTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('active',(tab==='file'&&i===0)||(tab==='url'&&i===1));
-  });
-  document.getElementById('tab-file').style.display=tab==='file'?'block':'none';
-  document.getElementById('tab-url').style.display=tab==='url'?'block':'none';
-}
-
-// ════════════════════════════════════════
-// HELPERS
-// ════════════════════════════════════════
-function fmtSize(b){
-  if(!b||b<1024) return (b||0)+' B';
-  if(b<1048576) return (b/1024).toFixed(1)+' KB';
-  if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
-  return (b/1073741824).toFixed(2)+' GB';
-}
-function fmtSpeed(bps){
-  if(bps<1024) return '<1 KB/s';
-  if(bps<1048576) return (bps/1024).toFixed(0)+' KB/s';
-  return (bps/1048576).toFixed(1)+' MB/s';
-}
-function fileIcon(n){
-  if(!n) return '🔗';
-  const e=n.split('.').pop().toLowerCase();
-  return {jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',
-    mp4:'🎬',mov:'🎬',avi:'🎬',mkv:'🎬',webm:'🎬',
-    mp3:'🎵',wav:'🎵',flac:'🎵',aac:'🎵',ogg:'🎵',
-    pdf:'📕',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',
-    zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',
-    js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',txt:'📄',md:'📄',json:'📋'}[e]||'📦';
-}
-function isImage(n){
-  return ['jpg','jpeg','png','gif','webp','svg','heic','avif']
-    .includes(n?.split('.').pop().toLowerCase());
-}
-function uid(){return Math.random().toString(36).slice(2,8);}
-
-// ════════════════════════════════════════
-// QR
-// ════════════════════════════════════════
-function drawQR(url){
-  const canvas=document.getElementById('qr-canvas');
-  const loading=document.getElementById('qr-loading');
-  const SIZE=196;
-  const img=new Image();
-  img.crossOrigin='anonymous';
-  img.src=`https://api.qrserver.com/v1/create-qr-code/?size=${SIZE}x${SIZE}&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=000000&margin=2`;
-  img.onload=()=>{
-    canvas.width=SIZE;canvas.height=SIZE;
-    canvas.getContext('2d').drawImage(img,0,0,SIZE,SIZE);
-    loading.style.display='none';
-    canvas.style.display='block';
-  };
-  img.onerror=()=>{
-    loading.textContent='Abre: '+url.split('?')[0];
-    loading.style.fontSize='10px';
-  };
-}
-
-// ════════════════════════════════════════
-// PEER FACTORY
-// ════════════════════════════════════════
-function makePeer(onOpen, onError){
-  const p=new Peer({config:ICE});
-  let opened=false;
-  const t=setTimeout(()=>{ if(!opened){p.destroy();onError('timeout');} },12000);
-  p.on('open',id=>{ opened=true;clearTimeout(t);onOpen(p,id); });
-  p.on('error',err=>{ clearTimeout(t);onError(err.type||'error'); });
-  return p;
-}
-
-// ════════════════════════════════════════
-// SENDER UI
-// ════════════════════════════════════════
-function initSenderUI(){
-  const dz=document.getElementById('drop-zone');
-  const fi=document.getElementById('file-input');
-  dz.addEventListener('click',()=>fi.click());
-  fi.addEventListener('change',e=>{if(e.target.files[0]) startWithFile(e.target.files[0]);});
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-  dz.addEventListener('drop',e=>{
-    e.preventDefault();dz.classList.remove('over');
-    if(e.dataTransfer.files[0]) startWithFile(e.dataTransfer.files[0]);
-  });
-}
-
-function handleUrl(){
-  const val=document.getElementById('url-input').value.trim();
-  if(!val||!val.startsWith('http')){
-    document.getElementById('url-input').style.outline='2px solid var(--red)';
-    return;
-  }
-  sharedUrl=val; selectedFile=null;
-  setupSender('🔗',val,'Enlace compartido');
-}
-
-function startWithFile(file){
-  selectedFile=file; sharedUrl=null;
-  setupSender(fileIcon(file.name),file.name,fmtSize(file.size));
-}
-
-function setSenderStatus(txt,dotClass){
-  document.getElementById('s-status').textContent=txt;
-  if(dotClass) document.getElementById('s-dot').className='sdot '+dotClass;
-}
-
-// ════════════════════════════════════════
-// SETUP SENDER — multi-receiver
-// ════════════════════════════════════════
-function setupSender(icon,label,sub){
-  document.getElementById('s-icon').textContent=icon;
-  document.getElementById('s-name').textContent=label;
-  document.getElementById('s-size').textContent=sub;
-  showScreen('s-qr');
-  setSenderStatus('Conectando...','waiting');
-
-  if(peer){try{peer.destroy();}catch(e){} peer=null;}
-  conns={}; connCount=0; sessionLocked=false; fileBuffer=null;
-  updateReceiverCounter();
-
-  makePeer(
-    (p,id)=>{
-      peer=p;
-      const url=`${location.origin}${location.pathname}?id=${id}`;
-      drawQR(url);
-      setSenderStatus('Listo — esperando que escaneen el QR','waiting');
-
-      p.on('connection',incoming=>{
-        // Bloqueamos solo si ya terminamos de enviar
-        if(sessionLocked){ incoming.close(); return; }
-
-        const cid=uid();
-        const rec={conn:incoming, name:'Dispositivo '+(Object.keys(conns).length+1), progress:0, done:false, speed:''};
-        conns[cid]=rec;
-        connCount++;
-        updateReceiverCounter();
-
-        // Data handler ANTES del open
-        incoming.on('data',data=>{
-          if(data.type==='ready'){
-            // Este receptor está listo — empezar a enviarle
-            sendToOne(cid);
-          }
-        });
-
-        incoming.on('open',()=>{
-          setSenderStatus(`${connCount} receptor${connCount>1?'es':''} conectado${connCount>1?'s':''}...`,'connected');
-          updateReceiverCounter();
-          // Enviar metadatos inmediatamente
-          if(sharedUrl){
-            incoming.send({type:'url',url:sharedUrl});
-            rec.done=true; rec.progress=100;
-            updateReceiverCounter();
-            checkAllDone();
-          } else {
-            incoming.send({
-              type:'metadata',
-              name:selectedFile.name,
-              size:selectedFile.size,
-              mime:selectedFile.type,
-              isImage:isImage(selectedFile.name)
-            });
-            // El receptor responde con 'ready' cuando está preparado
-          }
-        });
-
-        incoming.on('close',()=>{
-          if(conns[cid] && !conns[cid].done){
-            delete conns[cid];
-            connCount=Math.max(0,connCount-1);
-            updateReceiverCounter();
-          }
-        });
-
-        incoming.on('error',()=>{
-          delete conns[cid];
-          connCount=Math.max(0,connCount-1);
-          updateReceiverCounter();
-        });
-      });
-    },
-    (errType)=>{ setSenderStatus(`Error: ${errType} — recarga la página`,'waiting'); }
-  );
-}
-
-// ════════════════════════════════════════
-// SEND — multi-receiver con progreso individual
-// ════════════════════════════════════════
-
-// Buffer precargado del archivo (se carga una vez, se envía a todos)
-let fileBuffer = null;
-
-function sendToOne(cid){
-  const rec = conns[cid];
-  if(!rec || !selectedFile) return;
-
-  document.getElementById('s-prog').style.display='flex';
-  updateSenderStatusFromConns();
-
-  // Si ya tenemos el buffer precargado, enviamos directo
-  if(fileBuffer){
-    streamBufferToReceiver(cid, fileBuffer);
-    return;
-  }
-
-  // Primera vez: leer el archivo completo en memoria
-  // Para archivos grandes (>200MB) usamos slice por receptor
-  if(selectedFile.size > 200 * 1024 * 1024){
-    streamSliceToReceiver(cid);
-    return;
-  }
-
-  // Leer una vez y cachear
-  const reader = new FileReader();
-  reader.onload = e => {
-    fileBuffer = e.target.result;
-    // Enviar a todos los que ya estén esperando
-    Object.keys(conns).forEach(id => {
-      if(!conns[id].started) streamBufferToReceiver(id, fileBuffer);
-    });
-  };
-  reader.onerror = () => setSenderStatus('Error leyendo el archivo','waiting');
-  reader.readAsArrayBuffer(selectedFile);
-}
-
-// Enviar desde buffer precargado (archivo ya en memoria)
-function streamBufferToReceiver(cid, buffer){
-  const rec = conns[cid];
-  if(!rec || rec.started) return;
-  rec.started = true;
-
-  const CHUNK = 65536;
-  let offset = 0;
-  let lastTime = Date.now(), bytesSince = 0;
-
-  function nextChunk(){
-    if(!conns[cid]) return; // desconectado
-    if(offset >= buffer.byteLength){
-      try{ rec.conn.send({type:'done'}); }catch(e){}
-      rec.done = true; rec.progress = 100;
-      updateReceiverCounter();
-      updateGlobalProgress();
-      checkAllDone();
-      return;
-    }
-    const chunk = buffer.slice(offset, offset + CHUNK);
-    try{ rec.conn.send({type:'chunk', data:chunk}); }catch(e){ return; }
-    offset += chunk.byteLength;
-    bytesSince += chunk.byteLength;
-
-    // Speed display (global aproximado)
-    const now = Date.now(), elapsed = (now - lastTime) / 1000;
-    if(elapsed >= 0.5){
-      const bps = bytesSince / elapsed;
-      document.getElementById('s-speed').textContent = fmtSpeed(bps);
-      bytesSince = 0; lastTime = now;
-    }
-
-    rec.progress = Math.round(offset / buffer.byteLength * 100);
-    updateReceiverCounter();
-    updateGlobalProgress();
-    setTimeout(nextChunk, 1);
-  }
-
-  nextChunk();
-}
-
-// Para archivos >200MB: slice por receptor (no caben en RAM)
-function streamSliceToReceiver(cid){
-  const rec = conns[cid];
-  if(!rec || rec.started) return;
-  rec.started = true;
-
-  const CHUNK = 65536;
-  let offset = 0, chunkSize = CHUNK;
-  let lastTime = Date.now(), bytesSince = 0;
-  const reader = new FileReader();
-
-  function nextChunk(){
-    if(!conns[cid]) return;
-    if(offset >= selectedFile.size){
-      try{ rec.conn.send({type:'done'}); }catch(e){}
-      rec.done = true; rec.progress = 100;
-      updateReceiverCounter();
-      updateGlobalProgress();
-      checkAllDone();
-      return;
-    }
-    reader.readAsArrayBuffer(selectedFile.slice(offset, offset + chunkSize));
-  }
-
-  reader.onload = e => {
-    const buf = e.target.result;
-    try{ rec.conn.send({type:'chunk', data:buf}); }catch(e){ return; }
-    offset += buf.byteLength;
-    bytesSince += buf.byteLength;
-
-    const now = Date.now(), elapsed = (now - lastTime) / 1000;
-    if(elapsed >= 0.5){
-      const bps = bytesSince / elapsed;
-      chunkSize = bps > 2097152 ? 262144 : bps > 524288 ? 131072 : 65536;
-      document.getElementById('s-speed').textContent = fmtSpeed(bps);
-      bytesSince = 0; lastTime = now;
-    }
-
-    rec.progress = Math.round(offset / selectedFile.size * 100);
-    updateReceiverCounter();
-    updateGlobalProgress();
-    setTimeout(nextChunk, 1);
-  };
-
-  nextChunk();
-}
-
-function updateSenderStatusFromConns(){
-  const n = Object.keys(conns).length;
-  setSenderStatus(
-    `Enviando a ${n} receptor${n > 1 ? 'es' : ''}...`,
-    'sending'
-  );
-}
-
-function updateGlobalProgress(){
-  const vals=Object.values(conns);
-  if(!vals.length) return;
-  const avg=vals.reduce((a,r)=>a+r.progress,0)/vals.length;
-  document.getElementById('s-fill').style.width=avg+'%';
-  document.getElementById('s-prog-txt').textContent=Math.round(avg)+'%';
-}
-
-function checkAllDone(){
-  const vals=Object.values(conns);
-  if(vals.length>0 && vals.every(r=>r.done)){
-    sessionLocked=true;
-    const n=vals.length;
-    document.getElementById('done-sub').textContent=
-      `Recibido por ${n} dispositivo${n>1?'s':''} · sin pasar por ningún servidor`;
-    setTimeout(()=>showScreen('s-done'),400);
-  }
-}
-
-// ════════════════════════════════════════
-// RECEIVER COUNTER UI
-// ════════════════════════════════════════
-function updateReceiverCounter(){
-  const vals=Object.values(conns);
-  const el=document.getElementById('rcounter');
-  const list=document.getElementById('rcounter-list');
-  const num=document.getElementById('rcounter-num');
-
-  if(vals.length===0){ el.style.display='none'; return; }
-  el.style.display='flex';
-
-  const done=vals.filter(r=>r.done).length;
-  const total=vals.length;
-  num.textContent = done===total && total>0
-    ? `✓ ${total} completado${total>1?'s':''}`
-    : `${total} conectado${total>1?'s':''} · ${done} completado${done!==1?'s':''}`;
-
-  list.innerHTML='';
-  vals.forEach(rec=>{
-    const item=document.createElement('div');
-    item.className='rcounter-item';
-    const icon = rec.done ? '✅' : rec.progress>0 ? '📥' : '📱';
-    const pctLabel = rec.done ? '✓' : rec.started ? rec.progress+'%' : 'esperando...';
-    item.innerHTML=`
-      <div class="rcounter-icon">${icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div class="rcounter-name">${rec.name}</div>
-          <div class="rcounter-pct">${pctLabel}</div>
-        </div>
-        <div class="rcounter-bar">
-          <div class="rcounter-fill" style="width:${rec.progress}%"></div>
-        </div>
-      </div>
-    `;
-    list.appendChild(item);
-  });
-}
-
-// ════════════════════════════════════════
-// RECEIVER
-// ════════════════════════════════════════
-function setReceiverStatus(txt,dotClass,title,sub){
-  if(txt) document.getElementById('r-status').textContent=txt;
-  if(dotClass) document.getElementById('r-dot').className='sdot '+dotClass;
-  if(title) document.getElementById('r-title').textContent=title;
-  if(sub) document.getElementById('r-sub').textContent=sub;
-}
-
-function initReceiver(senderId){
-  setReceiverStatus('Conectando...','waiting','Iniciando...','');
-
-  makePeer(
-    (p)=>{
-      peer=p;
-      setReceiverStatus('Conectando con el emisor...','waiting','Conectando...','Canal seguro');
-
-      // Sin serialization:'binary' — dejamos que PeerJS maneje
-      // automáticamente JSON y ArrayBuffer según el tipo enviado
-      const conn=p.connect(senderId,{reliable:true});
-
-      // Timeout si no abre en 15 segundos
-      const connTimeout=setTimeout(()=>{
-        if(!fileMeta && receivedSize===0){
-          setReceiverStatus(
-            'No se pudo conectar — el QR puede haber expirado',
-            'waiting','Error de conexión',
-            'Pide al emisor que genere un nuevo QR'
-          );
-        }
-      }, 15000);
-
-      conn.on('open',()=>{
-        clearTimeout(connTimeout);
-        setReceiverStatus('Conectado · esperando archivo...','connected','Conectado ✓','Canal P2P cifrado activo');
-        conn.send({type:'ready'});
-      });
-
-      // Handler síncrono — sin async para evitar race conditions
-      conn.on('data', data=>{
-        handleReceiverData(data, conn);
-      });
-
-      conn.on('error', err=>{
-        clearTimeout(connTimeout);
-        console.error('Receiver conn error:', err);
-        setReceiverStatus(
-          'Error de conexión — vuelve a escanear el QR',
-          'waiting','Error','');
-      });
-
-      conn.on('close',()=>{
-        clearTimeout(connTimeout);
-        if(fileMeta && receivedSize < fileMeta.size){
-          setReceiverStatus('Conexión cerrada antes de terminar','waiting');
-        }
-      });
-    },
-    (errType)=>{
-      setReceiverStatus(
-        `No se pudo conectar (${errType}). Vuelve a escanear.`,
-        'waiting','Error de red','Prueba con Chrome o Safari');
-    }
-  );
-}
-
-function handleReceiverData(data, conn){
-  if(!data) return;
-
-  if(data.type==='metadata'){
-    fileMeta=data; receivedChunks=[]; receivedSize=0;
-    rBytesSince=0; rLastTime=Date.now();
-
-    document.getElementById('r-icon').textContent=fileIcon(data.name);
-    document.getElementById('r-name').textContent=data.name;
-    document.getElementById('r-size').textContent=fmtSize(data.size);
-    document.getElementById('r-strip').style.display='flex';
-    setReceiverStatus('Recibiendo...','sending','Recibiendo...','Conexión P2P cifrada activa');
-
-    // File System Access API para archivos grandes (async, no bloquea)
-    if(data.size > 52428800 && 'showSaveFilePicker' in window){
-      window.showSaveFilePicker({suggestedName:data.name})
-        .then(fh=>fh.createWritable())
-        .then(w=>{ fileWriter=w; })
-        .catch(()=>{ fileWriter=null; });
-    }
-
-  } else if(data.type==='chunk'){
-    // Los chunks llegan como ArrayBuffer o Blob según la versión de PeerJS
-    const buf = data.data instanceof ArrayBuffer ? data.data
-              : data.data instanceof Blob ? null // manejado abajo
-              : null;
-
-    if(buf){
-      if(fileWriter) fileWriter.write(buf).catch(()=>{});
-      else receivedChunks.push(buf);
-      receivedSize += buf.byteLength;
-      rBytesSince  += buf.byteLength;
-    } else if(data.data instanceof Blob){
-      // Fallback Blob → ArrayBuffer
-      data.data.arrayBuffer().then(ab=>{
-        if(fileWriter) fileWriter.write(ab).catch(()=>{});
-        else receivedChunks.push(ab);
-        receivedSize += ab.byteLength;
-        rBytesSince  += ab.byteLength;
-        updateReceiverProgress();
-      });
-      return; // updateReceiverProgress se llama dentro del then
-    }
-
-    updateReceiverProgress();
-
-  } else if(data.type==='done'){
-    document.getElementById('r-fill').style.width='100%';
-    document.getElementById('r-speed').textContent='';
-    document.getElementById('r-prog-txt').textContent='✓ Completado';
-    if(fileWriter){
-      fileWriter.close().then(()=>{
-        fileWriter=null;
-        setReceiverStatus('Guardado en disco ✓','done','¡Archivo guardado!','Escritura directa en disco');
-      }).catch(()=>{
-        fileWriter=null;
-        assembleAndDeliver();
-      });
-    } else {
-      assembleAndDeliver();
-    }
-
-  } else if(data.type==='url'){
-    setReceiverStatus('Recibido ✓','done','¡Enlace recibido!','Toca para abrirlo');
-    document.getElementById('r-prog').style.display='none';
-    const preview=document.getElementById('r-url-preview');
-    preview.style.display='flex';
-    document.getElementById('r-url-txt').textContent=data.url;
-    document.getElementById('r-url-link').href=data.url;
-    document.getElementById('r-url-btn').onclick=()=>window.open(data.url,'_blank','noopener');
-  }
-}
-
-function updateReceiverProgress(){
-  const now=Date.now(), elapsed=(now-rLastTime)/1000;
-  if(elapsed>=0.5){
-    document.getElementById('r-speed').textContent=fmtSpeed(rBytesSince/elapsed);
-    rBytesSince=0; rLastTime=now;
-  }
-  if(fileMeta && fileMeta.size>0){
-    const pct=Math.min(100,Math.round(receivedSize/fileMeta.size*100));
-    document.getElementById('r-fill').style.width=pct+'%';
-    document.getElementById('r-prog-txt').textContent=
-      `${fmtSize(receivedSize)} / ${fmtSize(fileMeta.size)} · ${pct}%`;
-  }
-}
-
-function assembleAndDeliver(){
-  const blob=new Blob(receivedChunks,{type:fileMeta?.mime||'application/octet-stream'});
-  if(fileMeta?.isImage){
-    const url=URL.createObjectURL(blob);
-    document.getElementById('r-img').src=url;
-    document.getElementById('r-img').style.display='block';
-    setReceiverStatus('Mantén pulsado para guardar','done','¡Imagen recibida!','');
-  } else {
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fileMeta?.name||'archivo';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),5000);
-    setReceiverStatus('Descarga iniciada ✓','done','¡Archivo recibido!','');
-  }
-  document.getElementById('r-prog-txt').textContent='✓ Completado';
-}
-
-// ════════════════════════════════════════
-// RESET
-// ════════════════════════════════════════
-function resetApp(){
-  if(peer){try{peer.destroy();}catch(e){} peer=null;}
-  Object.values(conns).forEach(r=>{try{r.conn.close();}catch(e){}});
-  conns={}; connCount=0; sessionLocked=false; fileBuffer=null;
-  selectedFile=null; sharedUrl=null;
-  receivedChunks=[]; receivedSize=0; fileMeta=null; fileWriter=null;
-
-  document.getElementById('file-input').value='';
-  document.getElementById('url-input').value='';
-  document.getElementById('qr-canvas').style.display='none';
-  document.getElementById('qr-loading').style.display='flex';
-  document.getElementById('qr-loading').textContent='Generando QR...';
-  document.getElementById('s-prog').style.display='none';
-  document.getElementById('s-fill').style.width='0%';
-  document.getElementById('rcounter').style.display='none';
-  document.getElementById('r-img').style.display='none';
-  document.getElementById('r-url-preview').style.display='none';
-  document.getElementById('r-strip').style.display='none';
-
-  history.replaceState({},'',location.pathname);
-  showScreen('s-drop');
+  receivedSize = 0;
+  fileMetadata = null;
+  document.getElementById('qr-container').innerHTML = '';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  showScreen('drop');
+  // Limpiar URL
+  window.history.replaceState({}, '', window.location.pathname);
 }
 </script>
 </body>
