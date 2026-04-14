@@ -519,8 +519,75 @@ function setupSender(icon, label, sub) {
     }
   };
 
-  ctrlWs.onerror = () => setSenderStatus('Error de conexión con servidor', 'waiting');
-  ctrlWs.onclose = () => { if (!sessionDone) setSenderStatus('Servidor desconectado', 'waiting'); };
+  ctrlWs.onerror = () => {};
+
+  // Render cierra WebSockets inactivos en ~55s.
+  // Enviamos un ping cada 25s para mantener la conexión viva.
+  let keepaliveTimer = null;
+  ctrlWs.onopen_orig = ctrlWs.onopen;
+
+  function startKeepalive() {
+    stopKeepalive();
+    keepaliveTimer = setInterval(() => {
+      if (ctrlWs && ctrlWs.readyState === 1) {
+        ctrlWs.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 25000);
+  }
+  function stopKeepalive() {
+    if (keepaliveTimer) { clearInterval(keepaliveTimer); keepaliveTimer = null; }
+  }
+
+  // Arranca el keepalive cuando abre
+  const origOpen = ctrlWs.onopen;
+  ctrlWs.onopen = (e) => {
+    startKeepalive();
+    origOpen(e);
+  };
+
+  ctrlWs.onclose = () => {
+    stopKeepalive();
+    if (sessionDone) return;
+
+    // Reconexión automática — Render puede cerrar la conexión por inactividad
+    // o durante un deploy. Intentamos reconectar hasta 5 veces.
+    setSenderStatus('Reconectando...', 'waiting');
+    let retries = 0;
+    function tryReconnect() {
+      if (sessionDone || retries >= 5) {
+        setSenderStatus('Sin conexión con servidor — recarga la página', 'waiting');
+        return;
+      }
+      retries++;
+      setTimeout(() => {
+        const ws2 = new WebSocket(wsBase + '/relay');
+        ws2.binaryType = 'arraybuffer';
+        ws2.onopen = () => {
+          ctrlWs = ws2;
+          startKeepalive();
+          // Re-registrarse en la misma sala
+          ws2.send(JSON.stringify({ role: 'sender', room: roomId }));
+          setSenderStatus('Listo — esperando que escaneen el QR', 'waiting');
+        };
+        ws2.onmessage = ctrlWs?.onmessage || (() => {});
+        ws2.onerror   = () => {};
+        ws2.onclose   = () => { stopKeepalive(); if (!sessionDone) tryReconnect(); };
+
+        // Copiar el handler de mensajes al nuevo WS
+        ws2.onmessage = (e) => {
+          if (e.data instanceof ArrayBuffer) return;
+          let msg; try { msg = JSON.parse(e.data); } catch { return; }
+          if (msg.type === 'peer_joined') {
+            if (!p2pActive && !relayMode) setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
+          }
+          if (msg.type === 'fallback' && !p2pActive) activateSenderRelay();
+          if (msg.type === 'partner_left' && !sessionDone) setSenderStatus('Receptor desconectado', 'waiting');
+        };
+        ws2.onclose = () => { stopKeepalive(); if (!sessionDone) tryReconnect(); };
+      }, Math.min(1000 * retries, 4000)); // espera 1s, 2s, 3s, 4s, 4s
+    }
+    tryReconnect();
+  };
 }
 
 // ── Fallback coordinado — sender ──
