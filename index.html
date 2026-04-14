@@ -175,7 +175,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam v2</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam v44</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -506,6 +506,8 @@ function setupSenderWithRoom(roomId, token) {
         });
 
         conn.on('close', () => {
+          // No borrar la entrada si ya cambiamos a relay — está siendo reusada
+          if (relayMode) return;
           if (!senderConns[cid]?.done) {
             delete senderConns[cid];
             updateRC();
@@ -537,11 +539,13 @@ function setupSenderWithRoom(roomId, token) {
     }
 
     if (msg.type === 'peer_joined') {
-      // Crear entrada para este receptor — es la ÚNICA vez que se crea.
-      // Tanto el path P2P como relay reusan esta misma entrada.
+      // Deduplicar: si ya tenemos una entrada para este rcvId, ignorar
+      const rcvId = msg.rcvId || uid();
+      const existing = Object.keys(senderConns).find(k => senderConns[k].rcvId === rcvId);
+      if (existing) return; // ya existe — ignorar duplicado
+
       const cid = uid();
-      senderConns[cid] = { progress: 0, done: false, mode: 'pending' };
-      // Guardar cid pendiente para que el path P2P o relay lo encuentre
+      senderConns[cid] = { progress: 0, done: false, mode: 'pending', rcvId };
       senderConns[cid]._pending = true;
       updateRC();
       setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
@@ -560,6 +564,14 @@ function setupSenderWithRoom(roomId, token) {
     }
 
     if (msg.type === 'partner_left' && !sessionDone) {
+      // Limpiar la entrada de este receptor si no completó
+      if (msg.rcvId) {
+        const k = Object.keys(senderConns).find(k => senderConns[k].rcvId === msg.rcvId);
+        if (k && !senderConns[k].done) {
+          delete senderConns[k];
+          updateRC();
+        }
+      }
       const done = Object.values(senderConns).filter(r => r.done).length;
       setSenderStatus(
         done > 0
@@ -625,10 +637,13 @@ function setupSenderWithRoom(roomId, token) {
           if (e.data instanceof ArrayBuffer) return;
           let msg; try { msg = JSON.parse(e.data); } catch { return; }
           if (msg.type === 'peer_joined') {
-            // Crear entrada (mismo patrón que el handler principal)
-            const cid = uid();
-            senderConns[cid] = { progress: 0, done: false, mode: 'pending', _pending: true };
-            updateRC();
+            const rcvId = msg.rcvId || uid();
+            const existing = Object.keys(senderConns).find(k => senderConns[k].rcvId === rcvId);
+            if (!existing) {
+              const cid = uid();
+              senderConns[cid] = { progress: 0, done: false, mode: 'pending', _pending: true, rcvId };
+              updateRC();
+            }
             setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
             if (ws2.readyState === 1) {
               ws2.send(JSON.stringify({ type: 'sender_ready', peerId: null }));
