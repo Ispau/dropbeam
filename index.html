@@ -269,6 +269,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 
 const SERVER_URL = 'https://com21.onrender.com'
 
+
 // Configuración ICE (solo STUN — el relay lo hace nuestro WS)
 const ICE_CFG = { iceServers: [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -620,13 +621,16 @@ function triggerFallback() {
 }
 
 function activateSenderRelay() {
-  // NO hacemos 'if (relayMode) return' — necesitamos manejar múltiples receptores.
-  // Cada llamada crea un nuevo slot de envío para el receptor que acaba de pedir relay.
+  // Guard inteligente: si ya hay un relay en progreso (no completado), ignorar
+  // esta llamada. Esto evita la doble activación cuando tanto el sender (ICE fail)
+  // como el receiver (mensaje fallback) disparan activateSenderRelay al mismo tiempo.
+  const hasActiveRelay = Object.values(senderConns).some(r => r.mode === 'relay' && !r.done);
+  if (hasActiveRelay) return;
+
   relayMode = true;
   p2pActive = false;
-  // Destruir peer P2P si aún existe (primera vez)
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
-  // Limpiar solo entradas P2P incompletas (no las completadas de receptores anteriores)
+  // Limpiar solo entradas P2P incompletas (no las relay ya completadas)
   Object.keys(senderConns).forEach(k => {
     if (!senderConns[k].done && senderConns[k].mode !== 'relay') delete senderConns[k];
   });
@@ -755,11 +759,16 @@ function sendRelay(cid) {
 
 // ── UI sender ──
 function updateSenderProgress() {
-  const v = Object.values(senderConns);
-  if (!v.length) return;
-  const avg = v.reduce((s, r) => s + r.progress, 0) / v.length;
-  document.getElementById('s-fill').style.width = avg + '%';
-  document.getElementById('s-prog-txt').textContent = Math.round(avg) + '%';
+  // Mostrar el progreso del receptor ACTIVO (no completado).
+  // Con múltiples receptores acumulados la media sería engañosa.
+  const active = Object.values(senderConns).find(r => !r.done);
+  if (active) {
+    document.getElementById('s-fill').style.width = active.progress + '%';
+    document.getElementById('s-prog-txt').textContent = active.progress + '%';
+  } else {
+    document.getElementById('s-fill').style.width = '100%';
+    document.getElementById('s-prog-txt').textContent = '✓';
+  }
 }
 
 // Countdown de 3 minutos — arranca cuando llega el primer receptor
