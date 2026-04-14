@@ -175,7 +175,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam v33</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -652,29 +652,27 @@ function activateSenderRelay() {
   p2pActive = false;
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
 
-  // Buscar la entrada 'pending' creada por peer_joined
-  const cid = Object.keys(senderConns).find(k => senderConns[k]._pending);
+  // Buscar entrada para servir por relay:
+  //  1) Entrada con _pending (receptor recién llegado, sin intento P2P)
+  //  2) Entrada P2P incompleta (PeerJS señalizó pero ICE falló — caso ADSL+5G)
+  let cid = Object.keys(senderConns).find(k => senderConns[k]._pending);
   if (!cid) {
-    // No hay entrada pendiente — posible doble llamada. Ignorar.
-    // Si hay envío en curso, los receivers que llegaron durante el envío
-    // ya recibirán los datos por broadcast.
+    cid = Object.keys(senderConns).find(k =>
+      senderConns[k].mode === 'p2p' && !senderConns[k].done
+    );
+  }
+  if (!cid) {
+    // No hay entrada pendiente ni P2P incompleta — doble llamada, ignorar.
     return;
   }
 
   // Si ya hay un envío en curso, este receiver recibirá los datos
   // automáticamente por broadcast. Cuando termine, comprobaremos si
-  // quedaron entradas 'pending' sin datos (receptores tardíos).
+  // quedaron entradas pendientes (receptores tardíos).
   if (relaySending) return;
 
   senderConns[cid].mode = 'relay';
   delete senderConns[cid]._pending;
-
-  // Limpiar entradas P2P incompletas (fallback desde P2P fallido)
-  Object.keys(senderConns).forEach(k => {
-    if (k !== cid && !senderConns[k].done && senderConns[k].mode === 'p2p') {
-      delete senderConns[k];
-    }
-  });
   updateRC();
 
   if (sharedUrl) {
@@ -778,11 +776,11 @@ function sendRelay(cid) {
       senderConns[cid].done = true; senderConns[cid].progress = 100;
       relaySending = false;
       updateRC(); updateSenderProgress(); checkAllDone();
-      // Si llegaron receptores durante este envío que NO recibieron los datos
-      // (se unieron tarde), hacer re-send. El broadcast hará que los que ya
-      // completaron lo ignoren (receiveComplete guard en el cliente).
-      const hasPending = Object.values(senderConns).some(r => r._pending);
-      if (hasPending) activateSenderRelay();
+      // Si quedaron receptores pendientes o con P2P fallido, re-enviar
+      const hasUnserved = Object.values(senderConns).some(r =>
+        r._pending || (r.mode === 'p2p' && !r.done)
+      );
+      if (hasUnserved) activateSenderRelay();
       return;
     }
     // Backpressure WebSocket
