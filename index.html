@@ -262,7 +262,8 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 //   ✅ Sin heurísticas de tiempo para detectar NAT
 // ════════════════════════════════════════════════════════════════
 
-const SERVER_URL = 'https://com21.onrender.com';
+// ── CAMBIA ESTA URL por la de tu servidor en Render ──
+const SERVER_URL = 'https://TU-SERVIDOR.onrender.com';
 
 // Configuración ICE (solo STUN — el relay lo hace nuestro WS)
 const ICE_CFG = { iceServers: [
@@ -356,20 +357,31 @@ function drawQR(url){
 }
 
 // ── ICE monitor real ──
-// Accede al RTCPeerConnection subyacente de PeerJS
-// y escucha iceConnectionState para detectar fallos reales
+// Accede al RTCPeerConnection subyacente de PeerJS y escucha
+// iceConnectionState. También hace polling del estado actual por si
+// el evento 'iceconnectionstatechange' llega antes de que adjuntemos
+// el listener. Prueba .peerConnection y ._pc (ambas variantes de PeerJS).
 function monitorIce(conn, onFail) {
-  // PeerJS expone conn.peerConnection, pero puede tardar unos ms en estar disponible
-  let attempts = 0;
+  let attached = false;
+  let fired    = false;
+  function fail() { if (!fired) { fired = true; onFail(); } }
+
   const poll = setInterval(() => {
-    const pc = conn.peerConnection;
-    if (!pc) { if (++attempts > 100) clearInterval(poll); return; }
-    clearInterval(poll);
-    pc.addEventListener('iceconnectionstatechange', () => {
-      // 'failed' es el único estado definitivo — 'disconnected' puede recuperarse
-      if (pc.iceConnectionState === 'failed') onFail();
-    });
-  }, 50);
+    const pc = conn.peerConnection || conn._pc;
+    if (!pc) return;
+
+    if (!attached) {
+      attached = true;
+      pc.addEventListener('iceconnectionstatechange', () => {
+        if (pc.iceConnectionState === 'failed') { clearInterval(poll); fail(); }
+      });
+    }
+    // Polling del estado actual por si ya estaba en failed antes de adjuntar
+    if (pc.iceConnectionState === 'failed') { clearInterval(poll); fail(); }
+  }, 100);
+
+  // Seguridad: limpiar el intervalo aunque nadie llame
+  setTimeout(() => clearInterval(poll), 15000);
 }
 
 // ════════════════════════════════════════
@@ -526,6 +538,8 @@ function activateSenderRelay() {
   p2pActive = false;
   // Cerrar P2P si estaba intentando
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
+  // Limpiar entradas P2P incompletas — solo queda la del relay
+  Object.keys(senderConns).forEach(k => { if (!senderConns[k].done) delete senderConns[k]; });
 
   const cid = uid();
   senderConns[cid] = { progress: 0, done: false, mode: 'relay' };
@@ -917,13 +931,21 @@ function resetState() {
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
   if (ctrlWs) { try { ctrlWs.close(); } catch(e) {} ctrlWs = null; }
   p2pConn = null; p2pActive = false; relayMode = false; sessionDone = false;
-  senderConns = {}; selectedFile = null; sharedUrl = null;
+  senderConns = {};
+  // IMPORTANTE: selectedFile y sharedUrl NO se limpian aquí.
+  // setupSender los necesita intactos después de llamar a resetState.
+  // Solo se limpian en resetApp (cuando el usuario pulsa "Compartir otro").
   fileMeta = null; receivedChunks = []; receivedSize = 0; fileWriter = null;
   if (rImageUrl) { URL.revokeObjectURL(rImageUrl); rImageUrl = null; }
 }
 
-function resetApp() {
+function resetAll() {
+  selectedFile = null; sharedUrl = null;
   resetState();
+}
+
+function resetApp() {
+  resetAll();
   const fi = document.getElementById('file-input'); if (fi) fi.value = '';
   const ui = document.getElementById('url-input'); if (ui) { ui.value = ''; ui.style.outline = ''; }
   document.getElementById('qr-canvas').style.display = 'none';
