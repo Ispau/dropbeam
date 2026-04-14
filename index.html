@@ -201,6 +201,11 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
     <div class="card">
       <div class="fstrip" id="s-strip"><div class="ficon" id="s-icon">📄</div><div class="fdet"><div class="fname" id="s-name">-</div><div class="fsize" id="s-size">-</div></div></div>
       <div id="qr-box"><div id="qr-loading">Generando QR...</div><canvas id="qr-canvas" style="display:none;border-radius:4px;"></canvas></div>
+      <!-- Countdown: visible en cuanto hay al menos 1 receptor conectado -->
+      <div id="qr-countdown" style="display:none;width:100%;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.14);border-radius:10px;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:8px;">
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">QR disponible</span>
+        <span id="qr-timer" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);">3:00</span>
+      </div>
       <div class="rcounter" id="rcounter" style="display:none;"><div class="rcounter-header"><div class="rcounter-label">Receptores</div><div class="rcounter-num" id="rcounter-num">0 conectados</div></div><div class="rcounter-list" id="rcounter-list"></div></div>
       <div class="status"><div class="sdot waiting" id="s-dot"></div><span id="s-status">Conectando...</span></div>
       <div class="prog-wrap" id="s-prog" style="display:none;"><div class="prog-bg"><div class="prog-fill" id="s-fill"></div></div><div class="prog-row"><div class="speed-txt" id="s-speed"></div><div class="prog-txt" id="s-prog-txt">0%</div></div></div>
@@ -262,7 +267,8 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 //   ✅ Sin heurísticas de tiempo para detectar NAT
 // ════════════════════════════════════════════════════════════════
 
-const SERVER_URL = 'https://com21.onrender.com';
+// ── CAMBIA ESTA URL por la de tu servidor en Render ──
+const SERVER_URL = 'https://TU-SERVIDOR.onrender.com';
 
 // Configuración ICE (solo STUN — el relay lo hace nuestro WS)
 const ICE_CFG = { iceServers: [
@@ -739,15 +745,62 @@ function updateSenderProgress() {
   document.getElementById('s-prog-txt').textContent = Math.round(avg) + '%';
 }
 
-function checkAllDone() {
-  const v = Object.values(senderConns);
-  if (v.length > 0 && v.every(r => r.done)) {
-    sessionDone = true;
-    if (ctrlWs) { try { ctrlWs.close(); } catch(e) {} ctrlWs = null; }
-    document.getElementById('done-sub').textContent =
-      'Recibido por ' + v.length + ' dispositivo' + (v.length > 1 ? 's' : '') + ' · sin almacenamiento intermedio';
-    setTimeout(() => showScreen('s-done'), 400);
+// Countdown de 3 minutos — arranca cuando llega el primer receptor
+// El QR sigue en pantalla para que más alumnos puedan escanear.
+// Al expirar se cierra la sesión y se muestra el resumen.
+let countdownTimer  = null;
+let countdownStarted = false;
+
+function startCountdown() {
+  if (countdownStarted) return;
+  countdownStarted = true;
+
+  const box   = document.getElementById('qr-countdown');
+  const label = document.getElementById('qr-timer');
+  box.style.display = 'flex';
+
+  let secsLeft = 180; // 3 minutos
+
+  function tick() {
+    const m = Math.floor(secsLeft / 60);
+    const s = secsLeft % 60;
+    label.textContent = m + ':' + String(s).padStart(2, '0');
+
+    // Color cambia a naranja en el último minuto y rojo en los últimos 30s
+    if (secsLeft <= 30)       label.style.color = 'var(--red)';
+    else if (secsLeft <= 60)  label.style.color = 'var(--warn)';
+
+    if (secsLeft <= 0) {
+      clearInterval(countdownTimer);
+      expireSession();
+      return;
+    }
+    secsLeft--;
   }
+
+  tick(); // primera llamada inmediata
+  countdownTimer = setInterval(tick, 1000);
+}
+
+function expireSession() {
+  // Cierra la sesión y muestra el resumen con cuántos recibieron
+  sessionDone = true;
+  if (ctrlWs) { try { ctrlWs.close(); } catch(e) {} ctrlWs = null; }
+  const total = Object.values(senderConns).filter(r => r.done).length;
+  document.getElementById('done-sub').textContent =
+    total > 0
+      ? 'Recibido por ' + total + ' dispositivo' + (total > 1 ? 's' : '') + ' · QR expirado'
+      : 'QR expirado · ningún receptor completó la descarga';
+  showScreen('s-done');
+}
+
+function checkAllDone() {
+  // En modo multi-receptor (profesor/alumnos) NO cerramos la sesión
+  // cuando termina el primero — dejamos el QR visible para los demás.
+  // El countdown de 3 min se encarga de cerrar cuando toca.
+  // Solo arrancamos el countdown con el primer receptor.
+  const v = Object.values(senderConns);
+  if (v.some(r => r.done)) startCountdown();
 }
 
 function updateRC() {
@@ -996,11 +1049,10 @@ function onUrlReceived(url) {
 function resetState() {
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
   if (ctrlWs) { try { ctrlWs.close(); } catch(e) {} ctrlWs = null; }
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  countdownStarted = false;
   p2pConn = null; p2pActive = false; relayMode = false; sessionDone = false;
   senderConns = {};
-  // IMPORTANTE: selectedFile y sharedUrl NO se limpian aquí.
-  // setupSender los necesita intactos después de llamar a resetState.
-  // Solo se limpian en resetApp (cuando el usuario pulsa "Compartir otro").
   fileMeta = null; receivedChunks = []; receivedSize = 0; fileWriter = null;
   if (rImageUrl) { URL.revokeObjectURL(rImageUrl); rImageUrl = null; }
 }
@@ -1017,6 +1069,11 @@ function resetApp() {
   document.getElementById('qr-canvas').style.display = 'none';
   const ql = document.getElementById('qr-loading');
   ql.style.display='flex';ql.textContent='Generando QR...';ql.style.fontSize='';ql.style.wordBreak='';ql.style.padding='';ql.style.textAlign='';
+  // Reset countdown
+  const cd = document.getElementById('qr-countdown');
+  if (cd) { cd.style.display = 'none'; }
+  const ct = document.getElementById('qr-timer');
+  if (ct) { ct.textContent = '3:00'; ct.style.color = 'var(--accent)'; }
   document.getElementById('s-prog').style.display='none';
   document.getElementById('s-fill').style.width='0%';
   document.getElementById('s-speed').textContent='';
