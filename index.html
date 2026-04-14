@@ -294,6 +294,8 @@ let sessionDone = false;
 let selectedFile = null;
 let sharedUrl    = null;
 let senderConns  = {};  // { cid: { progress, done, mode:'p2p'|'relay' } }
+let relaySending = false;  // true mientras hay un envío relay en curso
+let relayPending = false;  // true si llegó un nuevo receiver durante el envío
 
 // Estado receptor
 let fileMeta     = null;
@@ -302,6 +304,7 @@ let receivedSize = 0;
 let fileWriter   = null;
 let rLastTime    = 0, rBytesSince = 0;
 let rImageUrl    = null;
+let receiveComplete = false; // true una vez que se recibió el archivo completo
 
 // ════════════════════════════════════════
 // ARRANQUE
@@ -586,23 +589,31 @@ function setupSender(icon, label, sub) {
         ws2.onopen = () => {
           ctrlWs = ws2;
           startKeepalive();
-          // Re-registrarse en la misma sala
           ws2.send(JSON.stringify({ role: 'sender', room: roomId }));
           setSenderStatus('Listo — esperando que escaneen el QR', 'waiting');
         };
-        ws2.onmessage = ctrlWs?.onmessage || (() => {});
-        ws2.onerror   = () => {};
-        ws2.onclose   = () => { stopKeepalive(); if (!sessionDone) tryReconnect(); };
+        ws2.onerror = () => {};
 
-        // Copiar el handler de mensajes al nuevo WS
         ws2.onmessage = (e) => {
           if (e.data instanceof ArrayBuffer) return;
           let msg; try { msg = JSON.parse(e.data); } catch { return; }
           if (msg.type === 'peer_joined') {
-            if (!p2pActive && !relayMode) setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
+            setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
+            // Enviar sender_ready al nuevo receiver (relay directo tras reconexión)
+            if (ws2.readyState === 1) {
+              ws2.send(JSON.stringify({ type: 'sender_ready', peerId: null }));
+            }
           }
-          if (msg.type === 'fallback' && !p2pActive) activateSenderRelay();
-          if (msg.type === 'partner_left' && !sessionDone) setSenderStatus('Receptor desconectado', 'waiting');
+          if (msg.type === 'fallback') activateSenderRelay();
+          if (msg.type === 'partner_left' && !sessionDone) {
+            const done = Object.values(senderConns).filter(r => r.done).length;
+            setSenderStatus(
+              done > 0
+                ? done + ' recibido' + (done > 1 ? 's' : '') + ' — QR activo para más receptores'
+                : 'Receptor desconectado — esperando escaneo',
+              'waiting'
+            );
+          }
         };
         ws2.onclose = () => { stopKeepalive(); if (!sessionDone) tryReconnect(); };
       }, Math.min(1000 * retries, 4000)); // espera 1s, 2s, 3s, 4s, 4s
@@ -621,19 +632,16 @@ function triggerFallback() {
 }
 
 function activateSenderRelay() {
-  // Guard inteligente: si ya hay un relay en progreso (no completado), ignorar
-  // esta llamada. Esto evita la doble activación cuando tanto el sender (ICE fail)
-  // como el receiver (mensaje fallback) disparan activateSenderRelay al mismo tiempo.
-  const hasActiveRelay = Object.values(senderConns).some(r => r.mode === 'relay' && !r.done);
-  if (hasActiveRelay) return;
+  // Si ya hay un envío relay en curso, marcar que hay un receptor pendiente.
+  // Cuando termine el envío actual, se hará un re-send automático.
+  if (relaySending) {
+    relayPending = true;
+    return;
+  }
 
   relayMode = true;
   p2pActive = false;
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
-  // Limpiar solo entradas P2P incompletas (no las relay ya completadas)
-  Object.keys(senderConns).forEach(k => {
-    if (!senderConns[k].done && senderConns[k].mode !== 'relay') delete senderConns[k];
-  });
 
   const cid = uid();
   senderConns[cid] = { progress: 0, done: false, mode: 'relay' };
@@ -644,6 +652,8 @@ function activateSenderRelay() {
     senderConns[cid].done = true; senderConns[cid].progress = 100;
     updateRC(); checkAllDone();
   } else {
+    relaySending = true;
+    relayPending = false;
     document.getElementById('s-prog').style.display = 'flex';
     setSenderStatus('Enviando (relay)...', 'sending');
     sendRelay(cid);
@@ -732,12 +742,19 @@ function sendRelay(cid) {
 
   const reader = new FileReader(); let off = 0, lastT = Date.now(), bytes = 0;
   function next() {
-    if (!senderConns[cid]) return;
-    if (!ctrlWs || ctrlWs.readyState !== 1) return;
+    if (!senderConns[cid]) { relaySending = false; return; }
+    if (!ctrlWs || ctrlWs.readyState !== 1) { relaySending = false; return; }
     if (off >= selectedFile.size) {
       wsSend({ type: 'done' });
       senderConns[cid].done = true; senderConns[cid].progress = 100;
-      updateRC(); updateSenderProgress(); checkAllDone(); return;
+      relaySending = false;
+      updateRC(); updateSenderProgress(); checkAllDone();
+      // Si llegaron nuevos receivers durante este envío, re-enviar
+      if (relayPending) {
+        relayPending = false;
+        activateSenderRelay();
+      }
+      return;
     }
     // Backpressure WebSocket
     if (ctrlWs.bufferedAmount > BUF_HIGH * 2) { setTimeout(next, 20); return; }
@@ -745,7 +762,7 @@ function sendRelay(cid) {
   }
   reader.onload = e => {
     const b = e.target.result;
-    ctrlWs.send(b); // binario puro — el servidor lo reenvía directamente
+    ctrlWs.send(b); // binario puro — el servidor lo reenvía a TODOS los receivers
     off += b.byteLength; bytes += b.byteLength;
     const el = (Date.now() - lastT) / 1000;
     if (el >= 0.5) { document.getElementById('s-speed').textContent = fmtSpeed(bytes/el); bytes = 0; lastT = Date.now(); }
@@ -753,7 +770,7 @@ function sendRelay(cid) {
     updateRC(); updateSenderProgress();
     setTimeout(next, 0);
   };
-  reader.onerror = () => {};
+  reader.onerror = () => { relaySending = false; };
   next();
 }
 
@@ -873,6 +890,9 @@ function initReceiver(roomId) {
     try { msg = JSON.parse(e.data); } catch { return; }
 
     if (msg.type === 'sender_ready') {
+      // Solo procesar si aún no tenemos canal activo
+      // (ignora re-broadcasts para otros receivers)
+      if (p2pActive || relayMode) return;
       if (msg.peerId) {
         // Hay peerId — intentar P2P
         attemptP2P(msg.peerId);
@@ -975,13 +995,16 @@ function activateReceiverRelay() {
 // RECEPTOR — manejo de datos P2P
 // ════════════════════════════════════════
 function onP2PMeta(data) {
+  if (receiveComplete) return;
   initReceiveState(data);
 }
 function onP2PChunk(buf) {
+  if (receiveComplete) return;
   if (!buf) return;
   accumChunk(buf);
 }
 function onP2PDone() {
+  if (receiveComplete) return;
   finalizeReceive();
 }
 
@@ -989,12 +1012,15 @@ function onP2PDone() {
 // RECEPTOR — manejo de datos relay (WebSocket)
 // ════════════════════════════════════════
 function onRelayMeta(data) {
+  if (receiveComplete) return; // ignorar re-sends para otros receivers
   initReceiveState(data);
 }
 function onRelayChunk(buf) {
+  if (receiveComplete) return;
   accumChunk(buf);
 }
 function onRelayDone() {
+  if (receiveComplete) return;
   finalizeReceive();
 }
 
@@ -1017,6 +1043,7 @@ function initReceiveState(meta) {
 }
 
 function accumChunk(buf) {
+  if (!fileMeta) return; // ignorar chunks sin metadata (receiver llegó a mitad de envío)
   if (fileWriter) fileWriter.write(buf).catch(() => {});
   else receivedChunks.push(buf);
   receivedSize += buf.byteLength; rBytesSince += buf.byteLength;
@@ -1030,6 +1057,8 @@ function accumChunk(buf) {
 }
 
 function finalizeReceive() {
+  if (!fileMeta) return; // ignorar si no hay metadata (llegó a mitad de envío)
+  receiveComplete = true;
   document.getElementById('r-fill').style.width = '100%';
   document.getElementById('r-speed').textContent = '';
   document.getElementById('r-prog-txt').textContent = '✓ Completado';
@@ -1062,6 +1091,8 @@ function assembleAndDeliver() {
 }
 
 function onUrlReceived(url) {
+  if (receiveComplete) return;
+  receiveComplete = true;
   setReceiverStatus('Recibido ✓', 'done', '¡Enlace recibido!', 'Toca para abrirlo');
   document.getElementById('r-prog').style.display = 'none';
   document.getElementById('r-url-preview').style.display = 'flex';
@@ -1080,7 +1111,10 @@ function resetState() {
   countdownStarted = false;
   p2pConn = null; p2pActive = false; relayMode = false; sessionDone = false;
   senderConns = {};
+  relaySending = false;
+  relayPending = false;
   fileMeta = null; receivedChunks = []; receivedSize = 0; fileWriter = null;
+  receiveComplete = false;
   if (rImageUrl) { URL.revokeObjectURL(rImageUrl); rImageUrl = null; }
 }
 
