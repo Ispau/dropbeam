@@ -267,8 +267,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 //   ✅ Sin heurísticas de tiempo para detectar NAT
 // ════════════════════════════════════════════════════════════════
 
-
-const SERVER_URL = 'https://com21.onrender.com';
+const SERVER_URL = 'https://com21.onrender.com'
 
 // Configuración ICE (solo STUN — el relay lo hace nuestro WS)
 const ICE_CFG = { iceServers: [
@@ -508,19 +507,35 @@ function setupSender(icon, label, sub) {
     try { msg = JSON.parse(e.data); } catch { return; }
 
     if (msg.type === 'peer_joined') {
-      // Receiver conectó al servidor — actualizar UI
-      if (!p2pActive && !relayMode) {
-        setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
+      // Nuevo receptor conectado al servidor.
+      // SIEMPRE reenviar sender_ready — es el único modo de que el receptor
+      // sepa con qué peerId conectar (o que debe ir a relay directamente).
+      setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
+      if (relayMode) {
+        // Ya sabemos que relay funciona — decirle al receptor que vaya directo
+        // sin perder tiempo intentando P2P. Receptor responderá con 'fallback'
+        // para confirmar que está listo y queremos empezar a enviar.
+        wsSend({ type: 'sender_ready', peerId: null });
+      } else if (peer?.id) {
+        wsSend({ type: 'sender_ready', peerId: peer.id });
+      } else {
+        wsSend({ type: 'sender_ready', peerId: null });
       }
     }
 
     if (msg.type === 'fallback') {
-      // El receiver pidió fallback (su ICE falló)
+      // El receiver pidió fallback — activar relay para este receptor
       activateSenderRelay();
     }
 
     if (msg.type === 'partner_left' && !sessionDone) {
-      setSenderStatus('Receptor desconectado', 'waiting');
+      const done = Object.values(senderConns).filter(r => r.done).length;
+      setSenderStatus(
+        done > 0
+          ? done + ' recibido' + (done > 1 ? 's' : '') + ' — QR activo para más receptores'
+          : 'Receptor desconectado — esperando escaneo',
+        'waiting'
+      );
     }
   };
 
@@ -605,18 +620,20 @@ function triggerFallback() {
 }
 
 function activateSenderRelay() {
-  if (relayMode) return;
+  // NO hacemos 'if (relayMode) return' — necesitamos manejar múltiples receptores.
+  // Cada llamada crea un nuevo slot de envío para el receptor que acaba de pedir relay.
   relayMode = true;
   p2pActive = false;
-  // Cerrar P2P si estaba intentando
+  // Destruir peer P2P si aún existe (primera vez)
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
-  // Limpiar entradas P2P incompletas — solo queda la del relay
-  Object.keys(senderConns).forEach(k => { if (!senderConns[k].done) delete senderConns[k]; });
+  // Limpiar solo entradas P2P incompletas (no las completadas de receptores anteriores)
+  Object.keys(senderConns).forEach(k => {
+    if (!senderConns[k].done && senderConns[k].mode !== 'relay') delete senderConns[k];
+  });
 
   const cid = uid();
   senderConns[cid] = { progress: 0, done: false, mode: 'relay' };
   updateRC();
-  setSenderStatus('1 receptor conectado (relay)...', 'connected');
 
   if (sharedUrl) {
     wsSend({ type: 'url', url: sharedUrl });
@@ -851,9 +868,10 @@ function initReceiver(roomId) {
         // Hay peerId — intentar P2P
         attemptP2P(msg.peerId);
       } else {
-        // El sender no pudo crear peer — ir a relay directamente
-        relayMode = true;
-        setReceiverStatus('Conectado — esperando archivo...', 'connected', 'Conectado ✓', 'Canal relay activo');
+        // Sender indica relay directo — activar y avisar al sender que estamos listos.
+        // El sender espera este 'fallback' para empezar a enviar los chunks.
+        activateReceiverRelay();
+        wsSend({ type: 'fallback' });
       }
       return;
     }
