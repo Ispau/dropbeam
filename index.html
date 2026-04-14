@@ -175,7 +175,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam v44</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam 69</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -891,10 +891,9 @@ function startCountdown() {
 }
 
 function expireSession() {
-  // Cierra la sesión y muestra el resumen con cuántos recibieron
   sessionDone = true;
   if (ctrlWs) { try { ctrlWs.close(); } catch(e) {} ctrlWs = null; }
-  const total = Object.values(senderConns).filter(r => r.done).length;
+  const total = uniqueReceivers().filter(r => r.done).length;
   document.getElementById('done-sub').textContent =
     total > 0
       ? 'Recibido por ' + total + ' dispositivo' + (total > 1 ? 's' : '') + ' · QR expirado'
@@ -911,11 +910,27 @@ function checkAllDone() {
   if (v.some(r => r.done)) startCountdown();
 }
 
+// Deduplicar por rcvId: si hay varias entradas para el mismo receptor
+// (por la mecánica P2P→relay), quedarse con la más avanzada.
+function uniqueReceivers() {
+  const byRcv = {};
+  Object.values(senderConns).forEach(rec => {
+    const key = rec.rcvId || ('_' + Math.random());
+    const prev = byRcv[key];
+    if (!prev) { byRcv[key] = rec; return; }
+    if (rec.done && !prev.done) byRcv[key] = rec;
+    else if (rec.progress > prev.progress) byRcv[key] = rec;
+    else if (rec.mode === 'relay' && prev.mode === 'pending') byRcv[key] = rec;
+  });
+  return Object.values(byRcv);
+}
+
 function updateRC() {
-  const vals = Object.values(senderConns);
+  const vals = uniqueReceivers();
   const el = document.getElementById('rcounter');
   if (!vals.length) { el.style.display = 'none'; return; }
   el.style.display = 'flex';
+
   const done = vals.filter(r => r.done).length, total = vals.length;
   document.getElementById('rcounter-num').textContent =
     done === total ? '✓ ' + total + ' completado' + (total > 1 ? 's' : '')
