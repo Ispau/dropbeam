@@ -175,7 +175,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam v2</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -310,6 +310,7 @@ let receiveComplete = false; // true una vez que se recibió el archivo completo
 // ════════════════════════════════════════
 const params         = new URLSearchParams(location.search);
 const incomingRoom   = params.get('room');
+const incomingToken  = params.get('t');
 
 // Precalentamiento: despierta el servidor al cargar la página
 fetch(SERVER_URL + '/ping').catch(() => {});
@@ -320,7 +321,7 @@ if (incomingRoom) {
   const pa = document.getElementById('page-app');
   pa.style.display = 'flex'; pa.classList.add('active');
   showScreen('s-receiver');
-  initReceiver(incomingRoom);
+  initReceiver(incomingRoom, incomingToken);
 } else {
   initSenderUI();
 }
@@ -416,15 +417,33 @@ function setupSender(icon, label, sub) {
   document.getElementById('s-name').textContent = label;
   document.getElementById('s-size').textContent = sub;
   showScreen('s-qr');
-  setSenderStatus('Conectando al servidor...', 'waiting');
+  setSenderStatus('Creando sala segura...', 'waiting');
 
   // Reset estado
   resetState();
-  const roomId = uid(); // ID estable de sesión
 
-  // ── PASO 1: Conectar WebSocket de control ──
-  // El WebSocket se abre ANTES de hacer nada más.
-  // Es el canal de coordinación para toda la sesión.
+  // ── PASO 1: Crear sala con token en el servidor ──
+  fetch(SERVER_URL + '/room', { method: 'POST' })
+    .then(r => {
+      if (r.status === 429) throw new Error('rate_limit');
+      if (!r.ok) throw new Error('server_error');
+      return r.json();
+    })
+    .then(({ roomId, token }) => {
+      setupSenderWithRoom(roomId, token);
+    })
+    .catch(err => {
+      if (err.message === 'rate_limit') {
+        setSenderStatus('Demasiadas salas activas — espera un momento', 'waiting');
+      } else {
+        setSenderStatus('Error conectando al servidor — reintenta', 'waiting');
+      }
+    });
+}
+
+function setupSenderWithRoom(roomId, token) {
+  setSenderStatus('Conectando al servidor...', 'waiting');
+
   const wsBase = SERVER_URL.replace('https://', 'wss://').replace('http://', 'ws://');
   ctrlWs = new WebSocket(wsBase + '/relay');
   ctrlWs.binaryType = 'arraybuffer';
@@ -433,10 +452,8 @@ function setupSender(icon, label, sub) {
     // Registrarse en la sala como sender (primer mensaje)
     ctrlWs.send(JSON.stringify({ role: 'sender', room: roomId }));
 
-    // ── PASO 2: Dibujar QR estable ──
-    // La URL del QR contiene el roomId. NUNCA cambia.
-    // El receptor llegará a esta misma sala.
-    const shareUrl = location.origin + location.pathname + '?room=' + roomId;
+    // ── PASO 2: Dibujar QR estable con token ──
+    const shareUrl = location.origin + location.pathname + '?room=' + roomId + '&t=' + token;
     drawQR(shareUrl);
     setSenderStatus('Listo — esperando que escaneen el QR', 'waiting');
 
@@ -512,6 +529,12 @@ function setupSender(icon, label, sub) {
 
     let msg;
     try { msg = JSON.parse(e.data); } catch { return; }
+
+    if (msg.type === 'room_expired') {
+      // TTL del servidor expiró — cerrar sesión
+      expireSession();
+      return;
+    }
 
     if (msg.type === 'peer_joined') {
       // Crear entrada para este receptor — es la ÚNICA vez que se crea.
@@ -895,16 +918,22 @@ function updateRC() {
 // ════════════════════════════════════════
 // RECEIVER
 // ════════════════════════════════════════
-function initReceiver(roomId) {
+function initReceiver(roomId, token) {
   setReceiverStatus('Conectando al servidor...', 'waiting', 'Conectando...', '');
+
+  if (!token) {
+    setReceiverStatus('QR no válido', 'waiting', 'Enlace incompleto', 'Pide al emisor un nuevo código QR');
+    document.getElementById('r-prog').style.display = 'none';
+    return;
+  }
 
   const wsBase = SERVER_URL.replace('https://', 'wss://').replace('http://', 'ws://');
   ctrlWs = new WebSocket(wsBase + '/relay');
   ctrlWs.binaryType = 'arraybuffer';
 
   ctrlWs.onopen = () => {
-    // Registrarse en la sala como receiver (primer mensaje)
-    ctrlWs.send(JSON.stringify({ role: 'receiver', room: roomId }));
+    // Registrarse con room + token
+    ctrlWs.send(JSON.stringify({ role: 'receiver', room: roomId, token }));
     setReceiverStatus('Esperando al emisor...', 'waiting', 'Conectado', 'Esperando al emisor');
   };
 
@@ -920,6 +949,12 @@ function initReceiver(roomId) {
 
     if (msg.type === 'room_expired') {
       setReceiverStatus('QR ya no disponible', 'waiting', 'QR expirado', 'Pide al emisor un nuevo código QR');
+      document.getElementById('r-prog').style.display = 'none';
+      return;
+    }
+
+    if (msg.type === 'invalid_token') {
+      setReceiverStatus('Token no válido', 'waiting', 'Acceso denegado', 'Este enlace no es válido');
       document.getElementById('r-prog').style.display = 'none';
       return;
     }
