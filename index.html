@@ -175,7 +175,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam New</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam v2</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -249,8 +249,18 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 
 <footer><div class="foot"><span>🔒 Cifrado en tránsito</span><span class="foot-sep">|</span><span>Sin almacenamiento en servidores · Sin cookies</span><span class="foot-sep">|</span><span>Transferencia directa entre dispositivos</span></div></footer>
 
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script>if(typeof Peer==='undefined'){document.write('<script src="lib/peerjs.min.js"><\/script>')}</script>
 <script>
+// Si ni local ni CDN cargaron, stub que fuerza relay directo
+if (typeof Peer === 'undefined') {
+  window.Peer = function() {
+    this.id = null;
+    this.on = function(evt, cb) { if (evt === 'error') setTimeout(() => cb(new Error('PeerJS not available')), 100); };
+    this.connect = function() { return { on: function(){}, close: function(){} }; };
+    this.destroy = function() {};
+  };
+}
 // ════════════════════════════════════════════════════════════════
 // DROPBEAM v7.0 — Arquitectura correcta (basada en revisión técnica)
 //
@@ -355,13 +365,35 @@ function wsSend(data){
 }
 
 // ── QR ──
+// ── QR — generación local sin dependencias externas ──
+// Implementación mínima de QR Code generation (versión 1-10, modo byte)
+// Basada en el estándar ISO/IEC 18004, simplificada para URLs
+const QR=(()=>{const EC=[1,0,3,2];const MODE_BYTE=4;const ALIGNMENTS={2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};const EC_CODEWORDS={1:{L:7,M:10,Q:13,H:17},2:{L:10,M:16,Q:22,H:28},3:{L:15,M:26,Q:36,H:44},4:{L:20,M:36,Q:52,H:64},5:{L:26,M:48,Q:72,H:88},6:{L:36,M:64,Q:96,H:112},7:{L:40,M:72,Q:108,H:130},8:{L:48,M:88,Q:132,H:156},9:{L:60,M:110,Q:160,H:192},10:{L:72,M:130,Q:192,H:224}};const DATA_CAPACITY={1:{L:17,M:14,Q:11,H:7},2:{L:32,M:26,Q:20,H:14},3:{L:53,M:42,Q:32,H:24},4:{L:78,M:62,Q:46,H:34},5:{L:106,M:84,Q:60,H:44},6:{L:134,M:106,Q:74,H:58},7:{L:154,M:122,Q:86,H:64},8:{L:192,M:152,Q:108,H:84},9:{L:230,M:180,Q:130,H:98},10:{L:271,M:213,Q:151,H:119}};function getVersion(len,ecl){for(let v=1;v<=10;v++)if(DATA_CAPACITY[v][ecl]>=len)return v;return 10;}function makeBytes(str){const a=[];for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);if(c<128)a.push(c);else if(c<2048){a.push(192|(c>>6));a.push(128|(c&63));}else{a.push(224|(c>>12));a.push(128|((c>>6)&63));a.push(128|(c&63));}}return a;}function encode(text,ecLevel){ecLevel=ecLevel||'M';const bytes=makeBytes(text);const ver=getVersion(bytes.length,ecLevel);const size=ver*4+17;const grid=[];for(let i=0;i<size;i++){grid[i]=[];for(let j=0;j<size;j++)grid[i][j]=null;}addFinderPatterns(grid,size);addTimingPatterns(grid,size);if(ver>=2)addAlignmentPatterns(grid,ver,size);grid[size-8][8]=1;const bits=getDataBits(bytes,ver,ecLevel);placeBits(grid,size,bits);const best=applyBestMask(grid,size);return{size,grid:best};}function addFinderPatterns(g,s){function finder(r,c){for(let dr=-1;dr<=7;dr++)for(let dc=-1;dc<=7;dc++){const rr=r+dr,cc=c+dc;if(rr<0||rr>=s||cc<0||cc>=s)continue;if(dr===-1||dr===7||dc===-1||dc===7)g[rr][cc]=0;else if(dr>=0&&dr<=6&&dc>=0&&dc<=6){if(dr===0||dr===6||dc===0||dc===6)g[rr][cc]=1;else if(dr>=2&&dr<=4&&dc>=2&&dc<=4)g[rr][cc]=1;else g[rr][cc]=0;}}}finder(0,0);finder(0,s-7);finder(s-7,0);for(let i=0;i<8;i++){if(i<s){if(g[7]&&g[7][i]===null)g[7][i]=0;if(g[i]&&g[i][7]===null)g[i][7]=0;if(g[7]&&g[7][s-1-i]===null)g[7][s-1-i]=0;if(g[i]&&g[i][s-8]===null)g[i][s-8]=0;if(g[s-8]&&g[s-8][i]===null)g[s-8][i]=0;if(g[s-1-i])if(g[s-1-i][7]===null)g[s-1-i][7]=0;}}for(let i=0;i<9;i++){if(i<s&&g[8]&&g[8][i]===null)g[8][i]=0;if(i<s&&g[i]&&g[i][8]===null)g[i][8]=0;if(g[8]&&s-1-i>=0&&g[8][s-1-i]===null)g[8][s-1-i]=0;if(s-1-i>=0&&g[s-1-i]&&g[s-1-i][8]===null)g[s-1-i][8]=0;}}function addTimingPatterns(g,s){for(let i=8;i<s-8;i++){if(g[6][i]===null)g[6][i]=(i%2===0)?1:0;if(g[i][6]===null)g[i][6]=(i%2===0)?1:0;}}function addAlignmentPatterns(g,ver,s){const pos=ALIGNMENTS[ver];if(!pos)return;for(let i=0;i<pos.length;i++)for(let j=0;j<pos.length;j++){const r=pos[i],c=pos[j];if((r<9&&c<9)||(r<9&&c>s-9)||(r>s-9&&c<9))continue;for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++){if(g[r+dr][c+dc]===null)g[r+dr][c+dc]=(Math.abs(dr)===2||Math.abs(dc)===2||(!dr&&!dc))?1:0;}}}function getDataBits(bytes,ver,ecl){const totalCodewords=getTotalCodewords(ver);const ecCodewords=EC_CODEWORDS[ver][ecl];const dataCodewords=totalCodewords-ecCodewords;const bits=[];addBits(bits,MODE_BYTE,4);const ccLen=ver<=9?8:16;addBits(bits,bytes.length,ccLen);for(const b of bytes)addBits(bits,b,8);const dataBits=dataCodewords*8;while(bits.length<dataBits)bits.push(0);bits.length=dataBits;const codewords=[];for(let i=0;i<bits.length;i+=8){let v=0;for(let j=0;j<8;j++)v=(v<<1)|(bits[i+j]||0);codewords.push(v);}const pad=[236,17];while(codewords.length<dataCodewords)codewords.push(pad[codewords.length%2]);const ecCw=generateEC(codewords,ecCodewords);const all=[];for(const c of codewords)addBits(all,c,8);for(const c of ecCw)addBits(all,c,8);return all;}function getTotalCodewords(ver){const s=ver*4+17;const total=s*s;let func=3*64+2*(s-16)+1+2*15;if(ver>=2){const n=ALIGNMENTS[ver]?.length||0;func+=n*n*25;const overlap=n>0?2*(n-1):0;func-=overlap*5;}func+=(s-16)*2;return Math.floor((total-func)/8);}function addBits(arr,val,len){for(let i=len-1;i>=0;i--)arr.push((val>>i)&1);}function generateEC(data,ecLen){const gp=getGeneratorPoly(ecLen);const msg=[...data];while(msg.length<data.length+ecLen)msg.push(0);for(let i=0;i<data.length;i++){const coef=msg[i];if(coef===0)continue;const logCoef=GF_LOG[coef];for(let j=0;j<gp.length;j++)msg[i+j]^=GF_EXP[(logCoef+GF_LOG[gp[j]])%255];}return msg.slice(data.length);}const GF_EXP=new Array(512);const GF_LOG=new Array(256);(function(){let v=1;for(let i=0;i<255;i++){GF_EXP[i]=v;GF_LOG[v]=i;v<<=1;if(v>=256)v^=0x11d;}for(let i=255;i<512;i++)GF_EXP[i]=GF_EXP[i-255];})();function getGeneratorPoly(n){let g=[1];for(let i=0;i<n;i++){const p=[1,GF_EXP[i]];const ng=new Array(g.length+1).fill(0);for(let j=0;j<g.length;j++)for(let k=0;k<p.length;k++)ng[j+k]^=GF_EXP[(GF_LOG[g[j]]+GF_LOG[p[k]])%255];g=ng;}return g;}function placeBits(grid,size,bits){let idx=0;for(let col=size-1;col>=0;col-=2){if(col===6)col--;for(let row=0;row<size;row++){const r=((Math.floor((size-1-col)/2))%2===0)?size-1-row:row;for(let d=0;d<2;d++){const c=col-d;if(c<0)continue;if(grid[r][c]===null){grid[r][c]=(bits[idx]||0);idx++;}}}}return grid;}function applyBestMask(grid,size){let bestGrid=null,bestPenalty=Infinity;for(let m=0;m<8;m++){const g=grid.map(r=>[...r]);applyMask(g,size,m);writeFormatInfo(g,size,m);const p=calcPenalty(g,size);if(p<bestPenalty){bestPenalty=p;bestGrid=g;}}return bestGrid;}function applyMask(g,size,mask){for(let r=0;r<size;r++)for(let c=0;c<size;c++){if(isFunction(g,size,r,c))continue;let flip=false;switch(mask){case 0:flip=(r+c)%2===0;break;case 1:flip=r%2===0;break;case 2:flip=c%3===0;break;case 3:flip=(r+c)%3===0;break;case 4:flip=(Math.floor(r/2)+Math.floor(c/3))%2===0;break;case 5:flip=((r*c)%2+(r*c)%3)===0;break;case 6:flip=((r*c)%2+(r*c)%3)%2===0;break;case 7:flip=((r+c)%2+(r*c)%3)%2===0;break;}if(flip)g[r][c]^=1;}}function isFunction(g,s,r,c){if(r<=8&&c<=8)return true;if(r<=8&&c>=s-8)return true;if(r>=s-8&&c<=8)return true;if(r===6||c===6)return true;return false;}function writeFormatInfo(g,s,mask){const ecBits=0;const bits=(ecBits<<3)|mask;let fmt=bits;for(let i=0;i<10;i++)fmt<<=1,fmt&0x400&&(fmt^=0x537);fmt=(bits<<10)|fmt;fmt^=0x5412;for(let i=0;i<15;i++){const b=(fmt>>(14-i))&1;if(i<6)g[8][i]=b;else if(i===6)g[8][7]=b;else if(i===7)g[8][8]=b;else g[14-i][8]=b;if(i<8)g[s-1-i][8]=b;else g[8][s-15+i]=b;}}function calcPenalty(g,s){let p=0;for(let r=0;r<s;r++){let cnt=1;for(let c=1;c<s;c++){if(g[r][c]===g[r][c-1])cnt++;else{if(cnt>=5)p+=cnt-2;cnt=1;}}if(cnt>=5)p+=cnt-2;}for(let c=0;c<s;c++){let cnt=1;for(let r=1;r<s;r++){if(g[r][c]===g[r-1][c])cnt++;else{if(cnt>=5)p+=cnt-2;cnt=1;}}if(cnt>=5)p+=cnt-2;}return p;}return{encode};})();
+
 function drawQR(url){
   const c=document.getElementById('qr-canvas'),l=document.getElementById('qr-loading'),S=196;
-  const t=setTimeout(()=>{l.textContent=url;l.style.fontSize='8px';l.style.wordBreak='break-all';l.style.padding='8px';l.style.textAlign='center';},8000);
-  const img=new Image();img.crossOrigin='anonymous';
-  img.src='https://api.qrserver.com/v1/create-qr-code/?size='+S+'x'+S+'&data='+encodeURIComponent(url)+'&bgcolor=ffffff&color=000000&margin=2';
-  img.onload=()=>{clearTimeout(t);c.width=S;c.height=S;c.getContext('2d').drawImage(img,0,0,S,S);l.style.display='none';c.style.display='block';};
-  img.onerror=()=>{clearTimeout(t);l.textContent=url;l.style.fontSize='8px';l.style.wordBreak='break-all';l.style.padding='8px';l.style.textAlign='center';};
+  try {
+    const qr = QR.encode(url, 'M');
+    const cellSize = Math.floor(S / qr.size);
+    const offset = Math.floor((S - cellSize * qr.size) / 2);
+    c.width = S; c.height = S;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, S, S);
+    ctx.fillStyle = '#000000';
+    for (let r = 0; r < qr.size; r++)
+      for (let col = 0; col < qr.size; col++)
+        if (qr.grid[r][col]) ctx.fillRect(offset + col * cellSize, offset + r * cellSize, cellSize, cellSize);
+    l.style.display = 'none';
+    c.style.display = 'block';
+  } catch(e) {
+    // Fallback: mostrar URL como texto si QR falla
+    l.textContent = url;
+    l.style.fontSize = '8px';
+    l.style.wordBreak = 'break-all';
+    l.style.padding = '8px';
+    l.style.textAlign = 'center';
+  }
 }
 
 // ── ICE monitor real ──
@@ -426,6 +458,7 @@ function setupSender(icon, label, sub) {
   fetch(SERVER_URL + '/room', { method: 'POST' })
     .then(r => {
       if (r.status === 429) throw new Error('rate_limit');
+      if (r.status === 503) throw new Error('server_full');
       if (!r.ok) throw new Error('server_error');
       return r.json();
     })
@@ -435,6 +468,8 @@ function setupSender(icon, label, sub) {
     .catch(err => {
       if (err.message === 'rate_limit') {
         setSenderStatus('Demasiadas salas activas — espera un momento', 'waiting');
+      } else if (err.message === 'server_full') {
+        setSenderStatus('Servidor al límite — inténtalo en unos minutos', 'waiting');
       } else {
         setSenderStatus('Error conectando al servidor — reintenta', 'waiting');
       }
