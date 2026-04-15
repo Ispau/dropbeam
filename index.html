@@ -18,7 +18,7 @@
 @font-face{font-family:'DM Mono';src:url('fonts/DMMono-Light.woff2') format('woff2');font-weight:300;font-display:swap;}
 @font-face{font-family:'DM Mono';src:url('fonts/DMMono-Regular.woff2') format('woff2');font-weight:400;font-display:swap;}
 
-:root{--bg:#07070d;--s1:#0f0f1a;--s2:#161625;--s3:#1e1e30;--accent:#00e5ff;--accent2:#bf5af2;--green:#30d158;--red:#ff453a;--warn:#ffd60a;--text:#f2f2f7;--muted:#636380;--border:rgba(255,255,255,0.07);--glow:rgba(0,229,255,0.12);}
+:root{--bg:#07070d;--s1:#0f0f1a;--s2:#161625;--s3:#1e1e30;--accent:#00e5ff;--accent2:#bf5af2;--green:#30d158;--red:#ff453a;--warn:#ffd60a;--text:#f2f2f7;--muted:#9494a8;--border:rgba(255,255,255,0.07);--glow:rgba(0,229,255,0.12);}
 
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:'Syne',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
@@ -43,13 +43,6 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .screen.active{display:flex;animation:fadeUp .3s cubic-bezier(.16,1,.3,1);}
 
 #s-drop{gap:20px;max-width:520px;width:100%;}
-.hero{text-align:center;}
-.hero h1{font-size:clamp(30px,5vw,48px);font-weight:800;line-height:1.05;letter-spacing:-2px;}
-.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hero p{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.7;}
-
-.ncstrip{width:100%;display:flex;align-items:flex-start;gap:8px;background:rgba(48,209,88,0.05);border:1px solid rgba(48,209,88,0.15);border-radius:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(48,209,88,0.85);line-height:1.5;}
-.ncstrip span{flex-shrink:0;}
 .brave-warn{display:none;width:100%;background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.18);border-radius:12px;padding:16px 18px;flex-direction:column;gap:8px;}
 .brave-warn.show{display:flex;}
 .brave-title{font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px;}
@@ -68,15 +61,11 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .drop-icon{font-size:40px;margin-bottom:10px;display:block;transition:transform .2s;}
 .drop-zone:hover .drop-icon{transform:translateY(-4px) scale(1.05);}
 .drop-title{font-size:16px;font-weight:700;margin-bottom:5px;}
-.drop-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.drop-sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
 #file-input{display:none;}
-
-.how{width:100%;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
-.how-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-.how-steps{display:flex;flex-direction:column;gap:7px;}
-.how-step{display:flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
-.how-num{width:20px;height:20px;border-radius:50%;flex-shrink:0;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.18);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--accent);font-weight:700;}
-.how-step strong{color:var(--text);}
+.drag-overlay{position:fixed;inset:0;background:rgba(0,229,255,0.06);border:3px dashed rgba(0,229,255,0.4);z-index:9999;display:none;align-items:center;justify-content:center;pointer-events:none;transition:opacity .15s;}
+.drag-overlay.show{display:flex;}
+.drag-overlay-text{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--accent);letter-spacing:-1px;opacity:.8;}
 
 .feats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
 .feat{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px;}
@@ -168,14 +157,13 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 #s-receiver{gap:20px;max-width:400px;width:100%;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @media(max-width:768px){.cmp{grid-template-columns:1fr;}}
-@media(max-width:480px){header{padding:12px 16px;}.chip{display:none;}main{padding:20px 12px;}.hero h1{font-size:26px;letter-spacing:-1.2px;}.card{padding:16px 12px;border-radius:18px;}.drop-zone{padding:36px 16px;}.tab{font-size:12px;padding:10px 6px;}.feats{gap:6px;}.feat{font-size:10px;}#qr-box{min-width:170px;min-height:170px;}.nav-btn{font-size:12px;padding:5px 10px;}footer{padding:10px 16px;}.foot{font-size:10px;gap:8px;}.foot-sep{display:none;}}
-@media(max-width:360px){.hero h1{font-size:22px;}}
+@media(max-width:480px){header{padding:12px 16px;}.chip{display:none;}main{padding:20px 12px;}.card{padding:16px 12px;border-radius:18px;}.drop-zone{padding:36px 16px;}.tab{font-size:12px;padding:10px 6px;}.feats{gap:6px;}.feat{font-size:10px;}#qr-box{min-width:170px;min-height:170px;}.nav-btn{font-size:12px;padding:5px 10px;}footer{padding:10px 16px;}.foot{font-size:10px;gap:8px;}.foot-sep{display:none;}}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam NX</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -186,14 +174,12 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <main>
 <div id="page-app" class="page active">
   <div id="s-drop" class="screen active">
-    <div class="hero"><h1>Comparte archivos<br><em>sin intermediarios</em></h1><p>Transferencia directa entre dispositivos.<br>Como AirDrop, pero en cualquier dispositivo. Sin instalar nada.</p></div>
-    <div class="ncstrip"><span>🍪</span><span>Esta web <strong>no usa cookies</strong>. No hay nada que aceptar — por diseño, no por omisión.</span></div>
     <div class="brave-warn" id="brave-warn"><div class="brave-title">⚠️ Brave detectado</div><div class="brave-steps">Brave bloquea WebRTC por defecto. Para activarlo:<br>1 · Ve a <code>brave://settings/privacy</code><br>2 · Busca <code>WebRTC IP handling policy</code> → selecciona <code>Default</code><br>3 · Recarga esta página</div></div>
     <div class="tabs"><button class="tab active" onclick="switchTab('file')">📦 Archivos</button><button class="tab" onclick="switchTab('text')">📝 Texto</button></div>
-    <div id="tab-file" style="width:100%;"><div class="drop-zone" id="drop-zone"><span class="drop-icon">📦</span><div class="drop-title">Arrastra tus archivos aquí</div><div class="drop-sub">o haz clic · cualquier formato · hasta 5 GB · varios archivos</div><input type="file" id="file-input" multiple></div></div>
+    <div id="tab-file" style="width:100%;"><div class="drop-zone" id="drop-zone"><span class="drop-icon">📦</span><div class="drop-title">Suelta tus archivos aquí</div><div class="drop-sub">o haz clic para seleccionar · cualquier formato</div><input type="file" id="file-input" multiple></div></div>
     <div id="tab-text" style="display:none;width:100%;"><div style="display:flex;flex-direction:column;gap:10px;"><textarea id="text-input" style="width:100%;min-height:140px;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;resize:vertical;outline:none;" placeholder="Pega o escribe tu texto aquí..."></textarea><button class="btn btn-primary" onclick="handleText()">Enviar texto →</button></div></div>
-    <div class="how"><div class="how-label">Cómo funciona</div><div class="how-steps"><div class="how-step"><div class="how-num">1</div><span><strong>Arrastra tu archivo</strong> — aparece un QR en pantalla</span></div><div class="how-step"><div class="how-num">2</div><span><strong>Escanea el QR</strong> con la cámara del otro dispositivo</span></div><div class="how-step"><div class="how-num">3</div><span><strong>El archivo llega directo</strong> — sin almacenamiento intermedio</span></div></div></div>
-    <div class="feats"><div class="feat">Sin instalar nada</div><div class="feat">Sin almacenamiento en servidores</div><div class="feat">iPhone · Android · Windows · Mac</div><div class="feat">Cifrado en tránsito</div><div class="feat">Sin cuenta ni registro</div><div class="feat">Varios receptores a la vez</div></div>
+    <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:8px;">🔒 Cifrado en tránsito · 🚫 Sin almacenamiento · 🍪 Sin cookies</p>
+    <div class="feats"><div class="feat">Sin instalar nada</div><div class="feat">iPhone · Android · Windows · Mac</div><div class="feat">Sin cuenta ni registro</div><div class="feat">Varios receptores a la vez</div></div>
   </div>
 
   <div id="s-qr" class="screen" style="gap:20px;max-width:460px;width:100%;">
@@ -201,6 +187,10 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
     <div class="card">
       <div class="fstrip" id="s-strip"><div class="ficon" id="s-icon">📄</div><div class="fdet"><div class="fname" id="s-name">-</div><div class="fsize" id="s-size">-</div></div></div>
       <div id="qr-box"><div id="qr-loading">Generando QR...</div><canvas id="qr-canvas" style="display:none;border-radius:4px;"></canvas></div>
+      <div id="share-link" style="display:none;width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:none;align-items:center;gap:8px;">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="share-link-url">-</span>
+        <button id="share-link-btn" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all .15s;" onclick="copyShareLink()">Copiar enlace</button>
+      </div>
       <!-- Countdown: visible en cuanto hay al menos 1 receptor conectado -->
       <div id="qr-countdown" style="display:none;width:100%;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.14);border-radius:10px;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:8px;">
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">QR disponible</span>
@@ -347,6 +337,24 @@ function fileIcon(n){if(!n)return'🔗';const e=n.split('.').pop().toLowerCase()
 function isImage(n){return['jpg','jpeg','png','gif','webp','svg','heic','avif'].includes(n?.split('.').pop().toLowerCase());}
 function uid(){return Math.random().toString(36).slice(2,10);}
 
+function copyShareLink() {
+  const url = document.getElementById('share-link').dataset.url;
+  if (!url) return;
+  const btn = document.getElementById('share-link-btn');
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.textContent = 'Copiar enlace'; }, 2000);
+  }).catch(() => {
+    // Fallback para navegadores sin clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); btn.textContent = '✓ Copiado'; } catch(e) { btn.textContent = 'Error'; }
+    document.body.removeChild(ta);
+    setTimeout(() => { btn.textContent = 'Copiar enlace'; }, 2000);
+  });
+}
+
 async function detectBrave(){try{const b=navigator.brave?await navigator.brave.isBrave().catch(()=>false):/Brave/.test(navigator.userAgent);if(b)document.getElementById('brave-warn')?.classList.add('show');}catch(e){}}
 
 function showPage(n){document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});const t=document.getElementById('page-'+n);t.style.display='flex';t.offsetHeight;t.classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.toggle('active',(n==='app'&&b.textContent.trim()==='Compartir')||(n==='about'&&b.textContent.trim()==='Acerca de'));});}
@@ -432,11 +440,23 @@ function monitorIce(conn, onFail) {
 // ════════════════════════════════════════
 function initSenderUI(){
   const dz=document.getElementById('drop-zone'),fi=document.getElementById('file-input');
+  const overlay=document.getElementById('drag-overlay');
+  let dragCount=0; // track nested drag events
+
   dz.addEventListener('click',()=>fi.click());
   fi.addEventListener('change',e=>{if(e.target.files.length)startWithFiles(Array.from(e.target.files));});
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
   dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)startWithFiles(Array.from(e.dataTransfer.files));});
+
+  // Full-page drag overlay
+  document.addEventListener('dragenter',e=>{e.preventDefault();dragCount++;if(overlay)overlay.classList.add('show');});
+  document.addEventListener('dragleave',e=>{e.preventDefault();dragCount--;if(dragCount<=0){dragCount=0;if(overlay)overlay.classList.remove('show');}});
+  document.addEventListener('dragover',e=>e.preventDefault());
+  document.addEventListener('drop',e=>{e.preventDefault();dragCount=0;if(overlay)overlay.classList.remove('show');
+    // Si soltaron en cualquier parte de la página (no solo el drop zone), capturar igualmente
+    if(e.dataTransfer.files.length&&document.getElementById('s-drop')?.classList.contains('active'))startWithFiles(Array.from(e.dataTransfer.files));
+  });
 }
 
 // Extensiones bloqueadas (misma lista que el servidor)
@@ -542,6 +562,10 @@ function setupSenderWithRoom(roomId, token) {
     // ── PASO 2: Dibujar QR estable con token ──
     const shareUrl = location.origin + location.pathname + '?room=' + roomId + '&t=' + token;
     drawQR(shareUrl);
+    // Mostrar enlace copiable debajo del QR
+    document.getElementById('share-link-url').textContent = shareUrl;
+    document.getElementById('share-link').style.display = 'flex';
+    document.getElementById('share-link').dataset.url = shareUrl;
     setSenderStatus('Listo — esperando que escaneen el QR', 'waiting');
 
     // ── PASO 3: Crear peer PeerJS para intento P2P ──
@@ -1465,6 +1489,7 @@ function resetApp() {
   const fi = document.getElementById('file-input'); if (fi) fi.value = '';
   const ti = document.getElementById('text-input'); if (ti) { ti.value = ''; ti.style.outline = ''; }
   document.getElementById('qr-canvas').style.display = 'none';
+  document.getElementById('share-link').style.display = 'none';
   const ql = document.getElementById('qr-loading');
   ql.style.display='flex';ql.textContent='Generando QR...';ql.style.fontSize='';ql.style.wordBreak='';ql.style.padding='';ql.style.textAlign='';
   const cd = document.getElementById('qr-countdown');
@@ -1487,5 +1512,6 @@ function resetApp() {
   showScreen('s-drop');
 }
 </script>
+<div class="drag-overlay" id="drag-overlay"><div class="drag-overlay-text">Suelta para compartir</div></div>
 </body>
 </html>
