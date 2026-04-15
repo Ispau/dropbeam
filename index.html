@@ -71,13 +71,6 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .drop-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
 #file-input{display:none;}
 
-.url-area{width:100%;display:flex;flex-direction:column;gap:10px;}
-.url-wrap{display:flex;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;transition:border-color .2s;}
-.url-wrap:focus-within{border-color:rgba(0,229,255,0.35);}
-.url-wrap span{font-size:16px;}
-.url-input-field{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;}
-.url-input-field::placeholder{color:var(--muted);}
-
 .how{width:100%;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
 .how-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
 .how-steps{display:flex;flex-direction:column;gap:7px;}
@@ -136,11 +129,6 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .done-circle{width:72px;height:72px;border-radius:50%;background:rgba(48,209,88,0.1);border:2px solid rgba(48,209,88,0.3);display:flex;align-items:center;justify-content:center;font-size:32px;animation:pop .4s cubic-bezier(.175,.885,.32,1.275);}
 @keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 .img-preview{width:100%;max-height:260px;border-radius:12px;object-fit:contain;background:var(--s2);}
-.url-preview{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;}
-.url-plabel{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
-.url-plink{display:flex;align-items:center;gap:8px;color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;text-decoration:none;word-break:break-all;}
-.url-plink:hover{text-decoration:underline;}
-
 #page-about{max-width:640px;}
 .about-section{width:100%;display:flex;flex-direction:column;gap:14px;padding:8px 0;}
 .about-title{font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-1.5px;text-align:center;line-height:1.1;margin-bottom:4px;}
@@ -175,7 +163,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam BETA</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -189,9 +177,9 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
     <div class="hero"><h1>Comparte archivos<br><em>sin intermediarios</em></h1><p>Transferencia directa entre dispositivos.<br>Como AirDrop, pero en cualquier dispositivo. Sin instalar nada.</p></div>
     <div class="ncstrip"><span>🍪</span><span>Esta web <strong>no usa cookies</strong>. No hay nada que aceptar — por diseño, no por omisión.</span></div>
     <div class="brave-warn" id="brave-warn"><div class="brave-title">⚠️ Brave detectado</div><div class="brave-steps">Brave bloquea WebRTC por defecto. Para activarlo:<br>1 · Ve a <code>brave://settings/privacy</code><br>2 · Busca <code>WebRTC IP handling policy</code> → selecciona <code>Default</code><br>3 · Recarga esta página</div></div>
-    <div class="tabs"><button class="tab active" onclick="switchTab('file')">📦 Archivo</button><button class="tab" onclick="switchTab('url')">🔗 Enlace URL</button></div>
-    <div id="tab-file" style="width:100%;"><div class="drop-zone" id="drop-zone"><span class="drop-icon">📦</span><div class="drop-title">Arrastra tu archivo aquí</div><div class="drop-sub">o haz clic · cualquier formato · hasta 5 GB</div><input type="file" id="file-input"></div></div>
-    <div id="tab-url" style="display:none;width:100%;"><div class="url-area"><div class="url-wrap"><span>🔗</span><input class="url-input-field" id="url-input" type="url" placeholder="https://..."></div><button class="btn btn-primary" onclick="handleUrl()">Generar QR →</button></div></div>
+    <div class="tabs"><button class="tab active" onclick="switchTab('file')">📦 Archivos</button><button class="tab" onclick="switchTab('text')">📝 Texto</button></div>
+    <div id="tab-file" style="width:100%;"><div class="drop-zone" id="drop-zone"><span class="drop-icon">📦</span><div class="drop-title">Arrastra tus archivos aquí</div><div class="drop-sub">o haz clic · cualquier formato · hasta 5 GB · varios archivos</div><input type="file" id="file-input" multiple></div></div>
+    <div id="tab-text" style="display:none;width:100%;"><div style="display:flex;flex-direction:column;gap:10px;"><textarea id="text-input" style="width:100%;min-height:140px;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;resize:vertical;outline:none;" placeholder="Pega o escribe tu texto aquí..."></textarea><button class="btn btn-primary" onclick="handleText()">Enviar texto →</button></div></div>
     <div class="how"><div class="how-label">Cómo funciona</div><div class="how-steps"><div class="how-step"><div class="how-num">1</div><span><strong>Arrastra tu archivo</strong> — aparece un QR en pantalla</span></div><div class="how-step"><div class="how-num">2</div><span><strong>Escanea el QR</strong> con la cámara del otro dispositivo</span></div><div class="how-step"><div class="how-num">3</div><span><strong>El archivo llega directo</strong> — sin almacenamiento intermedio</span></div></div></div>
     <div class="feats"><div class="feat">Sin instalar nada</div><div class="feat">Sin almacenamiento en servidores</div><div class="feat">iPhone · Android · Windows · Mac</div><div class="feat">Cifrado en tránsito</div><div class="feat">Sin cuenta ni registro</div><div class="feat">Varios receptores a la vez</div></div>
   </div>
@@ -225,8 +213,8 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
       <div style="font-size:44px;animation:float 3s ease-in-out infinite;">📡</div>
       <div style="text-align:center;"><h2 style="font-size:20px;font-weight:800;letter-spacing:-.5px;" id="r-title">Conectando...</h2><p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;" id="r-sub">Estableciendo canal seguro</p></div>
       <div class="fstrip" id="r-strip" style="display:none;"><div class="ficon" id="r-icon">📄</div><div class="fdet"><div class="fname" id="r-name">-</div><div class="fsize" id="r-size">-</div></div></div>
+      <div id="r-files-list" style="display:none;width:100%;display:none;flex-direction:column;gap:4px;"></div>
       <img id="r-img" class="img-preview" style="display:none;" alt="preview">
-      <div class="url-preview" id="r-url-preview" style="display:none;"><div class="url-plabel">Enlace recibido</div><a class="url-plink" id="r-url-link" href="#" target="_blank" rel="noopener">🔗 <span id="r-url-txt">-</span></a><button class="btn btn-primary" id="r-url-btn" style="margin-top:4px;">Abrir enlace →</button></div>
       <div class="prog-wrap" id="r-prog"><div class="prog-bg"><div class="prog-fill" id="r-fill"></div></div><div class="prog-row"><div class="speed-txt" id="r-speed"></div><div class="prog-txt" id="r-prog-txt">Conectando...</div></div></div>
       <div class="status"><div class="sdot waiting" id="r-dot"></div><span id="r-status">Buscando al emisor...</span></div>
     </div>
@@ -303,8 +291,7 @@ let p2pActive = false; // P2P establecido y enviando datos
 let relayMode = false; // Usando relay por WebSocket
 let sessionDone = false;
 
-let selectedFile = null;
-let sharedUrl    = null;
+let selectedFiles = [];
 let senderConns  = {};  // { cid: { progress, done, mode:'pending'|'p2p'|'relay' } }
 let relaySending = false;  // true mientras hay un envío relay en curso
 
@@ -351,7 +338,7 @@ async function detectBrave(){try{const b=navigator.brave?await navigator.brave.i
 
 function showPage(n){document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});const t=document.getElementById('page-'+n);t.style.display='flex';t.offsetHeight;t.classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.toggle('active',(n==='app'&&b.textContent.trim()==='Compartir')||(n==='about'&&b.textContent.trim()==='Acerca de'));});}
 function showScreen(id){document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function switchTab(t){document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(t==='file'&&i===0)||(t==='url'&&i===1)));document.getElementById('tab-file').style.display=t==='file'?'block':'none';document.getElementById('tab-url').style.display=t==='url'?'block':'none';}
+function switchTab(t){document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(t==='file'&&i===0)||(t==='text'&&i===1)));document.getElementById('tab-file').style.display=t==='file'?'block':'none';document.getElementById('tab-text').style.display=t==='text'?'block':'none';}
 
 function setSenderStatus(txt, dot){document.getElementById('s-status').textContent=txt;if(dot)document.getElementById('s-dot').className='sdot '+dot;}
 function setReceiverStatus(txt, dot, title, sub){if(txt)document.getElementById('r-status').textContent=txt;if(dot)document.getElementById('r-dot').className='sdot '+dot;if(title)document.getElementById('r-title').textContent=title;if(sub!==undefined)document.getElementById('r-sub').textContent=sub;}
@@ -433,24 +420,73 @@ function monitorIce(conn, onFail) {
 function initSenderUI(){
   const dz=document.getElementById('drop-zone'),fi=document.getElementById('file-input');
   dz.addEventListener('click',()=>fi.click());
-  fi.addEventListener('change',e=>{if(e.target.files[0])startWithFile(e.target.files[0]);});
+  fi.addEventListener('change',e=>{if(e.target.files.length)startWithFiles(Array.from(e.target.files));});
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files[0])startWithFile(e.dataTransfer.files[0]);});
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)startWithFiles(Array.from(e.dataTransfer.files));});
 }
-function handleUrl(){const v=document.getElementById('url-input').value.trim();if(!v||!v.startsWith('http')){document.getElementById('url-input').style.outline='2px solid var(--red)';setTimeout(()=>document.getElementById('url-input').style.outline='',2000);return;}sharedUrl=v;selectedFile=null;setupSender('🔗',v,'Enlace compartido');}
-function startWithFile(f){selectedFile=f;sharedUrl=null;setupSender(fileIcon(f.name),f.name,fmtSize(f.size));}
+
+// Extensiones bloqueadas (misma lista que el servidor)
+const BLOCKED_EXT = new Set(['exe','msi','dll','scr','com','pif','bat','cmd','ps1','psm1','vbs','vbe','js','jse','ws','wsf','wsc','wsh','sh','bash','csh','ksh','zsh','class','jar','pyc','pyo','xlsm','docm','pptm','dotm','xltm','deb','rpm','apk','appimage','snap','dmg','pkg','app','lnk','url','desktop','reg','inf','sys','drv','cpl','hta','msp','mst','gadget','application']);
+
+function isBlockedExt(name) {
+  if (!name) return false;
+  return BLOCKED_EXT.has(name.split('.').pop().toLowerCase());
+}
+
+function handleText(){
+  const v = document.getElementById('text-input').value.trim();
+  if (!v) {
+    document.getElementById('text-input').style.outline = '2px solid var(--red)';
+    setTimeout(() => document.getElementById('text-input').style.outline = '', 2000);
+    return;
+  }
+  // Crear archivo .txt a partir del texto
+  const blob = new Blob([v], { type: 'text/plain' });
+  const now = new Date();
+  const ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
+    + '_' + String(now.getHours()).padStart(2,'0') + 'h' + String(now.getMinutes()).padStart(2,'0');
+  const file = new File([blob], 'nota_' + ts + '.txt', { type: 'text/plain' });
+  selectedFiles = [file];
+  setupSender();
+}
+
+function startWithFiles(files){
+  // Filtrar archivos bloqueados
+  const blocked = files.filter(f => isBlockedExt(f.name));
+  const allowed = files.filter(f => !isBlockedExt(f.name));
+
+  if (blocked.length > 0 && allowed.length === 0) {
+    // Todos bloqueados
+    alert('No se pueden enviar archivos ejecutables o scripts por seguridad.\n\nBloqueados: ' + blocked.map(f => f.name).join(', '));
+    return;
+  }
+  if (blocked.length > 0) {
+    // Algunos bloqueados
+    alert('Estos archivos se han excluido por seguridad (ejecutables/scripts):\n\n' + blocked.map(f => f.name).join(', ') + '\n\nSe enviarán los ' + allowed.length + ' restantes.');
+  }
+
+  selectedFiles = allowed;
+  setupSender();
+}
 
 // ════════════════════════════════════════
 // SENDER — SETUP
 // El QR se genera UNA sola vez con roomId estable.
 // Nunca se regenera. El receptor siempre escaneará el mismo QR.
 // ════════════════════════════════════════
-function setupSender(icon, label, sub) {
-  // UI
-  document.getElementById('s-icon').textContent = icon;
-  document.getElementById('s-name').textContent = label;
-  document.getElementById('s-size').textContent = sub;
+function setupSender() {
+  // UI — mostrar info de archivos
+  if (selectedFiles.length === 1) {
+    document.getElementById('s-icon').textContent = fileIcon(selectedFiles[0].name);
+    document.getElementById('s-name').textContent = selectedFiles[0].name;
+    document.getElementById('s-size').textContent = fmtSize(selectedFiles[0].size);
+  } else {
+    const totalSize = selectedFiles.reduce((s, f) => s + f.size, 0);
+    document.getElementById('s-icon').textContent = '📦';
+    document.getElementById('s-name').textContent = selectedFiles.length + ' archivos';
+    document.getElementById('s-size').textContent = fmtSize(totalSize);
+  }
   showScreen('s-qr');
   setSenderStatus('Creando sala segura...', 'waiting');
 
@@ -532,15 +568,9 @@ function setupSenderWithRoom(roomId, token) {
           p2pActive = true;
           setSenderStatus('1 receptor conectado (P2P directo)...', 'connected');
           updateRC();
-          if (sharedUrl) {
-            conn.send({ type: 'url', url: sharedUrl });
-            senderConns[cid].done = true; senderConns[cid].progress = 100;
-            updateRC(); checkAllDone();
-          } else {
-            document.getElementById('s-prog').style.display = 'flex';
-            setSenderStatus('Enviando (P2P)...', 'sending');
-            sendP2P(conn, cid);
-          }
+          document.getElementById('s-prog').style.display = 'flex';
+          setSenderStatus('Enviando (P2P)...', 'sending');
+          sendP2P(conn, cid);
         });
 
         conn.on('close', () => {
@@ -599,6 +629,10 @@ function setupSenderWithRoom(roomId, token) {
     if (msg.type === 'fallback') {
       // El receiver pidió fallback — activar relay para este receptor
       activateSenderRelay();
+    }
+
+    if (msg.type === 'file_blocked') {
+      setSenderStatus('Archivo bloqueado: ' + (msg.name || 'tipo no permitido'), 'waiting');
     }
 
     if (msg.type === 'partner_left' && !sessionDone) {
@@ -751,74 +785,81 @@ function activateSenderRelay() {
   delete senderConns[cid]._pending;
   updateRC();
 
-  if (sharedUrl) {
-    wsSend({ type: 'url', url: sharedUrl });
-    senderConns[cid].done = true; senderConns[cid].progress = 100;
-    updateRC(); checkAllDone();
-  } else {
-    relaySending = true;
-    document.getElementById('s-prog').style.display = 'flex';
-    setSenderStatus('Enviando (relay)...', 'sending');
-    sendRelay(cid);
-  }
+  relaySending = true;
+  document.getElementById('s-prog').style.display = 'flex';
+  setSenderStatus('Enviando (relay)...', 'sending');
+  sendRelay(cid);
 }
 
 // ════════════════════════════════════════
 // ENVÍO P2P — chunking con backpressure
 // ════════════════════════════════════════
 function sendP2P(conn, cid) {
-  if (!selectedFile) return;
-  const sendMeta = () => conn.send({
-    type: 'metadata', name: selectedFile.name,
-    size: selectedFile.size, mime: selectedFile.type,
-    isImage: isImage(selectedFile.name)
-  });
-  sendMeta();
+  if (!selectedFiles.length) return;
+  let fileIdx = 0;
+  const totalSize = selectedFiles.reduce((s, f) => s + f.size, 0);
+  let totalSent = 0;
 
-  if (selectedFile.size > 100*1024*1024) {
-    streamSliceP2P(conn, cid);
+  function sendNextFile() {
+    if (fileIdx >= selectedFiles.length) {
+      conn.send({ type: 'all_done', count: selectedFiles.length });
+      senderConns[cid].done = true; senderConns[cid].progress = 100;
+      updateRC(); updateSenderProgress(); checkAllDone();
+      return;
+    }
+    const file = selectedFiles[fileIdx];
+    conn.send({
+      type: 'metadata', name: file.name, size: file.size,
+      mime: file.type, isImage: isImage(file.name),
+      fileIndex: fileIdx, fileCount: selectedFiles.length
+    });
+    sendOneFileP2P(conn, cid, file, totalSize, totalSent, () => {
+      totalSent += file.size;
+      fileIdx++;
+      conn.send({ type: 'done', fileIndex: fileIdx - 1 });
+      sendNextFile();
+    });
+  }
+  sendNextFile();
+}
+
+function sendOneFileP2P(conn, cid, file, totalSize, prevSent, onComplete) {
+  if (file.size > 100*1024*1024) {
+    streamSliceP2PFile(conn, cid, file, totalSize, prevSent, onComplete);
   } else {
     const reader = new FileReader();
-    reader.onload = e => streamBufP2P(conn, cid, e.target.result);
-    reader.readAsArrayBuffer(selectedFile);
+    reader.onload = e => streamBufP2PFile(conn, cid, e.target.result, totalSize, prevSent, onComplete);
+    reader.readAsArrayBuffer(file);
   }
 }
 
-function streamBufP2P(conn, cid, buf) {
+function streamBufP2PFile(conn, cid, buf, totalSize, prevSent, onComplete) {
   let off = 0, lastT = Date.now(), bytes = 0;
   function next() {
     if (!senderConns[cid] || !conn.open) return;
-    if (off >= buf.byteLength) {
-      conn.send({ type: 'done' });
-      senderConns[cid].done = true; senderConns[cid].progress = 100;
-      updateRC(); updateSenderProgress(); checkAllDone(); return;
-    }
+    if (off >= buf.byteLength) { onComplete(); return; }
     const dc = conn.dataChannel || conn._dc;
     if (dc && dc.bufferedAmount > BUF_HIGH) { setTimeout(next, 20); return; }
     conn.send({ type: 'chunk', data: buf.slice(off, off + CHUNK) });
     off += Math.min(CHUNK, buf.byteLength - off);
-    bytes += Math.min(CHUNK, buf.byteLength - off + Math.min(CHUNK, buf.byteLength - off));
+    bytes += CHUNK;
     const el = (Date.now() - lastT) / 1000;
     if (el >= 0.5) { document.getElementById('s-speed').textContent = fmtSpeed(bytes/el); bytes = 0; lastT = Date.now(); }
-    senderConns[cid].progress = Math.round(off / buf.byteLength * 100);
+    senderConns[cid].progress = totalSize > 0 ? Math.round((prevSent + off) / totalSize * 100) : 100;
     updateRC(); updateSenderProgress();
     setTimeout(next, 0);
   }
   next();
 }
 
-function streamSliceP2P(conn, cid) {
+function streamSliceP2PFile(conn, cid, file, totalSize, prevSent, onComplete) {
   const reader = new FileReader(); let off = 0, cs = CHUNK, lastT = Date.now(), bytes = 0;
   function next() {
     if (!senderConns[cid] || !conn.open) return;
-    if (off >= selectedFile.size) {
-      conn.send({ type: 'done' });
-      senderConns[cid].done = true; senderConns[cid].progress = 100;
-      updateRC(); updateSenderProgress(); checkAllDone(); return;
-    }
+    if (off >= file.size) { onComplete(); return; }
     const dc = conn.dataChannel || conn._dc;
     if (dc && dc.bufferedAmount > BUF_HIGH) { setTimeout(next, 20); return; }
-    reader.readAsArrayBuffer(selectedFile.slice(off, off + cs));
+    reader.readAsArrayBuffer(file.slice(off, off + cs));
   }
   reader.onload = e => {
     const b = e.target.result;
@@ -826,7 +867,7 @@ function streamSliceP2P(conn, cid) {
     off += b.byteLength; bytes += b.byteLength;
     const el = (Date.now() - lastT) / 1000;
     if (el >= 0.5) { const bps = bytes/el; cs = bps>2e6?262144:bps>5e5?131072:CHUNK; document.getElementById('s-speed').textContent = fmtSpeed(bps); bytes = 0; lastT = Date.now(); }
-    senderConns[cid].progress = Math.round(off / selectedFile.size * 100);
+    senderConns[cid].progress = totalSize > 0 ? Math.round((prevSent + off) / totalSize * 100) : 100;
     updateRC(); updateSenderProgress();
     setTimeout(next, 0);
   };
@@ -839,42 +880,54 @@ function streamSliceP2P(conn, cid) {
 // El servidor los reenvía al receiver sin almacenar nada
 // ════════════════════════════════════════
 function sendRelay(cid) {
-  if (!selectedFile) return;
-  // Metadatos como JSON
-  wsSend({ type: 'metadata', name: selectedFile.name, size: selectedFile.size, mime: selectedFile.type, isImage: isImage(selectedFile.name) });
+  if (!selectedFiles.length) return;
+  let fileIdx = 0;
+  const totalSize = selectedFiles.reduce((s, f) => s + f.size, 0);
+  let totalSent = 0;
 
-  const reader = new FileReader(); let off = 0, lastT = Date.now(), bytes = 0;
-  function next() {
-    if (!senderConns[cid]) { relaySending = false; return; }
-    if (!ctrlWs || ctrlWs.readyState !== 1) { relaySending = false; return; }
-    if (off >= selectedFile.size) {
-      wsSend({ type: 'done' });
+  function sendNextFile() {
+    if (fileIdx >= selectedFiles.length) {
+      wsSend({ type: 'all_done', count: selectedFiles.length });
       senderConns[cid].done = true; senderConns[cid].progress = 100;
       relaySending = false;
       updateRC(); updateSenderProgress(); checkAllDone();
-      // Si quedaron receptores pendientes o con P2P fallido, re-enviar
       const hasUnserved = Object.values(senderConns).some(r =>
         r._pending || (r.mode === 'p2p' && !r.done)
       );
       if (hasUnserved) activateSenderRelay();
       return;
     }
-    // Backpressure WebSocket
-    if (ctrlWs.bufferedAmount > BUF_HIGH * 2) { setTimeout(next, 20); return; }
-    reader.readAsArrayBuffer(selectedFile.slice(off, off + CHUNK));
+    const file = selectedFiles[fileIdx];
+    wsSend({ type: 'metadata', name: file.name, size: file.size, mime: file.type, isImage: isImage(file.name), fileIndex: fileIdx, fileCount: selectedFiles.length });
+
+    const reader = new FileReader(); let off = 0, lastT = Date.now(), bytes = 0;
+    function next() {
+      if (!senderConns[cid]) { relaySending = false; return; }
+      if (!ctrlWs || ctrlWs.readyState !== 1) { relaySending = false; return; }
+      if (off >= file.size) {
+        wsSend({ type: 'done', fileIndex: fileIdx });
+        totalSent += file.size;
+        fileIdx++;
+        sendNextFile();
+        return;
+      }
+      if (ctrlWs.bufferedAmount > BUF_HIGH * 2) { setTimeout(next, 20); return; }
+      reader.readAsArrayBuffer(file.slice(off, off + CHUNK));
+    }
+    reader.onload = e => {
+      const b = e.target.result;
+      ctrlWs.send(b);
+      off += b.byteLength; bytes += b.byteLength;
+      const el = (Date.now() - lastT) / 1000;
+      if (el >= 0.5) { document.getElementById('s-speed').textContent = fmtSpeed(bytes/el); bytes = 0; lastT = Date.now(); }
+      senderConns[cid].progress = totalSize > 0 ? Math.round((totalSent + off) / totalSize * 100) : 100;
+      updateRC(); updateSenderProgress();
+      setTimeout(next, 0);
+    };
+    reader.onerror = () => { relaySending = false; };
+    next();
   }
-  reader.onload = e => {
-    const b = e.target.result;
-    ctrlWs.send(b); // binario puro — el servidor lo reenvía a TODOS los receivers
-    off += b.byteLength; bytes += b.byteLength;
-    const el = (Date.now() - lastT) / 1000;
-    if (el >= 0.5) { document.getElementById('s-speed').textContent = fmtSpeed(bytes/el); bytes = 0; lastT = Date.now(); }
-    senderConns[cid].progress = Math.round(off / selectedFile.size * 100);
-    updateRC(); updateSenderProgress();
-    setTimeout(next, 0);
-  };
-  reader.onerror = () => { relaySending = false; };
-  next();
+  sendNextFile();
 }
 
 // ── UI sender ──
@@ -1065,7 +1118,7 @@ function initReceiver(roomId, token) {
     // Los chunks binarios ya se manejan arriba
     if (msg.type === 'metadata') onRelayMeta(msg);
     if (msg.type === 'done')     onRelayDone();
-    if (msg.type === 'url')      onUrlReceived(msg.url);
+    if (msg.type === 'all_done') { if (!receiveComplete) onAllDone(); }
     if (msg.type === 'partner_left') {
       if (fileMeta && receivedSize < fileMeta.size) {
         setReceiverStatus('Emisor desconectado', 'waiting', 'Conexión perdida', 'Pide al emisor un nuevo QR');
@@ -1122,7 +1175,7 @@ function attemptP2P(senderId) {
       if (data.type === 'metadata') onP2PMeta(data);
       if (data.type === 'chunk')    onP2PChunk(data.data);
       if (data.type === 'done')     onP2PDone();
-      if (data.type === 'url')      onUrlReceived(data.url);
+      if (data.type === 'all_done') { if (!receiveComplete) onAllDone(); }
     });
 
     conn.on('error', () => { clearTimeout(connTimeout); triggerFallbackReceiver(); });
@@ -1164,14 +1217,14 @@ function onP2PChunk(buf) {
 }
 function onP2PDone() {
   if (receiveComplete) return;
-  finalizeReceive();
+  finalizeCurrentFile();
 }
 
 // ════════════════════════════════════════
 // RECEPTOR — manejo de datos relay (WebSocket)
 // ════════════════════════════════════════
 function onRelayMeta(data) {
-  if (receiveComplete) return; // ignorar re-sends para otros receivers
+  if (receiveComplete) return;
   initReceiveState(data);
 }
 function onRelayChunk(buf) {
@@ -1180,19 +1233,35 @@ function onRelayChunk(buf) {
 }
 function onRelayDone() {
   if (receiveComplete) return;
-  finalizeReceive();
+  finalizeCurrentFile();
 }
 
-// ── Estado compartido de recepción ──
+// ── Estado compartido de recepción multi-archivo ──
+let rFileCount    = 0;  // total esperado (del sender)
+let rFilesReceived = 0; // completados
+let rTotalSize    = 0;  // suma de tamaños de todos los archivos recibidos
+
 function initReceiveState(meta) {
+  // Resetear estado del archivo actual (no de la sesión)
   fileMeta = meta;
   receivedChunks = []; receivedSize = 0;
   rLastTime = Date.now(); rBytesSince = 0; fileWriter = null;
+
+  if (meta.fileCount) rFileCount = meta.fileCount;
+
+  // Actualizar UI con archivo actual
   document.getElementById('r-icon').textContent = fileIcon(meta.name);
-  document.getElementById('r-name').textContent = meta.name;
+  document.getElementById('r-name').textContent = rFileCount > 1
+    ? '(' + ((meta.fileIndex || 0) + 1) + '/' + rFileCount + ') ' + meta.name
+    : meta.name;
   document.getElementById('r-size').textContent = fmtSize(meta.size);
   document.getElementById('r-strip').style.display = 'flex';
-  setReceiverStatus('Recibiendo...', 'sending', 'Recibiendo...', 'Canal activo');
+
+  const label = rFileCount > 1
+    ? 'Recibiendo archivo ' + ((meta.fileIndex || 0) + 1) + ' de ' + rFileCount + '...'
+    : 'Recibiendo...';
+  setReceiverStatus(label, 'sending', label, 'Canal activo');
+
   if (meta.size > FSAPI_MIN && 'showSaveFilePicker' in window) {
     window.showSaveFilePicker({ suggestedName: meta.name })
       .then(fh => fh.createWritable())
@@ -1202,7 +1271,7 @@ function initReceiveState(meta) {
 }
 
 function accumChunk(buf) {
-  if (!fileMeta) return; // ignorar chunks sin metadata (receiver llegó a mitad de envío)
+  if (!fileMeta) return;
   if (fileWriter) fileWriter.write(buf).catch(() => {});
   else receivedChunks.push(buf);
   receivedSize += buf.byteLength; rBytesSince += buf.byteLength;
@@ -1215,49 +1284,80 @@ function accumChunk(buf) {
   }
 }
 
-function finalizeReceive() {
-  if (!fileMeta) return; // ignorar si no hay metadata (llegó a mitad de envío)
-  receiveComplete = true;
-  document.getElementById('r-fill').style.width = '100%';
-  document.getElementById('r-speed').textContent = '';
-  document.getElementById('r-prog-txt').textContent = '✓ Completado';
+// Finalizar UN archivo (no la sesión entera)
+function finalizeCurrentFile() {
+  if (!fileMeta) return;
+  rFilesReceived++;
+  rTotalSize += fileMeta.size;
+
   if (fileWriter) {
     fileWriter.close()
-      .then(() => { fileWriter = null; setReceiverStatus('Guardado en disco ✓', 'done', '¡Archivo guardado!', 'Escritura directa en disco'); })
-      .catch(() => { fileWriter = null; assembleAndDeliver(); });
+      .then(() => { fileWriter = null; addReceivedFileToList(fileMeta.name, fileMeta.size, 'disk'); })
+      .catch(() => { fileWriter = null; deliverCurrentFile(); });
   } else {
-    assembleAndDeliver();
+    deliverCurrentFile();
   }
 }
 
-function assembleAndDeliver() {
-  if (!fileMeta || !receivedChunks.length) { setReceiverStatus('Error: sin datos', 'waiting', 'Error', ''); return; }
+function deliverCurrentFile() {
+  if (!fileMeta || !receivedChunks.length) return;
   const blob = new Blob(receivedChunks, { type: fileMeta.mime || 'application/octet-stream' });
+  const meta = fileMeta;
   receivedChunks = [];
-  if (fileMeta.isImage) {
+
+  if (meta.isImage && rFileCount <= 1) {
+    // Solo mostrar preview inline si es una sola imagen
     if (rImageUrl) URL.revokeObjectURL(rImageUrl);
     rImageUrl = URL.createObjectURL(blob);
     document.getElementById('r-img').src = rImageUrl;
     document.getElementById('r-img').style.display = 'block';
-    setReceiverStatus('Mantén pulsado para guardar', 'done', '¡Imagen recibida!', '');
+    addReceivedFileToList(meta.name, meta.size, 'image');
   } else {
+    // Descargar automáticamente
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = fileMeta.name || 'archivo';
+    const a = document.createElement('a'); a.href = url; a.download = meta.name || 'archivo';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 10000);
-    setReceiverStatus('Descarga iniciada ✓', 'done', '¡Archivo recibido!', '');
+    addReceivedFileToList(meta.name, meta.size, 'download');
+  }
+
+  // Preparar para siguiente archivo
+  fileMeta = null;
+
+  if (rFileCount <= 1) {
+    // Archivo único — completar sesión
+    onAllDone();
+  } else {
+    // Multi-archivo — esperar más o all_done
+    setReceiverStatus(rFilesReceived + '/' + rFileCount + ' recibidos...', 'sending',
+      'Recibiendo archivos...', rFilesReceived + ' de ' + rFileCount + ' completados');
+    document.getElementById('r-fill').style.width = '0%';
   }
 }
 
-function onUrlReceived(url) {
-  if (receiveComplete) return;
+function addReceivedFileToList(name, size, type) {
+  const list = document.getElementById('r-files-list');
+  list.style.display = 'flex';
+  const icon = type === 'disk' ? '💾' : type === 'image' ? '🖼️' : '✅';
+  list.innerHTML += '<div style="display:flex;align-items:center;gap:8px;background:var(--s2);padding:8px 10px;border-radius:8px;">'
+    + '<span style="font-size:14px;">' + icon + '</span>'
+    + '<span style="flex:1;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</span>'
+    + '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--accent);">' + fmtSize(size) + '</span>'
+    + '</div>';
+}
+
+function onAllDone() {
   receiveComplete = true;
-  setReceiverStatus('Recibido ✓', 'done', '¡Enlace recibido!', 'Toca para abrirlo');
-  document.getElementById('r-prog').style.display = 'none';
-  document.getElementById('r-url-preview').style.display = 'flex';
-  document.getElementById('r-url-txt').textContent = url;
-  document.getElementById('r-url-link').href = url;
-  document.getElementById('r-url-btn').onclick = () => window.open(url, '_blank', 'noopener');
+  document.getElementById('r-fill').style.width = '100%';
+  document.getElementById('r-speed').textContent = '';
+  const label = rFilesReceived > 1
+    ? '✓ ' + rFilesReceived + ' archivos recibidos'
+    : '✓ Completado';
+  document.getElementById('r-prog-txt').textContent = label;
+  const title = rFilesReceived > 1
+    ? '¡' + rFilesReceived + ' archivos recibidos!'
+    : '¡Archivo recibido!';
+  setReceiverStatus(label, 'done', title, fmtSize(rTotalSize) + ' transferidos');
 }
 
 // ════════════════════════════════════════
@@ -1273,22 +1373,22 @@ function resetState() {
   relaySending = false;
   fileMeta = null; receivedChunks = []; receivedSize = 0; fileWriter = null;
   receiveComplete = false;
+  rFileCount = 0; rFilesReceived = 0; rTotalSize = 0;
   if (rImageUrl) { URL.revokeObjectURL(rImageUrl); rImageUrl = null; }
 }
 
 function resetAll() {
-  selectedFile = null; sharedUrl = null;
+  selectedFiles = [];
   resetState();
 }
 
 function resetApp() {
   resetAll();
   const fi = document.getElementById('file-input'); if (fi) fi.value = '';
-  const ui = document.getElementById('url-input'); if (ui) { ui.value = ''; ui.style.outline = ''; }
+  const ti = document.getElementById('text-input'); if (ti) { ti.value = ''; ti.style.outline = ''; }
   document.getElementById('qr-canvas').style.display = 'none';
   const ql = document.getElementById('qr-loading');
   ql.style.display='flex';ql.textContent='Generando QR...';ql.style.fontSize='';ql.style.wordBreak='';ql.style.padding='';ql.style.textAlign='';
-  // Reset countdown
   const cd = document.getElementById('qr-countdown');
   if (cd) { cd.style.display = 'none'; }
   const ct = document.getElementById('qr-timer');
@@ -1299,8 +1399,9 @@ function resetApp() {
   document.getElementById('s-prog-txt').textContent='0%';
   document.getElementById('rcounter').style.display='none';
   document.getElementById('r-img').style.display='none';
-  document.getElementById('r-url-preview').style.display='none';
   document.getElementById('r-strip').style.display='none';
+  const rfl = document.getElementById('r-files-list');
+  if (rfl) { rfl.style.display = 'none'; rfl.innerHTML = ''; }
   document.getElementById('r-fill').style.width='0%';
   document.getElementById('r-prog-txt').textContent='Conectando...';
   document.getElementById('r-speed').textContent='';
