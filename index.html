@@ -129,6 +129,18 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .done-circle{width:72px;height:72px;border-radius:50%;background:rgba(48,209,88,0.1);border:2px solid rgba(48,209,88,0.3);display:flex;align-items:center;justify-content:center;font-size:32px;animation:pop .4s cubic-bezier(.175,.885,.32,1.275);}
 @keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 .img-preview{width:100%;max-height:260px;border-radius:12px;object-fit:contain;background:var(--s2);}
+.rfile{display:flex;flex-direction:column;gap:6px;background:var(--s2);border-radius:10px;padding:10px 12px;width:100%;}
+.rfile-row{display:flex;align-items:center;gap:8px;}
+.rfile-icon{font-size:16px;flex-shrink:0;}
+.rfile-name{flex:1;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rfile-size{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);flex-shrink:0;}
+.rfile-dl{background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);color:var(--accent);font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;flex-shrink:0;transition:all .15s;}
+.rfile-dl:hover{background:rgba(0,229,255,0.2);border-color:rgba(0,229,255,0.4);}
+.rfile-img{width:100%;max-height:180px;border-radius:8px;object-fit:contain;background:var(--s3);}
+.rfile-actions{display:flex;gap:8px;margin-top:8px;}
+.rfile-dlall{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;padding:10px;border-radius:10px;border:none;cursor:pointer;transition:all .15s;}
+.rfile-dlall:hover{transform:translateY(-1px);box-shadow:0 0 20px rgba(0,229,255,0.2);}
+.rfile-dlall:active{transform:scale(.98);}
 #page-about{max-width:640px;}
 .about-section{width:100%;display:flex;flex-direction:column;gap:14px;padding:8px 0;}
 .about-title{font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-1.5px;text-align:center;line-height:1.1;margin-bottom:4px;}
@@ -163,7 +175,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam NX</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Compartir</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -213,8 +225,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
       <div style="font-size:44px;animation:float 3s ease-in-out infinite;">📡</div>
       <div style="text-align:center;"><h2 style="font-size:20px;font-weight:800;letter-spacing:-.5px;" id="r-title">Conectando...</h2><p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;" id="r-sub">Estableciendo canal seguro</p></div>
       <div class="fstrip" id="r-strip" style="display:none;"><div class="ficon" id="r-icon">📄</div><div class="fdet"><div class="fname" id="r-name">-</div><div class="fsize" id="r-size">-</div></div></div>
-      <div id="r-files-list" style="display:none;width:100%;display:none;flex-direction:column;gap:4px;"></div>
-      <img id="r-img" class="img-preview" style="display:none;" alt="preview">
+      <div id="r-files-list" style="display:none;width:100%;flex-direction:column;gap:6px;"></div>
       <div class="prog-wrap" id="r-prog"><div class="prog-bg"><div class="prog-fill" id="r-fill"></div></div><div class="prog-row"><div class="speed-txt" id="r-speed"></div><div class="prog-txt" id="r-prog-txt">Conectando...</div></div></div>
       <div class="status"><div class="sdot waiting" id="r-dot"></div><span id="r-status">Buscando al emisor...</span></div>
     </div>
@@ -239,6 +250,8 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>if(typeof qrcode==='undefined'){document.write('<script src="lib/qrcode.min.js"><\/script>')}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>if(typeof JSZip==='undefined'){document.write('<script src="lib/jszip.min.js"><\/script>')}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script>if(typeof Peer==='undefined'){document.write('<script src="lib/peerjs.min.js"><\/script>')}</script>
 <script>
@@ -1285,65 +1298,114 @@ function accumChunk(buf) {
 }
 
 // Finalizar UN archivo (no la sesión entera)
+let receivedBlobs = []; // { name, size, mime, blob, isImage }
+
 function finalizeCurrentFile() {
   if (!fileMeta) return;
   rFilesReceived++;
   rTotalSize += fileMeta.size;
 
   if (fileWriter) {
+    const meta = fileMeta;
     fileWriter.close()
-      .then(() => { fileWriter = null; addReceivedFileToList(fileMeta.name, fileMeta.size, 'disk'); })
-      .catch(() => { fileWriter = null; deliverCurrentFile(); });
+      .then(() => { fileWriter = null; addReceivedFileToList(meta, null); afterFileReceived(); })
+      .catch(() => { fileWriter = null; buildBlobAndShow(); });
   } else {
-    deliverCurrentFile();
+    buildBlobAndShow();
   }
 }
 
-function deliverCurrentFile() {
-  if (!fileMeta || !receivedChunks.length) return;
+function buildBlobAndShow() {
+  if (!fileMeta || !receivedChunks.length) { afterFileReceived(); return; }
   const blob = new Blob(receivedChunks, { type: fileMeta.mime || 'application/octet-stream' });
-  const meta = fileMeta;
+  const meta = { ...fileMeta };
   receivedChunks = [];
+  receivedBlobs.push({ name: meta.name, size: meta.size, mime: meta.mime, blob, isImage: meta.isImage });
+  addReceivedFileToList(meta, blob);
+  afterFileReceived();
+}
 
-  if (meta.isImage && rFileCount <= 1) {
-    // Solo mostrar preview inline si es una sola imagen
-    if (rImageUrl) URL.revokeObjectURL(rImageUrl);
-    rImageUrl = URL.createObjectURL(blob);
-    document.getElementById('r-img').src = rImageUrl;
-    document.getElementById('r-img').style.display = 'block';
-    addReceivedFileToList(meta.name, meta.size, 'image');
-  } else {
-    // Descargar automáticamente
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = meta.name || 'archivo';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-    addReceivedFileToList(meta.name, meta.size, 'download');
-  }
-
-  // Preparar para siguiente archivo
+function afterFileReceived() {
   fileMeta = null;
-
   if (rFileCount <= 1) {
-    // Archivo único — completar sesión
     onAllDone();
   } else {
-    // Multi-archivo — esperar más o all_done
     setReceiverStatus(rFilesReceived + '/' + rFileCount + ' recibidos...', 'sending',
       'Recibiendo archivos...', rFilesReceived + ' de ' + rFileCount + ' completados');
     document.getElementById('r-fill').style.width = '0%';
   }
 }
 
-function addReceivedFileToList(name, size, type) {
+function addReceivedFileToList(meta, blob) {
   const list = document.getElementById('r-files-list');
   list.style.display = 'flex';
-  const icon = type === 'disk' ? '💾' : type === 'image' ? '🖼️' : '✅';
-  list.innerHTML += '<div style="display:flex;align-items:center;gap:8px;background:var(--s2);padding:8px 10px;border-radius:8px;">'
-    + '<span style="font-size:14px;">' + icon + '</span>'
-    + '<span style="flex:1;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</span>'
-    + '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--accent);">' + fmtSize(size) + '</span>'
-    + '</div>';
+  const idx = receivedBlobs.length - 1;
+  const icon = fileIcon(meta.name);
+  const div = document.createElement('div');
+  div.className = 'rfile';
+
+  let html = '<div class="rfile-row">'
+    + '<span class="rfile-icon">' + icon + '</span>'
+    + '<span class="rfile-name">' + meta.name + '</span>'
+    + '<span class="rfile-size">' + fmtSize(meta.size) + '</span>';
+
+  if (blob) {
+    html += '<button class="rfile-dl" data-idx="' + idx + '">Guardar</button>';
+  } else {
+    html += '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--green);">💾 disco</span>';
+  }
+  html += '</div>';
+
+  // Preview para imágenes
+  if (blob && meta.isImage) {
+    const imgUrl = URL.createObjectURL(blob);
+    html += '<img class="rfile-img" src="' + imgUrl + '" alt="' + meta.name + '">';
+  }
+
+  div.innerHTML = html;
+
+  // Bind download button
+  const btn = div.querySelector('.rfile-dl');
+  if (btn) {
+    btn.addEventListener('click', () => downloadBlob(parseInt(btn.dataset.idx)));
+  }
+
+  list.appendChild(div);
+}
+
+function downloadBlob(idx) {
+  const item = receivedBlobs[idx];
+  if (!item) return;
+  const url = URL.createObjectURL(item.blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = item.name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function downloadAllAsZip() {
+  if (!receivedBlobs.length) return;
+  if (typeof JSZip === 'undefined') {
+    // Fallback si JSZip no cargó: descargar uno a uno con delay
+    let i = 0;
+    (function next() { if (i >= receivedBlobs.length) return; downloadBlob(i); i++; setTimeout(next, 600); })();
+    return;
+  }
+  const btn = document.querySelector('.rfile-dlall');
+  if (btn) { btn.textContent = 'Comprimiendo...'; btn.disabled = true; }
+
+  const zip = new JSZip();
+  receivedBlobs.forEach(item => zip.file(item.name, item.blob));
+  zip.generateAsync({ type: 'blob' }).then(content => {
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'dropbeam_' + receivedBlobs.length + '_archivos.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    if (btn) { btn.textContent = '✓ ZIP descargado'; btn.disabled = false; }
+  }).catch(() => {
+    if (btn) { btn.textContent = 'Error al comprimir'; btn.disabled = false; }
+  });
 }
 
 function onAllDone() {
@@ -1358,6 +1420,19 @@ function onAllDone() {
     ? '¡' + rFilesReceived + ' archivos recibidos!'
     : '¡Archivo recibido!';
   setReceiverStatus(label, 'done', title, fmtSize(rTotalSize) + ' transferidos');
+
+  if (receivedBlobs.length > 1) {
+    // Multi-archivo — botón ZIP
+    const list = document.getElementById('r-files-list');
+    const btn = document.createElement('button');
+    btn.className = 'rfile-dlall';
+    btn.textContent = 'Descargar todo en ZIP (' + receivedBlobs.length + ' archivos)';
+    btn.addEventListener('click', downloadAllAsZip);
+    list.appendChild(btn);
+  } else if (receivedBlobs.length === 1) {
+    // Archivo único — descarga directa
+    downloadBlob(0);
+  }
 }
 
 // ════════════════════════════════════════
@@ -1374,6 +1449,9 @@ function resetState() {
   fileMeta = null; receivedChunks = []; receivedSize = 0; fileWriter = null;
   receiveComplete = false;
   rFileCount = 0; rFilesReceived = 0; rTotalSize = 0;
+  // Liberar blobs en memoria
+  if (receivedBlobs) receivedBlobs.forEach(item => { try { URL.revokeObjectURL(URL.createObjectURL(item.blob)); } catch(e) {} });
+  receivedBlobs = [];
   if (rImageUrl) { URL.revokeObjectURL(rImageUrl); rImageUrl = null; }
 }
 
@@ -1398,7 +1476,6 @@ function resetApp() {
   document.getElementById('s-speed').textContent='';
   document.getElementById('s-prog-txt').textContent='0%';
   document.getElementById('rcounter').style.display='none';
-  document.getElementById('r-img').style.display='none';
   document.getElementById('r-strip').style.display='none';
   const rfl = document.getElementById('r-files-list');
   if (rfl) { rfl.style.display = 'none'; rfl.innerHTML = ''; }
