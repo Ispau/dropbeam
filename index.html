@@ -184,7 +184,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam v2</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Home</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -611,6 +611,10 @@ function handleText(){
   setupSender();
 }
 
+// Umbrales para zip automático
+const ZIP_MIN_FILES = 6;                  // comprimir si hay más de 5 archivos
+const ZIP_MAX_TOTAL_SIZE = 500 * 1024 * 1024;  // pero solo si total < 500MB
+
 function startWithFiles(files){
   // Filtrar archivos bloqueados
   const blocked = files.filter(f => isBlockedExt(f.name));
@@ -626,8 +630,57 @@ function startWithFiles(files){
     alert('Estos archivos se han excluido por seguridad (ejecutables/scripts):\n\n' + blocked.map(f => f.name).join(', ') + '\n\nSe enviarán los ' + allowed.length + ' restantes.');
   }
 
-  selectedFiles = allowed;
-  setupSender();
+  // Decidir si comprimir automáticamente:
+  // - Más de 5 archivos: muchos archivos pequeños → zip es mucho más eficiente
+  // - Total < 500MB: por encima de eso el zip ocupa demasiado en memoria del receptor
+  // - JSZip disponible (si no cargó, enviamos individualmente)
+  const totalSize = allowed.reduce((s, f) => s + f.size, 0);
+  const shouldZip = allowed.length >= ZIP_MIN_FILES
+                 && totalSize < ZIP_MAX_TOTAL_SIZE
+                 && typeof JSZip !== 'undefined';
+
+  if (shouldZip) {
+    compressAndStart(allowed);
+  } else {
+    selectedFiles = allowed;
+    setupSender();
+  }
+}
+
+// Comprimir archivos en un zip antes de enviar.
+// Muestra UI de progreso mientras comprime.
+function compressAndStart(files) {
+  // Mostrar pantalla QR con mensaje de compresión (aún sin QR)
+  document.getElementById('s-icon').textContent = '🗜️';
+  document.getElementById('s-name').textContent = 'Comprimiendo ' + files.length + ' archivos...';
+  const totalSize = files.reduce((s, f) => s + f.size, 0);
+  document.getElementById('s-size').textContent = fmtSize(totalSize);
+  showScreen('s-qr');
+  setSenderStatus('Preparando envío...', 'waiting');
+
+  // Ocultar QR loading mientras comprime (evita "Generando QR" prematuro)
+  const ql = document.getElementById('qr-loading');
+  if (ql) ql.textContent = 'Comprimiendo...';
+
+  const zip = new JSZip();
+  files.forEach(f => zip.file(f.name, f));
+
+  // Sin compresión (STORE) para que sea rápido — los archivos ya suelen estar comprimidos
+  // (fotos JPEG, vídeos, PDFs, etc.). Si intentamos deflate perdemos tiempo para nada.
+  zip.generateAsync({ type: 'blob', compression: 'STORE' }).then(blob => {
+    const now = new Date();
+    const ts = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
+      + '_' + String(now.getHours()).padStart(2,'0') + 'h' + String(now.getMinutes()).padStart(2,'0');
+    const zipName = 'dropbeam_' + files.length + '_archivos_' + ts + '.zip';
+    const zipFile = new File([blob], zipName, { type: 'application/zip' });
+    selectedFiles = [zipFile];
+    setupSender();
+  }).catch(err => {
+    // Si falla la compresión, fallback a envío individual
+    console.error('Zip compression failed:', err);
+    selectedFiles = files;
+    setupSender();
+  });
 }
 
 // ════════════════════════════════════════
