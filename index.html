@@ -253,7 +253,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 
 <div id="page-about" class="page">
   <div class="about-section">
-    <div><div class="about-title">Cómo funciona <em>DropBeam v6</em></div><p class="about-lead">Transferencia directa entre dispositivos. Sin servidores intermedios.</p></div>
+    <div><div class="about-title">Cómo funciona <em>DropBeam</em></div><p class="about-lead">Transferencia directa entre dispositivos. Sin servidores intermedios.</p></div>
 
     <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="13 2 13 9 20 9"/></svg></div>Conexión directa P2P</div><div class="about-card-body">Tus archivos van directamente de tu dispositivo al del receptor. <strong>Ningún servidor almacena ni tiene acceso al contenido.</strong> Si la conexión directa no es posible, se usa un relay cifrado.</div></div>
 
@@ -635,7 +635,7 @@ function handleText(){
 }
 
 // Umbrales para zip automático
-const ZIP_MIN_FILES = 6;                  // comprimir si hay más de 5 archivos
+const ZIP_MIN_FILES = 11;                 // comprimir si hay más de 10 archivos
 const ZIP_MAX_TOTAL_SIZE = 500 * 1024 * 1024;  // pero solo si total < 500MB
 
 function startWithFiles(files){
