@@ -228,6 +228,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
       <div class="rcounter" id="rcounter" style="display:none;"><div class="rcounter-header"><div class="rcounter-label">Receptores</div><div class="rcounter-num" id="rcounter-num">0 conectados</div></div><div class="rcounter-list" id="rcounter-list"></div></div>
       <div class="status"><div class="sdot waiting" id="s-dot"></div><span id="s-status">Conectando...</span></div>
       <div class="prog-wrap" id="s-prog" style="display:none;"><div class="prog-bg"><div class="prog-fill" id="s-fill"></div></div><div class="prog-row"><div class="speed-txt" id="s-speed"></div><div class="prog-txt" id="s-prog-txt">0%</div></div></div>
+      <div id="mobile-tip" style="display:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;opacity:.7;">Mantén esta pantalla abierta durante el envío</div>
     </div>
     <button class="btn btn-ghost" onclick="resetApp()">← Compartir otro</button>
   </div>
@@ -352,6 +353,7 @@ let p2pConn   = null;  // Conexión WebRTC activa
 let p2pActive = false; // P2P establecido y enviando datos
 let relayMode = false; // Usando relay por WebSocket
 let sessionDone = false;
+let wakeLock = null;   // Screen Wake Lock — evita que la pantalla se apague durante transferencia
 
 let selectedFiles = [];
 let senderConns  = {};  // { cid: { progress, done, mode:'pending'|'p2p'|'relay' } }
@@ -506,6 +508,22 @@ function copyShareLink() {
 }
 
 async function detectBrave(){try{const b=navigator.brave?await navigator.brave.isBrave().catch(()=>false):/Brave/.test(navigator.userAgent);if(b)document.getElementById('brave-warn')?.classList.add('show');}catch(e){}}
+
+// ── Wake Lock — mantener pantalla activa durante transferencia ──
+// Falla silenciosamente si el navegador no lo soporta (Safari <16.4, Firefox, etc.)
+async function requestWakeLock() {
+  if (wakeLock) return; // ya activo
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+      dbg('wakeLock acquired');
+    }
+  } catch(e) { dbg('wakeLock failed', e.message); }
+}
+function releaseWakeLock() {
+  if (wakeLock) { try { wakeLock.release(); } catch(e) {} wakeLock = null; dbg('wakeLock released'); }
+}
 
 function showPage(n){document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});const t=document.getElementById('page-'+n);t.style.display='flex';t.offsetHeight;t.classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>{const txt=b.textContent.trim();b.classList.toggle('active',(n==='app'&&txt==='Home')||(n==='about'&&txt==='Acerca de')||(n==='faq'&&txt==='FAQ'));});}
 function showScreen(id){document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
@@ -725,6 +743,14 @@ function setupSender() {
   }
   showScreen('s-qr');
   setSenderStatus('Creando sala segura...', 'waiting');
+
+  // Mantener pantalla activa durante la sesión (útil si el sender es móvil)
+  requestWakeLock();
+
+  // Mostrar tip en dispositivos táctiles (móvil/tablet)
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    document.getElementById('mobile-tip').style.display = 'block';
+  }
 
   // Reset estado
   resetState();
@@ -1247,6 +1273,7 @@ function startCountdown() {
 
 function expireSession() {
   sessionDone = true;
+  releaseWakeLock();
   if (ctrlWs) { try { ctrlWs.close(); } catch(e) {} ctrlWs = null; }
   const total = uniqueReceivers().filter(r => r.done).length;
   document.getElementById('done-sub').textContent =
@@ -1534,6 +1561,9 @@ function initReceiveState(meta) {
   receivedChunks = []; receivedSize = 0;
   rLastTime = Date.now(); rBytesSince = 0; fileWriter = null;
 
+  // Mantener pantalla activa mientras se recibe
+  requestWakeLock();
+
   if (meta.fileCount) rFileCount = meta.fileCount;
 
   // Actualizar UI con archivo actual
@@ -1688,6 +1718,7 @@ function downloadAllAsZip() {
 
 function onAllDone() {
   receiveComplete = true;
+  releaseWakeLock();
   document.getElementById('r-fill').style.width = '100%';
   document.getElementById('r-speed').textContent = '';
   const label = rFilesReceived > 1
@@ -1729,6 +1760,7 @@ function resetState() {
   if (ctrlWs) { try { ctrlWs.close(); } catch(e) {} ctrlWs = null; }
   if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
   countdownStarted = false;
+  releaseWakeLock();
   p2pConn = null; p2pActive = false; relayMode = false; sessionDone = false;
   senderConns = {};
   relaySending = false;
@@ -1769,6 +1801,7 @@ function resetApp() {
   document.getElementById('s-fill').style.width='0%';
   document.getElementById('s-speed').textContent='';
   document.getElementById('s-prog-txt').textContent='0%';
+  document.getElementById('mobile-tip').style.display='none';
   document.getElementById('rcounter').style.display='none';
   document.getElementById('r-strip').style.display='none';
   const rfl = document.getElementById('r-files-list');
