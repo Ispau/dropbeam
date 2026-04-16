@@ -184,7 +184,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
+  <div class="logo"><div class="logo-beam"></div>DropBeam vm</div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app')">Home</button>
     <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
@@ -1344,16 +1344,26 @@ function initReceiver(roomId, token) {
   };
 
   ctrlWs.onerror = () => {
-    if (!receiveComplete && !fileMeta) {
+    // Solo mostrar error si NO se ha completado la recepción
+    if (receiveComplete) return;
+    if (!fileMeta) {
       setReceiverStatus('QR ya no disponible', 'waiting', 'QR expirado', 'Pide al emisor un nuevo código QR');
       document.getElementById('r-prog').style.display = 'none';
     }
   };
   ctrlWs.onclose = () => {
+    // Si ya completamos, ignorar el cierre (sender se va tras el envío)
     if (receiveComplete) return;
+    // Si tenemos blobs completos pero receiveComplete no se disparó (race condition),
+    // forzar la finalización ahora. Esto cubre el caso en que all_done se pierde
+    // porque el WS se cierra antes de procesarlo.
+    if (receivedBlobs.length > 0 && !fileMeta) {
+      onAllDone();
+      return;
+    }
     if (fileMeta && receivedSize < (fileMeta.size || 0)) {
       setReceiverStatus('Conexión cerrada', 'waiting', 'Conexión perdida', 'Pide al emisor un nuevo QR');
-    } else if (!fileMeta) {
+    } else if (!fileMeta && receivedBlobs.length === 0) {
       setReceiverStatus('QR ya no disponible', 'waiting', 'QR expirado', 'Pide al emisor un nuevo código QR');
       document.getElementById('r-prog').style.display = 'none';
     }
@@ -1548,14 +1558,18 @@ function addReceivedFileToList(meta, blob) {
   const div = document.createElement('div');
   div.className = 'rfile';
 
+  // Si es archivo único, no mostramos botón pequeño — onAllDone añadirá el botón grande.
+  // Solo en multi-archivo cada fila tiene su propio botón "Guardar".
+  const isSingleFile = rFileCount <= 1;
+
   let html = '<div class="rfile-row">'
     + '<span class="rfile-icon">' + icon + '</span>'
     + '<span class="rfile-name">' + meta.name + '</span>'
     + '<span class="rfile-size">' + fmtSize(meta.size) + '</span>';
 
-  if (blob) {
+  if (blob && !isSingleFile) {
     html += '<button class="rfile-dl" data-idx="' + idx + '">Guardar</button>';
-  } else {
+  } else if (!blob) {
     html += '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--green);">💾 disco</span>';
   }
   html += '</div>';
@@ -1568,7 +1582,7 @@ function addReceivedFileToList(meta, blob) {
 
   div.innerHTML = html;
 
-  // Bind download button
+  // Bind download button (solo existe en multi-archivo)
   const btn = div.querySelector('.rfile-dl');
   if (btn) {
     btn.addEventListener('click', () => downloadBlob(parseInt(btn.dataset.idx)));
@@ -1625,17 +1639,25 @@ function onAllDone() {
     : '¡Archivo recibido!';
   setReceiverStatus(label, 'done', title, fmtSize(rTotalSize) + ' transferidos');
 
+  const list = document.getElementById('r-files-list');
+
   if (receivedBlobs.length > 1) {
     // Multi-archivo — botón ZIP
-    const list = document.getElementById('r-files-list');
     const btn = document.createElement('button');
     btn.className = 'rfile-dlall';
     btn.textContent = 'Descargar todo en ZIP (' + receivedBlobs.length + ' archivos)';
     btn.addEventListener('click', downloadAllAsZip);
     list.appendChild(btn);
   } else if (receivedBlobs.length === 1) {
-    // Archivo único — descarga directa
-    downloadBlob(0);
+    // Archivo único — botón grande "Descargar" que requiere tap del usuario.
+    // No auto-descargamos porque iOS Safari bloquea descargas programáticas
+    // después del cierre del WebSocket, sobre todo para archivos .zip.
+    const item = receivedBlobs[0];
+    const btn = document.createElement('button');
+    btn.className = 'rfile-dlall';
+    btn.textContent = 'Descargar ' + item.name;
+    btn.addEventListener('click', () => downloadBlob(0));
+    list.appendChild(btn);
   }
 }
 
