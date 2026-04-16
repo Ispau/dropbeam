@@ -3,14 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DropBeam — AirDrop para cualquier dispositivo. Sin instalar nada.</title>
-<meta name="description" content="Transfiere archivos entre iPhone, Android, Windows o Mac al instante. Como AirDrop pero entre cualquier dispositivo — desde el navegador, sin cuenta, sin almacenamiento en servidores.">
-<meta name="keywords" content="airdrop alternativa, transferir archivos entre dispositivos, compartir archivos sin registro, enviar archivo del pc al movil, transferencia directa dispositivos, sin instalar nada">
-<meta property="og:title" content="DropBeam — AirDrop para cualquier dispositivo">
+<title>DropBeam — Transfiere archivos entre dispositivos al instante</title>
+<meta name="description" content="Transfiere archivos entre iPhone, Android, Windows o Mac al instante. Conexión directa entre dispositivos — desde el navegador, sin cuenta, sin almacenamiento en servidores.">
+<meta name="keywords" content="transferir archivos entre dispositivos, compartir archivos sin registro, enviar archivo del pc al movil, transferencia directa dispositivos, sin instalar nada, compartir fotos entre dispositivos">
+<meta property="og:title" content="DropBeam — Transfiere archivos entre dispositivos al instante">
 <meta property="og:description" content="Transfiere archivos entre iPhone, Android y PC en tiempo real. Sin almacenamiento en servidores. Sin cuenta. Sin instalar nada.">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="DropBeam — Transferencia directa entre dispositivos">
-<meta name="twitter:description" content="Como AirDrop pero para cualquier dispositivo. Desde el navegador, sin instalar nada, sin almacenamiento en servidores.">
+<meta name="twitter:description" content="Transfiere archivos entre cualquier dispositivo. Desde el navegador, sin instalar nada, sin almacenamiento en servidores.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"¿Cómo paso archivos del móvil al ordenador sin cable?","acceptedAnswer":{"@type":"Answer","text":"Abre DropBeam en el ordenador, arrastra el archivo o selecciónalo desde el móvil. Aparece un QR. Escanéalo con la cámara del otro dispositivo. El archivo llega directo, sin cables, sin apps, sin Bluetooth. Funciona con iPhone, Android, Windows, Mac y Linux."}},
+{"@type":"Question","name":"¿Funciona entre iPhone y Android?","acceptedAnswer":{"@type":"Answer","text":"Sí. Cualquier combinación: iPhone a Android, Android a PC, Mac a Windows, tablet a móvil. Lo único que necesitas es un navegador en cada dispositivo. No instalas nada en ninguno de los dos."}},
+{"@type":"Question","name":"¿Puedo enviar archivos grandes sin crear cuenta?","acceptedAnswer":{"@type":"Answer","text":"Sí. Sin registro, sin cuenta, sin límite fijo de tamaño. El archivo viaja directo entre dispositivos. Archivos de varios GB funcionan en ordenadores."}},
+{"@type":"Question","name":"¿Es seguro para documentos confidenciales?","acceptedAnswer":{"@type":"Answer","text":"El archivo va cifrado de punta a punta y nunca toca un servidor. No hay cuenta, no hay cookies, no hay tracking. Cuando cierras la pestaña, la sesión desaparece."}},
+{"@type":"Question","name":"¿En qué se diferencia de WeTransfer o Google Drive?","acceptedAnswer":{"@type":"Answer","text":"Ellos almacenan tus archivos en sus servidores. DropBeam no almacena nada: la transferencia es directa y en tiempo real. No necesitas cuenta, nadie tiene acceso a lo que envías, y todo desaparece cuando cierras la pestaña."}},
+{"@type":"Question","name":"¿Puedo compartir con varias personas a la vez?","acceptedAnswer":{"@type":"Answer","text":"Sí. Proyecta el QR o envía el enlace. Hasta 30 personas lo escanean y reciben el archivo a la vez. Útil en clase, en una reunión, o en cualquier sitio donde quieras distribuir algo al momento."}}
+]}
+</script>
 <style>
 @font-face{font-family:'Syne';src:url('fonts/Syne-Regular.woff2') format('woff2');font-weight:400;font-display:swap;}
 @font-face{font-family:'Syne';src:url('fonts/Syne-Bold.woff2') format('woff2');font-weight:700;font-display:swap;}
@@ -149,7 +159,8 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .rfile-dlall{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#000;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;padding:10px;border-radius:10px;border:none;cursor:pointer;transition:all .15s;}
 .rfile-dlall:hover{transform:translateY(-1px);box-shadow:0 0 20px rgba(0,229,255,0.2);}
 .rfile-dlall:active{transform:scale(.98);}
-#page-about,#page-faq{max-width:560px;}
+#page-about{max-width:720px;}
+#page-faq{max-width:640px;}
 .about-section{width:100%;display:flex;flex-direction:column;gap:14px;padding:8px 0;}
 .about-title{font-size:22px;font-weight:800;letter-spacing:-1px;text-align:center;line-height:1.1;margin-bottom:4px;}
 .about-title em{font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
@@ -160,6 +171,18 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .about-card-icon svg{width:16px;height:16px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .about-card-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;}
 .about-card-body strong{color:var(--text);}
+.usecase-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.usecase{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;}
+.usecase-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:2px;}
+.usecase-icon svg{width:14px;height:14px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.usecase-title{font-size:12px;font-weight:800;}
+.usecase-desc{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.6;}
+.steps-row{display:flex;gap:12px;width:100%;}
+.step{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.step-num{width:28px;height:28px;border-radius:50%;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.18);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;}
+.step-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.5;}
+.step-txt strong{color:var(--text);}
+@media(max-width:480px){.usecase-grid{grid-template-columns:1fr;}.steps-row{flex-direction:column;gap:16px;}}
 .disclaimer{width:100%;background:rgba(255,69,58,0.03);border:1px solid rgba(255,69,58,0.1);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;}
 .disclaimer-title{font-size:12px;font-weight:800;color:var(--red);display:flex;align-items:center;gap:6px;}
 .disclaimer-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.75;}
@@ -220,6 +243,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
         <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="share-link-url">-</span>
         <button id="share-link-btn" style="background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:all .15s;" onclick="copyShareLink()">Copiar enlace</button>
       </div>
+      <div id="mobile-tip" style="display:none;width:100%;align-items:center;justify-content:center;gap:8px;"><div class="sdot waiting" style="width:6px;height:6px;background:var(--warn);box-shadow:0 0 6px var(--warn);"></div><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);">No cierres esta ventana durante el envío</span></div>
       <!-- Countdown: visible en cuanto hay al menos 1 receptor conectado -->
       <div id="qr-countdown" style="display:none;width:100%;background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.14);border-radius:10px;padding:10px 14px;display:none;align-items:center;justify-content:space-between;gap:8px;">
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">QR disponible</span>
@@ -228,7 +252,6 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
       <div class="rcounter" id="rcounter" style="display:none;"><div class="rcounter-header"><div class="rcounter-label">Receptores</div><div class="rcounter-num" id="rcounter-num">0 conectados</div></div><div class="rcounter-list" id="rcounter-list"></div></div>
       <div class="status"><div class="sdot waiting" id="s-dot"></div><span id="s-status">Conectando...</span></div>
       <div class="prog-wrap" id="s-prog" style="display:none;"><div class="prog-bg"><div class="prog-fill" id="s-fill"></div></div><div class="prog-row"><div class="speed-txt" id="s-speed"></div><div class="prog-txt" id="s-prog-txt">0%</div></div></div>
-      <div id="mobile-tip" style="display:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;opacity:.7;">Mantén esta pantalla abierta durante el envío</div>
     </div>
     <button class="btn btn-ghost" onclick="resetApp()">← Compartir otro</button>
   </div>
@@ -254,17 +277,31 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 
 <div id="page-about" class="page">
   <div class="about-section">
-    <div><div class="about-title">Cómo funciona <em>DropBeam</em></div><p class="about-lead">Transferencia directa entre dispositivos. Sin servidores intermedios.</p></div>
+    <div><div class="about-title">Tus archivos llegan.<br><em>Al instante. Directo.</em></div><p class="about-lead">Arrastra, escanea, recibe. Tres segundos entre pulsar y tener el archivo en el otro dispositivo. Funciona entre iPhone, Android, Windows y Mac — desde el navegador.</p></div>
 
-    <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="13 2 13 9 20 9"/></svg></div>Conexión directa P2P</div><div class="about-card-body">Tus archivos van directamente de tu dispositivo al del receptor. <strong>Ningún servidor almacena ni tiene acceso al contenido.</strong> Si la conexión directa no es posible, se usa un relay cifrado.</div></div>
+    <!-- Casos de uso -->
+    <div class="usecase-grid">
+      <div class="usecase"><div class="usecase-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="usecase-title">Tu móvil ↔ tu ordenador</div><div class="usecase-desc">Fotos del iPhone al PC. PDFs del portátil a la tablet. Sin cable, sin Bluetooth, sin instalar nada en ninguno de los dos.</div></div>
+      <div class="usecase"><div class="usecase-icon" style="background:rgba(191,90,242,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent2);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="usecase-title">A quien tengas al lado</div><div class="usecase-desc">Fotos de la cena, el vídeo del viaje, un documento de trabajo. Se lo pasas en el momento. Sin subirlo a ningún sitio.</div></div>
+      <div class="usecase"><div class="usecase-icon" style="background:rgba(48,209,88,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--green);"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="usecase-title">Un QR, treinta receptores</div><div class="usecase-desc">Proyectas el QR en clase, en una reunión, en un evento. Todos escanean con el móvil. Todos reciben. Sin plataforma, sin login, sin esperas.</div></div>
+      <div class="usecase"><div class="usecase-icon" style="background:rgba(255,69,58,0.06);"><svg viewBox="0 0 24 24" style="stroke:var(--red);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="usecase-title">Información que no debe quedar en la nube</div><div class="usecase-desc">Contratos, datos médicos, credenciales. El archivo va directo al otro dispositivo. Nadie más lo ve. Nada se almacena en ningún servidor.</div></div>
+    </div>
 
-    <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(191,90,242,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent2);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>Cifrado en tránsito</div><div class="about-card-body">WebRTC cifra con <strong>DTLS</strong>. En modo relay, la conexión va por <strong>HTTPS/WSS</strong>. Nadie en la red puede leer lo que envías.</div></div>
+    <!-- Cómo funciona -->
+    <div style="width:100%;"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:12px;">Tres pasos. Cero fricción.</div>
+    <div class="steps-row">
+      <div class="step"><div class="step-num">1</div><div class="step-txt"><strong>Arrastra tu archivo</strong><br>Aparece un código QR en pantalla</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-txt"><strong>Escanea con el otro dispositivo</strong><br>Apunta la cámara al QR</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-txt"><strong>Ya lo tienes</strong><br>El archivo llega directo. Sin intermediarios.</div></div>
+    </div></div>
 
-    <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(48,209,88,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--green);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>Sin cuenta ni rastro</div><div class="about-card-body">No pedimos email, nombre ni nada. Cada sesión es efímera. <strong>Cuando cierras la pestaña, no queda ningún registro.</strong></div></div>
+    <!-- Privacidad y seguridad -->
+    <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>Directo y cifrado</div><div class="about-card-body">Tus archivos viajan de dispositivo a dispositivo con <strong>cifrado DTLS</strong>. Nadie en medio. Si la conexión directa no es posible, se usa un relay cifrado que tampoco almacena nada. El contenido nunca toca un servidor.</div></div>
 
-    <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>Sin cookies por diseño</div><div class="about-card-body">No usamos cookies porque <strong>arquitectónicamente no las necesitamos</strong>. Cero tracking. Cero banners. Por diseño.</div></div>
+    <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(48,209,88,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--green);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>Privacidad real, no un eslogan</div><div class="about-card-body">Sin cuenta. Sin cookies. Sin tracking. Sin almacenamiento. No es una promesa — es consecuencia de cómo está construido. DropBeam es una transferencia en vivo: cuando cierras la pestaña, la sesión desaparece. No queda rastro. Tus datos no entrenan ninguna IA.</div></div>
 
-    <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(191,90,242,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent2);"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>No entrena ninguna IA</div><div class="about-card-body">No vemos tus archivos. No podríamos usarlos aunque quisiéramos. <strong>Zero datos = zero entrenamiento.</strong></div></div>
+    <!-- CTA -->
+    <button class="btn btn-neon" onclick="showPage('app')" style="margin-top:4px;">Empezar a compartir →</button>
 
     <div class="disclaimer"><div class="disclaimer-title"><svg style="width:14px;height:14px;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Aviso legal</div><div class="disclaimer-body">DropBeam es un servicio de infraestructura técnica para la transferencia directa de archivos. <strong>No nos hacemos responsables del uso que los usuarios hagan del servicio.</strong><br><br>DropBeam no almacena, procesa ni tiene acceso al contenido transferido.<br><br><strong style="color:var(--muted);">AirDrop® es marca registrada de Apple Inc. DropBeam no está afiliado ni respaldado por Apple.</strong></div></div>
   </div>
@@ -274,23 +311,32 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
   <div class="about-section">
     <div><div class="about-title">Preguntas <em>frecuentes</em></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Cómo funciona?</button><div class="faq-a"><div class="faq-a-inner">Arrastras un archivo, se genera un QR. El receptor lo escanea con su cámara y recibe el archivo directamente desde tu dispositivo. No se almacena nada en servidores.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Cómo paso archivos del móvil al ordenador sin cable?</button><div class="faq-a"><div class="faq-a-inner">Abre DropBeam en el ordenador, arrastra el archivo (o selecciónalo desde el móvil). Aparece un QR. Escanéalo con la cámara del otro dispositivo. El archivo llega directo — sin cables, sin apps, sin Bluetooth. Funciona con iPhone, Android, Windows, Mac y Linux. Todo desde el navegador.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Funciona entre iPhone y Android?</button><div class="faq-a"><div class="faq-a-inner">Sí. DropBeam funciona en cualquier dispositivo con navegador: iPhone, Android, Windows, Mac, Linux. No necesitas instalar nada.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Funciona entre iPhone y Android?</button><div class="faq-a"><div class="faq-a-inner">Sí. Cualquier combinación: iPhone a Android, Android a PC, Mac a Windows, tablet a móvil. Lo único que necesitas es un navegador en cada dispositivo. No instalas nada en ninguno de los dos.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Hay límite de tamaño?</button><div class="faq-a"><div class="faq-a-inner">No hay un límite fijo. El archivo se transfiere directamente, así que depende de tu conexión y de la memoria disponible en el navegador. Archivos de varios GB funcionan sin problema.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Puedo enviar archivos grandes sin crear cuenta?</button><div class="faq-a"><div class="faq-a-inner">Sí. Sin registro, sin cuenta, sin límite fijo de tamaño. El archivo viaja directo entre dispositivos — no sube a ningún servidor. Archivos de varios GB funcionan en ordenadores. En móviles, el límite práctico es la memoria del navegador.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Puedo enviar varios archivos a la vez?</button><div class="faq-a"><div class="faq-a-inner">Sí. Puedes seleccionar o arrastrar varios archivos. Se envían secuencialmente y el receptor los ve en una lista con opción de descargar individualmente o todo en ZIP.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Puedo enviar varias fotos a la vez?</button><div class="faq-a"><div class="faq-a-inner">Hasta 10 archivos se envían individualmente — el receptor los ve en una lista y puede guardar cada uno o previsualizarlos. Más de 10 se comprimen en un ZIP automáticamente para que la transferencia sea más rápida y estable.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Cuánto tiempo dura el QR?</button><div class="faq-a"><div class="faq-a-inner">El QR es válido durante unos minutos. Cuando alguien lo escanea, se inicia un contador de 3 minutos para que más receptores puedan unirse. Pasado ese tiempo, la sesión se cierra automáticamente.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Tengo que mantener la pantalla abierta?</button><div class="faq-a"><div class="faq-a-inner">Sí. DropBeam es una transferencia en vivo. Los dos dispositivos tienen que estar conectados al mismo tiempo — como una llamada. Si cierras la pestaña, bloqueas la pantalla o cambias de app, la transferencia se corta. Eso es lo que hace que no se almacene nada en ningún sitio.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Qué archivos no se pueden enviar?</button><div class="faq-a"><div class="faq-a-inner">Por seguridad, DropBeam bloquea ejecutables (.exe, .bat, .sh, etc.), scripts, instaladores y archivos de Office con macros. Imágenes, documentos, PDFs, zips, vídeos y cualquier otro formato pasan sin problema.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Es seguro para documentos confidenciales?</button><div class="faq-a"><div class="faq-a-inner">El archivo va cifrado de punta a punta y nunca toca un servidor. No hay cuenta, no hay cookies, no hay tracking. Cuando cierras la pestaña, la sesión desaparece. No queda registro de que hayas enviado nada.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Funciona con Brave?</button><div class="faq-a"><div class="faq-a-inner">Brave bloquea WebRTC por defecto. Para usarlo necesitas ir a <strong>brave://settings/privacy</strong>, buscar <strong>WebRTC IP handling policy</strong> y seleccionar <strong>Default</strong>. Luego recarga la página.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Cuánto dura el código QR?</button><div class="faq-a"><div class="faq-a-inner">Unos minutos. Cuando alguien lo escanea, se inicia un contador de 3 minutos para que más personas puedan unirse. Después, la sesión se cierra sola. Si lo necesitas otra vez, generas uno nuevo en segundos.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>He compartido el QR por email y aparece un dispositivo conectado</button><div class="faq-a"><div class="faq-a-inner">Los servidores de correo corporativos (Outlook, Gmail empresarial) escanean automáticamente los enlaces de los emails entrantes para verificar que no son phishing. El bot del servidor abre la URL y eso genera una conexión momentánea. Es normal y no afecta al funcionamiento. Para evitarlo, comparte el QR por mensajería (WhatsApp, Telegram, Slack) en lugar de email.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Qué tipos de archivo acepta?</button><div class="faq-a"><div class="faq-a-inner">Fotos, vídeos, documentos, PDFs, música, archivos comprimidos — cualquier formato habitual. Lo único que DropBeam bloquea son ejecutables y scripts (.exe, .bat, .sh, etc.) para evitar la distribución de software malicioso.</div></div></div>
 
-    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Es realmente seguro?</button><div class="faq-a"><div class="faq-a-inner">DropBeam usa cifrado en tránsito (DTLS para P2P, WSS para relay). Los archivos nunca se almacenan en ningún servidor. No hay cuentas, no hay cookies, no hay tracking. Cada sesión es efímera y se destruye al cerrar la pestaña o al expirar el temporizador.</div></div></div>
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Puedo compartir con varias personas a la vez?</button><div class="faq-a"><div class="faq-a-inner">Sí. Proyecta el QR o envía el enlace. Hasta 30 personas lo escanean y reciben el archivo a la vez. Útil en clase, en una reunión, o en cualquier sitio donde quieras distribuir algo al momento.</div></div></div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿En qué se diferencia de WeTransfer o Google Drive?</button><div class="faq-a"><div class="faq-a-inner">Ellos almacenan tus archivos en sus servidores. Tú subes, el otro descarga después. DropBeam no almacena nada — la transferencia es directa y en tiempo real. No necesitas cuenta, nadie tiene acceso a lo que envías, y todo desaparece cuando cierras la pestaña. No compiten por lo mismo: ellos son un buzón. DropBeam es una entrega en mano.</div></div></div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>¿Funciona con Brave u otros navegadores?</button><div class="faq-a"><div class="faq-a-inner">Chrome, Safari, Firefox, Edge — todos funcionan. Brave bloquea WebRTC por defecto. Para habilitarlo: <strong>brave://settings/privacy</strong> → <strong>WebRTC IP handling policy</strong> → <strong>Default</strong>.</div></div></div>
+
+    <div class="faq-item" onclick="this.classList.toggle('open')"><button class="faq-q"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Envié el QR por email y aparece un dispositivo fantasma</button><div class="faq-a"><div class="faq-a-inner">Los servidores de correo corporativos (Outlook, Gmail empresarial) abren los enlaces automáticamente para verificar que no son phishing. Eso genera una conexión momentánea que desaparece en segundos. No afecta al funcionamiento. Para evitarlo, comparte el QR por WhatsApp, Telegram o Slack.</div></div></div>
+
+    <!-- CTA -->
+    <button class="btn btn-neon" onclick="showPage('app')" style="margin-top:8px;">Probarlo ahora →</button>
 
   </div>
 </div>
@@ -749,7 +795,7 @@ function setupSender() {
 
   // Mostrar tip en dispositivos táctiles (móvil/tablet)
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    document.getElementById('mobile-tip').style.display = 'block';
+    document.getElementById('mobile-tip').style.display = 'flex';
   }
 
   // Reset estado
