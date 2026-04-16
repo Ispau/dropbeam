@@ -253,7 +253,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 
 <div id="page-about" class="page">
   <div class="about-section">
-    <div><div class="about-title">Cómo funciona <em>DropBeam</em></div><p class="about-lead">Transferencia directa entre dispositivos. Sin servidores intermedios.</p></div>
+    <div><div class="about-title">Cómo funciona <em>DropBeam v6</em></div><p class="about-lead">Transferencia directa entre dispositivos. Sin servidores intermedios.</p></div>
 
     <div class="about-card"><div class="about-card-head"><div class="about-card-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="13 2 13 9 20 9"/></svg></div>Conexión directa P2P</div><div class="about-card-body">Tus archivos van directamente de tu dispositivo al del receptor. <strong>Ningún servidor almacena ni tiene acceso al contenido.</strong> Si la conexión directa no es posible, se usa un relay cifrado.</div></div>
 
@@ -356,6 +356,25 @@ let sessionDone = false;
 let selectedFiles = [];
 let senderConns  = {};  // { cid: { progress, done, mode:'pending'|'p2p'|'relay' } }
 let relaySending = false;  // true mientras hay un envío relay en curso
+let senderPaused = false;  // true cuando el servidor pidió pausar (flow control)
+let flowResumeResolvers = []; // promesas esperando un 'resume' del servidor
+
+// Esperar a que el servidor envíe 'resume' (o timeout de seguridad)
+// Si senderPaused no está activo, retorna inmediatamente.
+function waitForFlowResume() {
+  if (!senderPaused) return Promise.resolve();
+  return new Promise(resolve => {
+    flowResumeResolvers.push(resolve);
+    // Safety: nunca esperar más de 30s — si el servidor no responde, continuar
+    setTimeout(() => {
+      const idx = flowResumeResolvers.indexOf(resolve);
+      if (idx >= 0) {
+        flowResumeResolvers.splice(idx, 1);
+        resolve();
+      }
+    }, 30000);
+  });
+}
 
 // Estado receptor
 let fileMeta     = null;
@@ -463,6 +482,10 @@ function fmtSpeed(bps){if(bps<1024)return'<1 KB/s';if(bps<1048576)return(bps/102
 function fileIcon(n){if(!n)return'🔗';const e=n.split('.').pop().toLowerCase();return({jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',svg:'🖼️',heic:'🖼️',avif:'🖼️',mp4:'🎬',mov:'🎬',avi:'🎬',mkv:'🎬',webm:'🎬',mp3:'🎵',wav:'🎵',flac:'🎵',aac:'🎵',ogg:'🎵',pdf:'📕',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',ppt:'📋',pptx:'📋',zip:'🗜️',rar:'🗜️','7z':'🗜️',tar:'🗜️',gz:'🗜️',js:'⚙️',ts:'⚙️',py:'🐍',html:'🌐',css:'🎨',txt:'📄',md:'📄',json:'📋'}[e])||'📦';}
 function isImage(n){return['jpg','jpeg','png','gif','webp','svg','heic','avif'].includes(n?.split('.').pop().toLowerCase());}
 function uid(){return Math.random().toString(36).slice(2,10);}
+
+// Debug logs — activar con ?debug=1 en URL
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+function dbg(...args) { if (DEBUG) console.log('[DropBeam]', ...args); }
 
 function copyShareLink() {
   const url = document.getElementById('share-link').dataset.url;
@@ -852,6 +875,24 @@ function setupSenderWithRoom(roomId, token) {
       setSenderStatus('Archivo bloqueado: ' + (msg.name || 'tipo no permitido'), 'waiting');
     }
 
+    // ── Control de flujo desde servidor ──
+    // El servidor monitoriza el buffer de los receptores y pausa/reanuda al sender
+    // cuando algún receptor se satura. Esto evita expulsiones y acumulación de memoria.
+    if (msg.type === 'pause') {
+      senderPaused = true;
+      dbg('flow pause');
+    }
+    if (msg.type === 'resume') {
+      senderPaused = false;
+      dbg('flow resume');
+      // Despertar cualquier bucle de envío que estuviera esperando
+      if (flowResumeResolvers.length) {
+        const resolvers = flowResumeResolvers.slice();
+        flowResumeResolvers.length = 0;
+        resolvers.forEach(r => r());
+      }
+    }
+
     if (msg.type === 'partner_left' && !sessionDone) {
       // Limpiar la entrada de este receptor si no completó
       if (msg.rcvId) {
@@ -1128,6 +1169,12 @@ function sendRelay(cid) {
         sendNextFile();
         return;
       }
+      // Control de flujo: si el servidor pidió pause, esperar a resume
+      if (senderPaused) {
+        waitForFlowResume().then(next);
+        return;
+      }
+      // Backpressure local (buffer del WebSocket del sender)
       if (ctrlWs.bufferedAmount > BUF_HIGH * 2) { setTimeout(next, 20); return; }
       reader.readAsArrayBuffer(file.slice(off, off + CHUNK));
     }
@@ -1335,7 +1382,7 @@ function initReceiver(roomId, token) {
     // Los chunks binarios ya se manejan arriba
     if (msg.type === 'metadata') onRelayMeta(msg);
     if (msg.type === 'done')     onRelayDone();
-    if (msg.type === 'all_done') { if (!receiveComplete) onAllDone(); }
+    if (msg.type === 'all_done') { dbg('all_done received', { receiveComplete, blobs: receivedBlobs.length }); if (!receiveComplete) onAllDone(); }
     if (msg.type === 'partner_left') {
       if (fileMeta && receivedSize < fileMeta.size) {
         setReceiverStatus('Emisor desconectado', 'waiting', 'Conexión perdida', 'Pide al emisor un nuevo QR');
@@ -1351,16 +1398,27 @@ function initReceiver(roomId, token) {
       document.getElementById('r-prog').style.display = 'none';
     }
   };
-  ctrlWs.onclose = () => {
+  ctrlWs.onclose = (ev) => {
+    dbg('ctrlWs.onclose', { receiveComplete, fileMeta: !!fileMeta, receivedSize, expected: fileMeta?.size, blobs: receivedBlobs.length, code: ev.code, reason: ev.reason });
     // Si ya completamos, ignorar el cierre (sender se va tras el envío)
     if (receiveComplete) return;
-    // Si tenemos blobs completos pero receiveComplete no se disparó (race condition),
-    // forzar la finalización ahora. Esto cubre el caso en que all_done se pierde
-    // porque el WS se cierra antes de procesarlo.
+
+    // Recuperación 1: tenemos blobs completos pero receiveComplete no se disparó
+    // porque all_done se perdió — forzar finalización
     if (receivedBlobs.length > 0 && !fileMeta) {
       onAllDone();
       return;
     }
+
+    // Recuperación 2: tenemos fileMeta y todos los bytes esperados pero 'done' no llegó
+    // (el WS se cerró entre el último chunk y el mensaje done) — finalizar archivo actual
+    if (fileMeta && fileMeta.size > 0 && receivedSize >= fileMeta.size) {
+      finalizeCurrentFile();
+      // afterFileReceived → onAllDone marca receiveComplete
+      if (receiveComplete) return;
+    }
+
+    // Si solo estamos a mitad de un archivo, mostrar error real
     if (fileMeta && receivedSize < (fileMeta.size || 0)) {
       setReceiverStatus('Conexión cerrada', 'waiting', 'Conexión perdida', 'Pide al emisor un nuevo QR');
     } else if (!fileMeta && receivedBlobs.length === 0) {
@@ -1459,8 +1517,10 @@ function onRelayChunk(buf) {
   accumChunk(buf);
 }
 function onRelayDone() {
+  dbg('onRelayDone', { fileMeta, receivedSize, expected: fileMeta?.size, receiveComplete });
   if (receiveComplete) return;
   finalizeCurrentFile();
+  dbg('onRelayDone after finalize', { receiveComplete, receivedBlobs: receivedBlobs.length });
 }
 
 // ── Estado compartido de recepción multi-archivo ──
@@ -1672,6 +1732,13 @@ function resetState() {
   p2pConn = null; p2pActive = false; relayMode = false; sessionDone = false;
   senderConns = {};
   relaySending = false;
+  // Resetear control de flujo y despertar waiters pendientes
+  senderPaused = false;
+  if (flowResumeResolvers.length) {
+    const resolvers = flowResumeResolvers.slice();
+    flowResumeResolvers.length = 0;
+    resolvers.forEach(r => r());
+  }
   fileMeta = null; receivedChunks = []; receivedSize = 0; fileWriter = null;
   receiveComplete = false;
   rFileCount = 0; rFilesReceived = 0; rTotalSize = 0;
