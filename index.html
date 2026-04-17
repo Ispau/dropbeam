@@ -211,7 +211,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <body>
 
 <header>
-  <div class="logo"><div class="logo-beam"></div>DropBeam</div>
+  <div class="logo" onclick="resetApp();showPage('app');" style="cursor:pointer;"><div class="logo-beam"></div>DropBeam</div>
   <button class="hamburger" onclick="document.querySelector('.nav').classList.toggle('open')"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
   <nav class="nav">
     <button class="nav-btn active" onclick="showPage('app');document.querySelector('.nav').classList.remove('open')">Home</button>
@@ -257,6 +257,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
       <div class="rcounter" id="rcounter" style="display:none;"><div class="rcounter-header"><div class="rcounter-label">Receptores</div><div class="rcounter-num" id="rcounter-num">0 conectados</div></div><div class="rcounter-list" id="rcounter-list"></div></div>
       <div class="status"><div class="sdot waiting" id="s-dot"></div><span id="s-status">Conectando...</span></div>
       <div class="prog-wrap" id="s-prog" style="display:none;"><div class="prog-bg"><div class="prog-fill" id="s-fill"></div></div><div class="prog-row"><div class="speed-txt" id="s-speed"></div><div class="prog-txt" id="s-prog-txt">0%</div></div></div>
+      <button id="s-reload" class="btn btn-neon" style="display:none;" onclick="location.reload()"><svg class="icon-inline" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--accent);"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Reiniciar</button>
     </div>
     <button class="btn btn-ghost" onclick="resetApp()">← Compartir otro</button>
   </div>
@@ -276,6 +277,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
       <div id="r-files-list" style="display:none;width:100%;flex-direction:column;gap:6px;"></div>
       <div class="prog-wrap" id="r-prog"><div class="prog-bg"><div class="prog-fill" id="r-fill"></div></div><div class="prog-row"><div class="speed-txt" id="r-speed"></div><div class="prog-txt" id="r-prog-txt">Conectando...</div></div></div>
       <div class="status"><div class="sdot waiting" id="r-dot"></div><span id="r-status">Buscando al emisor...</span></div>
+      <button id="r-reload" class="btn btn-neon" style="display:none;" onclick="location.reload()"><svg class="icon-inline" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--accent);"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Reiniciar</button>
     </div>
   </div>
 </div>
@@ -594,8 +596,22 @@ function showPage(n){document.querySelectorAll('.page').forEach(p=>{p.classList.
 function showScreen(id){document.querySelectorAll('#page-app .screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function switchTab(t){document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(t==='file'&&i===0)||(t==='text'&&i===1)));document.getElementById('tab-file').style.display=t==='file'?'block':'none';document.getElementById('tab-text').style.display=t==='text'?'block':'none';}
 
-function setSenderStatus(txt, dot){document.getElementById('s-status').textContent=txt;if(dot)document.getElementById('s-dot').className='sdot '+dot;}
-function setReceiverStatus(txt, dot, title, sub){if(txt)document.getElementById('r-status').textContent=txt;if(dot)document.getElementById('r-dot').className='sdot '+dot;if(title)document.getElementById('r-title').textContent=title;if(sub!==undefined)document.getElementById('r-sub').textContent=sub;}
+function setSenderStatus(txt, dot){
+  document.getElementById('s-status').textContent=txt;
+  if(dot)document.getElementById('s-dot').className='sdot '+dot;
+}
+function setReceiverStatus(txt, dot, title, sub){
+  if(txt)document.getElementById('r-status').textContent=txt;
+  if(dot)document.getElementById('r-dot').className='sdot '+dot;
+  if(title)document.getElementById('r-title').textContent=title;
+  if(sub!==undefined)document.getElementById('r-sub').textContent=sub;
+}
+// Mostrar botón reiniciar en caso de error irrecuperable
+function showReload(side) {
+  const id = side === 'sender' ? 's-reload' : 'r-reload';
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'inline-flex';
+}
 
 // ── WebSocket send helper ──
 function wsSend(data){
@@ -1040,6 +1056,7 @@ function setupSenderWithRoom(roomId, token) {
     function tryReconnect() {
       if (sessionDone || retries >= 5) {
         setSenderStatus('Sin conexión con servidor — recarga la página', 'waiting');
+        showReload('sender');
         return;
       }
       retries++;
@@ -1400,6 +1417,7 @@ function initReceiver(roomId, token) {
 
   if (!token) {
     setReceiverStatus('QR no válido', 'waiting', 'Enlace incompleto', 'Pide al emisor un nuevo código QR');
+    showReload('receiver');
     document.getElementById('r-prog').style.display = 'none';
     return;
   }
@@ -1424,6 +1442,7 @@ function initReceiver(roomId, token) {
     let msg;
     try { msg = JSON.parse(e.data); } catch { return; }
 
+      showReload('receiver');
     if (msg.type === 'room_expired') {
       setReceiverStatus('QR ya no disponible', 'waiting', 'QR expirado', 'Pide al emisor un nuevo código QR');
       document.getElementById('r-prog').style.display = 'none';
@@ -1433,18 +1452,21 @@ function initReceiver(roomId, token) {
     if (msg.type === 'invalid_token') {
       setReceiverStatus('Token no válido', 'waiting', 'Acceso denegado', 'Este enlace no es válido');
       document.getElementById('r-prog').style.display = 'none';
+      showReload('receiver');
       return;
     }
 
     if (msg.type === 'evicted') {
       setReceiverStatus('Conexión demasiado lenta', 'waiting', 'Desconectado', 'Tu conexión no pudo mantener el ritmo — pide un nuevo QR');
       document.getElementById('r-prog').style.display = 'none';
+      showReload('receiver');
       return;
     }
 
     if (msg.type === 'room_full') {
       setReceiverStatus('Sala llena', 'waiting', 'Demasiados receptores', 'Espera a que termine y pide un nuevo QR');
       document.getElementById('r-prog').style.display = 'none';
+      showReload('receiver');
       return;
     }
 
@@ -1478,16 +1500,17 @@ function initReceiver(roomId, token) {
     if (msg.type === 'partner_left') {
       if (fileMeta && receivedSize < fileMeta.size) {
         setReceiverStatus('Emisor desconectado', 'waiting', 'Conexión perdida', 'Pide al emisor un nuevo QR');
+        showReload('receiver');
       }
     }
   };
 
   ctrlWs.onerror = () => {
-    // Solo mostrar error si NO se ha completado la recepción
     if (receiveComplete) return;
     if (!fileMeta) {
       setReceiverStatus('QR ya no disponible', 'waiting', 'QR expirado', 'Pide al emisor un nuevo código QR');
       document.getElementById('r-prog').style.display = 'none';
+      showReload('receiver');
     }
   };
   ctrlWs.onclose = (ev) => {
@@ -1513,9 +1536,11 @@ function initReceiver(roomId, token) {
     // Si solo estamos a mitad de un archivo, mostrar error real
     if (fileMeta && receivedSize < (fileMeta.size || 0)) {
       setReceiverStatus('Conexión cerrada', 'waiting', 'Conexión perdida', 'Pide al emisor un nuevo QR');
+      showReload('receiver');
     } else if (!fileMeta && receivedBlobs.length === 0) {
       setReceiverStatus('QR ya no disponible', 'waiting', 'QR expirado', 'Pide al emisor un nuevo código QR');
       document.getElementById('r-prog').style.display = 'none';
+      showReload('receiver');
     }
   };
 }
@@ -1815,6 +1840,15 @@ function onAllDone() {
     btn.addEventListener('click', () => downloadBlob(0));
     list.appendChild(btn);
   }
+
+  // Botón para que el receptor pueda usar DropBeam él también
+  const goBtn = document.createElement('button');
+  goBtn.className = 'btn btn-neon';
+  goBtn.style.marginTop = '6px';
+  goBtn.style.width = '100%';
+  goBtn.innerHTML = '<svg class="icon-inline" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--accent);"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Compartir archivos';
+  goBtn.addEventListener('click', () => { window.location.href = location.pathname; });
+  list.appendChild(goBtn);
 }
 
 // ════════════════════════════════════════
