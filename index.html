@@ -52,7 +52,11 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .screen{display:none;flex-direction:column;align-items:center;}
 .screen.active{display:flex;animation:fadeUp .3s cubic-bezier(.16,1,.3,1);}
 
-#s-drop{gap:20px;max-width:520px;width:100%;}
+#s-drop{gap:20px;max-width:580px;width:100%;}
+.hamburger{display:none;background:transparent;border:none;cursor:pointer;padding:6px;}
+.hamburger svg{width:22px;height:22px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;}
+.hamburger:hover svg{stroke:var(--text);}
+@media(max-width:540px){.nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--s1);border-bottom:1px solid var(--border);flex-direction:column;padding:8px 16px;gap:4px;z-index:200;}.nav.open{display:flex;}.nav-btn{text-align:left;padding:10px 14px;}.hamburger{display:block;}.chip{display:none;}}
 .brave-warn{display:none;width:100%;background:rgba(255,214,10,0.04);border:1px solid rgba(255,214,10,0.18);border-radius:12px;padding:16px 18px;flex-direction:column;gap:8px;}
 .brave-warn.show{display:flex;}
 .brave-title{font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px;}
@@ -182,7 +186,7 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .step-num{width:28px;height:28px;border-radius:50%;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.18);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;}
 .step-txt{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.5;}
 .step-txt strong{color:var(--text);}
-@media(max-width:480px){.usecase-grid{grid-template-columns:1fr;}.steps-row{flex-direction:column;gap:16px;}}
+@media(max-width:540px){.usecase-grid{grid-template-columns:1fr;}.steps-row{flex-direction:column;gap:16px;}}
 .disclaimer{width:100%;background:rgba(255,69,58,0.03);border:1px solid rgba(255,69,58,0.1);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;}
 .disclaimer-title{font-size:12px;font-weight:800;color:var(--red);display:flex;align-items:center;gap:6px;}
 .disclaimer-body{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.75;}
@@ -201,17 +205,18 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 #s-receiver{gap:20px;max-width:400px;width:100%;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @media(max-width:768px){.cmp{grid-template-columns:1fr;}}
-@media(max-width:480px){header{padding:12px 16px;}.chip{display:none;}main{padding:20px 12px;}.card{padding:16px 12px;border-radius:18px;}.drop-zone{padding:36px 16px;}.tab{font-size:12px;padding:10px 6px;}.feats{gap:6px;}.feat{font-size:10px;}#qr-box{min-width:170px;min-height:170px;}.nav-btn{font-size:12px;padding:5px 10px;}footer{padding:10px 16px;}.foot{font-size:10px;gap:8px;}.foot-sep{display:none;}}
+@media(max-width:480px){header{padding:12px 16px;}main{padding:20px 12px;}.card{padding:16px 12px;border-radius:18px;}.drop-zone{padding:36px 16px;}.tab{font-size:12px;padding:10px 6px;}.feats{gap:6px;}.feat{font-size:10px;}#qr-box{min-width:170px;min-height:170px;}footer{padding:10px 16px;}.foot{font-size:10px;gap:8px;}.foot-sep{display:none;}}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo"><div class="logo-beam"></div>DropBeam</div>
+  <button class="hamburger" onclick="document.querySelector('.nav').classList.toggle('open')"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
   <nav class="nav">
-    <button class="nav-btn active" onclick="showPage('app')">Home</button>
-    <button class="nav-btn" onclick="showPage('about')">Acerca de</button>
-    <button class="nav-btn" onclick="showPage('faq')">FAQ</button>
+    <button class="nav-btn active" onclick="showPage('app');document.querySelector('.nav').classList.remove('open')">Home</button>
+    <button class="nav-btn" onclick="showPage('about');document.querySelector('.nav').classList.remove('open')">Acerca de</button>
+    <button class="nav-btn" onclick="showPage('faq');document.querySelector('.nav').classList.remove('open')">FAQ</button>
   </nav>
   <div class="chip">P2P · CIFRADO</div>
 </header>
@@ -234,7 +239,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
     <div class="feats"><div class="feat">Sin instalar nada</div><div class="feat">iPhone · Android · Windows · Mac</div><div class="feat">Sin cuenta ni registro</div><div class="feat">Varios receptores a la vez</div></div>
   </div>
 
-  <div id="s-qr" class="screen" style="gap:20px;max-width:460px;width:100%;">
+  <div id="s-qr" class="screen" style="gap:20px;max-width:520px;width:100%;">
     <div style="text-align:center;"><h2 style="font-size:22px;font-weight:800;letter-spacing:-1px;">Escanea para recibir</h2><p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;">Transferencia directa · sin almacenamiento · cifrado en tránsito</p></div>
     <div class="card">
       <div class="fstrip" id="s-strip"><div class="ficon" id="s-icon">📄</div><div class="fdet"><div class="fname" id="s-name">-</div><div class="fsize" id="s-size">-</div></div></div>
@@ -277,11 +282,11 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 
 <div id="page-about" class="page">
   <div class="about-section">
-    <div><div class="about-title">Tus archivos llegan.<br><em>Al instante. Directo.</em></div><p class="about-lead">Arrastra, escanea, recibe. Tres segundos entre pulsar y tener el archivo en el otro dispositivo. Funciona entre iPhone, Android, Windows y Mac — desde el navegador.</p></div>
+    <div><div class="about-title">Tus archivos llegan.<br><em>Al instante. Directo.</em></div><p class="about-lead">Arrastra, escanea, recibe. En segundos tienes el archivo en el otro dispositivo. Funciona entre iPhone, Android, Windows y Mac — desde el navegador.</p></div>
 
     <!-- Casos de uso -->
     <div class="usecase-grid">
-      <div class="usecase"><div class="usecase-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="usecase-title">Tu móvil ↔ tu ordenador</div><div class="usecase-desc">Fotos del iPhone al PC. PDFs del portátil a la tablet. Sin cable, sin Bluetooth, sin instalar nada en ninguno de los dos.</div></div>
+      <div class="usecase"><div class="usecase-icon" style="background:rgba(0,229,255,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div><div class="usecase-title">Tu ordenador ↔ tu móvil</div><div class="usecase-desc">Pasa del PC al móvil en segundos. Perfecto para publicar en Instagram, TikTok o YouTube. Sin cable, sin Bluetooth, sin instalar nada.</div></div>
       <div class="usecase"><div class="usecase-icon" style="background:rgba(191,90,242,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--accent2);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="usecase-title">A quien tengas al lado</div><div class="usecase-desc">Fotos de la cena, el vídeo del viaje, un documento de trabajo. Se lo pasas en el momento. Sin subirlo a ningún sitio.</div></div>
       <div class="usecase"><div class="usecase-icon" style="background:rgba(48,209,88,0.08);"><svg viewBox="0 0 24 24" style="stroke:var(--green);"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="usecase-title">Un QR, treinta receptores</div><div class="usecase-desc">Proyectas el QR en clase, en una reunión, en un evento. Todos escanean con el móvil. Todos reciben. Sin plataforma, sin login, sin esperas.</div></div>
       <div class="usecase"><div class="usecase-icon" style="background:rgba(255,69,58,0.06);"><svg viewBox="0 0 24 24" style="stroke:var(--red);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="usecase-title">Información que no debe quedar en la nube</div><div class="usecase-desc">Contratos, datos médicos, credenciales. El archivo va directo al otro dispositivo. Nadie más lo ve. Nada se almacena en ningún servidor.</div></div>
@@ -303,7 +308,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
     <!-- CTA -->
     <button class="btn btn-neon" onclick="showPage('app')" style="margin-top:4px;">Empezar a compartir →</button>
 
-    <div class="disclaimer"><div class="disclaimer-title"><svg style="width:14px;height:14px;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Aviso legal</div><div class="disclaimer-body">DropBeam es un servicio de infraestructura técnica para la transferencia directa de archivos. <strong>No nos hacemos responsables del uso que los usuarios hagan del servicio.</strong><br><br>DropBeam no almacena, procesa ni tiene acceso al contenido transferido.</div></div>
+    <div class="disclaimer"><div class="disclaimer-title"><svg style="width:14px;height:14px;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Aviso legal</div><div class="disclaimer-body">DropBeam es un servicio de infraestructura técnica para la transferencia directa de archivos. <strong>No nos hacemos responsables del uso que los usuarios hagan del servicio.</strong><br><br>DropBeam no almacena, procesa ni tiene acceso al contenido transferido.<br><br><strong style="color:var(--muted);">AirDrop® es marca registrada de Apple Inc. DropBeam no está afiliado ni respaldado por Apple.</strong></div></div>
   </div>
 </div>
 
@@ -553,7 +558,21 @@ function copyShareLink() {
   });
 }
 
-async function detectBrave(){try{const b=navigator.brave?await navigator.brave.isBrave().catch(()=>false):/Brave/.test(navigator.userAgent);if(b)document.getElementById('brave-warn')?.classList.add('show');}catch(e){}}
+async function detectBrave(){
+  try{
+    const isBrave = navigator.brave ? await navigator.brave.isBrave().catch(()=>false) : /Brave/.test(navigator.userAgent);
+    if (!isBrave) return;
+    // Brave detectado — pero solo avisar si WebRTC está bloqueado.
+    // Intentamos crear un RTCPeerConnection. Si falla, WebRTC está deshabilitado.
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [] });
+      pc.close();
+      // WebRTC funciona en Brave — no mostrar warning
+    } catch(e) {
+      document.getElementById('brave-warn')?.classList.add('show');
+    }
+  }catch(e){}
+}
 
 // ── Wake Lock — mantener pantalla activa durante transferencia ──
 // Falla silenciosamente si el navegador no lo soporta (Safari <16.4, Firefox, etc.)
