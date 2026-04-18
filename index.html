@@ -930,10 +930,10 @@ function setupSenderWithRoom(roomId, token) {
 
         conn.on('open', () => {
           p2pActive = true;
-          setSenderStatus('1 receptor conectado (P2P directo)...', 'connected');
+          setSenderStatus('Receptor conectado', 'connected');
           updateRC();
           document.getElementById('s-prog').style.display = 'flex';
-          setSenderStatus('Enviando (P2P)...', 'sending');
+          setSenderStatus('Enviando...', 'sending');
           sendP2P(conn, cid);
         });
 
@@ -980,7 +980,7 @@ function setupSenderWithRoom(roomId, token) {
       senderConns[cid] = { progress: 0, done: false, mode: 'pending', rcvId };
       senderConns[cid]._pending = true;
       updateRC();
-      setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
+      setSenderStatus('Receptor conectado — preparando envío...', 'connected');
       if (relayMode) {
         wsSend({ type: 'sender_ready', peerId: null });
       } else if (peer?.id) {
@@ -1099,7 +1099,7 @@ function setupSenderWithRoom(roomId, token) {
               senderConns[cid] = { progress: 0, done: false, mode: 'pending', _pending: true, rcvId };
               updateRC();
             }
-            setSenderStatus('Receptor conectado — estableciendo canal...', 'connected');
+            setSenderStatus('Receptor conectado — preparando envío...', 'connected');
             if (ws2.readyState === 1) {
               ws2.send(JSON.stringify({ type: 'sender_ready', peerId: null }));
             }
@@ -1170,7 +1170,7 @@ function activateSenderRelay() {
 
   relaySending = true;
   document.getElementById('s-prog').style.display = 'flex';
-  setSenderStatus('Enviando (relay)...', 'sending');
+  setSenderStatus('Enviando...', 'sending');
   sendRelay(cid);
 }
 
@@ -1420,7 +1420,7 @@ function updateRC() {
     const icon = rec.done ? '✅' : rec.progress > 0 ? '📥' : '📱';
     const pct  = rec.done ? '✓' : rec.progress > 0 ? rec.progress + '%' : '...';
     const lbl  = rec.mode === 'pending' ? 'Dispositivo 〔conectando〕'
-               : rec.mode === 'relay'   ? 'Dispositivo 〔relay〕'
+               : rec.mode === 'relay'   ? 'Dispositivo'
                : 'Dispositivo';
     return `<div class="rcounter-item"><div class="rcounter-icon">${icon}</div><div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between"><div class="rcounter-name">${lbl}</div><div class="rcounter-pct">${pct}</div></div><div class="rcounter-bar"><div class="rcounter-fill" style="width:${rec.progress}%"></div></div></div></div>`;
   }).join('');
@@ -1467,10 +1467,10 @@ function initReceiverConnect(roomId, token) {
     let msg;
     try { msg = JSON.parse(e.data); } catch { return; }
 
-      showReload('receiver');
     if (msg.type === 'room_expired') {
       setReceiverStatus('QR ya no disponible', 'waiting', 'QR expirado', 'Pide al emisor un nuevo código QR');
       document.getElementById('r-prog').style.display = 'none';
+      showReload('receiver');
       return;
     }
 
@@ -1572,7 +1572,7 @@ function initReceiverConnect(roomId, token) {
 
 // ── Intento P2P desde receiver ──
 function attemptP2P(senderId) {
-  setReceiverStatus('Intentando conexión P2P...', 'waiting', 'Conectando...', 'Probando P2P directo');
+  setReceiverStatus('Estableciendo conexión...', 'waiting', 'Conectando...', 'Buscando la mejor ruta');
 
   peer = new Peer({ config: ICE_CFG });
 
@@ -1594,7 +1594,7 @@ function attemptP2P(senderId) {
     conn.on('open', () => {
       clearTimeout(connTimeout);
       p2pActive = true;
-      setReceiverStatus('Conectado — esperando archivo...', 'connected', 'Conectado ✓', 'Canal P2P cifrado activo');
+      setReceiverStatus('Conectado — esperando archivo...', 'connected', 'Conectado ✓', 'Canal cifrado activo');
     });
 
     conn.on('data', data => {
@@ -1627,7 +1627,7 @@ function activateReceiverRelay() {
   relayMode = true;
   p2pActive = false;
   if (peer) { try { peer.destroy(); } catch(e) {} peer = null; }
-  setReceiverStatus('Conectado — esperando archivo...', 'connected', 'Conectado ✓', 'Canal relay activo');
+  setReceiverStatus('Conectado — esperando archivo...', 'connected', 'Conectado ✓', 'Canal cifrado activo');
 }
 
 // ════════════════════════════════════════
