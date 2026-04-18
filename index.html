@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>DropBeam — Transfiere archivos entre dispositivos al instante</title>
 <meta name="description" content="Transfiere archivos entre iPhone, Android, Windows o Mac al instante. Conexión directa entre dispositivos — desde el navegador, sin cuenta, sin almacenamiento en servidores.">
 <meta name="keywords" content="transferir archivos entre dispositivos, compartir archivos sin registro, enviar archivo del pc al movil, transferencia directa dispositivos, sin instalar nada, compartir fotos entre dispositivos">
@@ -225,7 +228,7 @@ footer{position:relative;z-index:10;padding:12px 32px;border-top:1px solid var(-
 <div id="page-app" class="page active">
   <div id="s-drop" class="screen active">
     <div style="text-align:center;margin-bottom:4px;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px;"><div class="logo-beam" style="width:30px;height:7px;"></div><span style="font-size:26px;font-weight:800;letter-spacing:-1px;">DropBeam</span></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px;"><div class="logo-beam" style="width:30px;height:7px;"></div><span style="font-size:26px;font-weight:800;letter-spacing:-1px;">DropBeam</span><button onclick="location.reload()" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;transition:all .15s;" title="Reiniciar"><svg style="width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button></div>
       <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);">Transfiere archivos entre dispositivos</p>
     </div>
     <div class="brave-warn" id="brave-warn"><div class="brave-title">⚠️ Brave detectado</div><div class="brave-steps">Brave bloquea WebRTC por defecto. Para activarlo:<br>1 · Ve a <code>brave://settings/privacy</code><br>2 · Busca <code>WebRTC IP handling policy</code> → selecciona <code>Default</code><br>3 · Recarga esta página</div></div>
@@ -510,8 +513,14 @@ function showCapWarning(warnings) {
   el.style.display = 'flex';
 }
 
-// Precalentamiento: despierta el servidor al cargar la página
-fetch(SERVER_URL + '/ping').catch(() => {});
+// Precalentamiento: despierta el servidor al cargar la página.
+// Guardamos la promesa para que setupSender pueda esperarla antes de crear la sala.
+// Timeout de 10s — si Render no responde, seguimos igualmente.
+let serverReady = false;
+const warmupPromise = Promise.race([
+  fetch(SERVER_URL + '/ping').then(() => { serverReady = true; }).catch(() => {}),
+  new Promise(resolve => setTimeout(resolve, 10000))
+]);
 detectBrave();
 
 // Check de capacidades ANTES de inicializar nada
@@ -836,8 +845,16 @@ function setupSender() {
   // Reset estado
   resetState();
 
-  // ── PASO 1: Crear sala con token en el servidor ──
-  fetch(SERVER_URL + '/room', { method: 'POST' })
+  // ── PASO 1: Esperar a que el servidor esté despierto, luego crear sala ──
+  // Render Free tier duerme el servidor tras 15min de inactividad.
+  // El warmup se lanzó al cargar la página. Esperamos a que responda antes
+  // de crear la sala — así evitamos "QR expirado" por cold start.
+  warmupPromise.then(() => {
+    if (!serverReady) {
+      setSenderStatus('Despertando servidor...', 'waiting');
+    }
+    return fetch(SERVER_URL + '/room', { method: 'POST' });
+  })
     .then(r => {
       if (r.status === 429) throw new Error('rate_limit');
       if (r.status === 503) throw new Error('server_full');
@@ -1421,6 +1438,14 @@ function initReceiver(roomId, token) {
     document.getElementById('r-prog').style.display = 'none';
     return;
   }
+
+  // Esperar warmup antes de conectar WebSocket
+  warmupPromise.then(() => {
+    initReceiverConnect(roomId, token);
+  });
+}
+
+function initReceiverConnect(roomId, token) {
 
   const wsBase = SERVER_URL.replace('https://', 'wss://').replace('http://', 'ws://');
   ctrlWs = new WebSocket(wsBase + '/relay');
